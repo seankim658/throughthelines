@@ -1,0 +1,34 @@
+# Configuration for upstream data sources.
+#
+# This file is the single source of truth for WHAT to fetch and from WHERE.
+# The fetch pipeline reads it, downloads the listed files to data/raw/,
+# and writes a manifest recording the bytes it actually got.
+#
+# Versioning:
+#   - lewis.commit_sha : a git commit SHA on master. Once pinned, the
+#     raw URLs built from this config are immutable.
+#   - voteview does not expose a strong version identifier; we record
+#     the ETag (or Last-Modified) returned at fetch time in the manifest.
+
+schema_version = 1
+
+[lewis]
+# Jeffrey Lewis's congressional-district-boundaries repo.
+# https://github.com/JeffreyBLewis/congressional-district-boundaries
+repo = "JeffreyBLewis/congressional-district-boundaries"
+commit_sha = "f107b1b6c149c1b759cbb9b5bb14111a2355d6a1"
+files = [
+    "GeoJson/North Carolina_103_to_105.geojson",
+    "GeoJson/North Carolina_106_to_106.geojson",
+    "GeoJson/North Carolina_107_to_107.geojson",
+    "GeoJson/North Carolina_108_to_112.geojson",
+    "GeoJson/North Carolina_113_to_114.geojson",
+    "GeoJson/North Carolina_115_to_116.geojson",
+    "GeoJson/North Carolina_117_to_117.geojson",
+    "GeoJson/North Carolina_118_to_118.geojson",
+    "GeoJson/North Carolina_119_to_119.geojson",
+]
+
+[voteview]
+# Voteview's member-level data (HSall = all House members across all Congresses).
+url = "https://voteview.com/static/data/out/members/HSall_members.csv"
