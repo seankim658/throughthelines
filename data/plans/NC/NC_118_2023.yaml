@@ -5,7 +5,7 @@ state: NC
 chamber: congressional
 congress_start: 118
 congress_end: 118
-source_file: lewis/North Carolina_118_to_118.geojson
+source_file: lewis/NC/North Carolina_118_to_118.geojson
 source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 enacted_date: pending

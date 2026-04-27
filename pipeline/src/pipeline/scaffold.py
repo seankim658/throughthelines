@@ -204,7 +204,7 @@ def _build_plan(
         chamber="congressional",
         congress_start=congress_start,
         congress_end=congress_end,
-        source_file=f"lewis/{lewis_filename}",
+        source_file=f"lewis/{state}/{lewis_filename}",
         source_commit=lewis_commit_sha,
         schema_version=1,
     )
