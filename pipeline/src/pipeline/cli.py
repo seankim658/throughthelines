@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import argparse
+from os import stat
 import sys
 from pathlib import Path
 
@@ -15,8 +16,7 @@ from pipeline.fetch import FetchError, fetch_all
 from pipeline.paths import RepoRootNotFoundError, find_repo_root
 from pipeline.scaffold import ScaffoldGeneratorError, ScaffoldResult, scaffold_all
 from pipeline.schema import StateCode
-
-SUPPORTED_STATES: tuple[StateCode, ...] = ("NC",)
+from pipeline.state_codes import SUPPORTED_STATES
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -63,9 +63,14 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     scaffold_parser.add_argument(
         "--state",
-        default="NC",
+        action="append",
         type=_validate_state,
-        help="Two-letter state code (default: NC). Currently only NC is supported.",
+        metavar="STATE",
+        help=(
+            "Two-letter state code to scaffold (repeatable, e.g., "
+            "--state NC --state PA). If omitted, scaffolds every state "
+            "configured in sources.toml."
+        ),
     )
     scaffold_parser.add_argument(
         "--force",
@@ -137,7 +142,7 @@ def _run_fetch(project_config: ProjectConfig) -> int:
 
 
 def _run_scaffold(project_config: ProjectConfig, args: argparse.Namespace) -> int:
-    state: StateCode = args.state
+    states_arg: list[StateCode] | None = args.state
     patterns: list[str] = list(args.patterns)
     force: bool = args.force
 
@@ -147,34 +152,78 @@ def _run_scaffold(project_config: ProjectConfig, args: argparse.Namespace) -> in
         print(f"error loading config: {e}", file=sys.stderr)
         return 2
 
-    try:
-        results: list[ScaffoldResult] = scaffold_all(
-            lewis_dir=project_config.project_paths.lewis_dir,
-            plans_dir=project_config.project_paths.plans_dir / Path(state),
-            state=state,
-            lewis_commit_sha=sources.lewis.commit_sha,
-            patterns=patterns or None,
-            force=force,
-        )
-    except FileNotFoundError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
-    except ScaffoldGeneratorError as e:
-        print(f"generator error: {e}", file=sys.stderr)
-        return 1
-
-    return _report_scaffold_results(results, patterns)
-
-
-def _report_scaffold_results(results: list[ScaffoldResult], patterns: list[str]) -> int:
-    if not results:
-        if patterns:
-            print(f"no files matched patterns: {patterns}")
-        else:
-            print("no Lewis files found")
-        return 0
+    configured: list[StateCode] = sorted(sources.lewis.states.keys())
+    if states_arg is None:
+        target_states: list[StateCode] = configured
+    else:
+        missing: list[StateCode] = [
+            s for s in states_arg if s not in sources.lewis.states
+        ]
+        if missing:
+            print(
+                f"error: state(s) {missing} not configured in sources.toml; "
+                f"available: {configured}",
+                file=sys.stderr,
+            )
+            return 2
+        target_states = _dedupe_states(states_arg)
 
     counts: dict[str, int] = {"wrote": 0, "force": 0, "skip": 0, "fail": 0}
+
+    for state in target_states:
+        print(f"\n[{state}]")
+        try:
+            state_results: list[ScaffoldResult] = scaffold_all(
+                lewis_dir=project_config.project_paths.lewis_dir / state,
+                plans_dir=project_config.project_paths.plans_dir / state,
+                state=state,
+                lewis_commit_sha=sources.lewis.commit_sha,
+                patterns=patterns or None,
+                force=force,
+            )
+        except FileNotFoundError as e:
+            print(f"\terror: {e}", file=sys.stderr)
+            counts["fail"] += 1
+            continue
+        except ScaffoldGeneratorError as e:
+            print(f"\tgenerator error: {e}", file=sys.stderr)
+            counts["fail"] += 1
+            continue
+
+        state_counts: dict[str, int] = _print_scaffold_results(state_results, patterns)
+        for key, value in state_counts.items():
+            counts[key] += value
+
+    print(
+        f"\nTotal: {counts['wrote']} written, {counts['force']} overwritten, "
+        f"{counts['skip']} skipped, {counts['fail']} failed."
+    )
+
+    return 1 if counts["fail"] > 0 else 0
+
+
+def _dedupe_states(states: list[StateCode]) -> list[StateCode]:
+    seen: set[StateCode] = set()
+    result: list[StateCode] = []
+    for state in states:
+        if state not in seen:
+            seen.add(state)
+            result.append(state)
+    return result
+
+
+def _print_scaffold_results(
+    results: list[ScaffoldResult], patterns: list[str]
+) -> dict[str, int]:
+    counts: dict[str, int] = {"wrote": 0, "force": 0, "skip": 0, "fail": 0}
+
+    if not results:
+        if patterns:
+            print(f"\tno files matched patterns: {patterns}")
+        else:
+            print("\tno Lewis files found")
+        return counts
+
     for result in results:
         counts[result.status] += 1
         marker: str = _status_marker(result.status)
@@ -185,13 +234,7 @@ def _report_scaffold_results(results: list[ScaffoldResult], patterns: list[str])
             line += f"\t[{result.message}]"
         print(line)
 
-    summary: str = (
-        f"\n{counts['wrote']} written, {counts['force']} overwritten, "
-        f"{counts['skip']} skipped, {counts['fail']} failed."
-    )
-    print(summary)
-
-    return 1 if counts["fail"] > 0 else 0
+    return counts
 
 
 def _status_marker(status: str) -> str:

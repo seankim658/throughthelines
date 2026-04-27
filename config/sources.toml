@@ -17,6 +17,8 @@ schema_version = 1
 # https://github.com/JeffreyBLewis/congressional-district-boundaries
 repo = "JeffreyBLewis/congressional-district-boundaries"
 commit_sha = "f107b1b6c149c1b759cbb9b5bb14111a2355d6a1"
+
+[lewis.states.NC]
 files = [
     "GeoJson/North Carolina_103_to_105.geojson",
     "GeoJson/North Carolina_106_to_106.geojson",

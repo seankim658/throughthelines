@@ -83,18 +83,21 @@ def fetch_all(
     # Lewis files
     lewis_dir = project_paths.lewis_dir
     lewis_dir.mkdir(exist_ok=True)
-    for file_path in sources.lewis.files:
-        source_url: str = sources.lewis.raw_url(file_path)
-        local_path: Path = lewis_dir / Path(file_path).name
-        fetched.append(
-            _fetch_one(
-                source_url,
-                local_path,
-                request_settings,
-                user_agent,
-                prior.get(source_url),
+    for state_code, state_files in sources.lewis.states.items():
+        state_dir: Path = lewis_dir / state_code
+        state_dir.mkdir(exist_ok=True)
+        for file_path in state_files:
+            source_url: str = sources.lewis.raw_url(file_path)
+            local_path: Path = state_dir / Path(file_path).name
+            fetched.append(
+                _fetch_one(
+                    source_url,
+                    local_path,
+                    request_settings,
+                    user_agent,
+                    prior.get(source_url),
+                )
             )
-        )
 
     # Voteview file
     voteview_dir = project_paths.voteview_dir

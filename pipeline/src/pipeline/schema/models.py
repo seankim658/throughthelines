@@ -29,6 +29,8 @@ from pydantic import (
     model_validator,
 )
 
+from pipeline.state_codes import SUPPORTED_STATES, StateCode
+
 # Sentinel strings
 PENDING: Literal["pending"] = "pending"
 UNKNOWN: Literal["unknown"] = "unknown"
@@ -51,7 +53,6 @@ DateField = date | Literal["unknown", "pending"] | None
 StruckDownField = bool | Literal["unknown", "pending"]
 
 CurationStatusField = Literal["pending", "partial", "curated"]
-StateCode = Literal["NC"]
 
 # A free-prose field that may be a real string, "unknown", or "pending".
 # The distinction between a real value and sentinels is by exact string
