@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 import argparse
-from os import stat
 import sys
 from pathlib import Path
 
@@ -109,7 +108,7 @@ def _run_fetch(project_config: ProjectConfig) -> int:
     try:
         sources = load_fetch_config(project_config.sources_config_path)
         request = load_request_config(project_config.request_config_path)
-    except FetchError as e:
+    except (OSError, ValueError) as e:
         print(f"fetch failed: {e}", file=sys.stderr)
         return 2
 

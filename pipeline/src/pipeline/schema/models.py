@@ -29,7 +29,7 @@ from pydantic import (
     model_validator,
 )
 
-from pipeline.state_codes import SUPPORTED_STATES, StateCode
+from pipeline.state_codes import StateCode
 
 # Sentinel strings
 PENDING: Literal["pending"] = "pending"
@@ -101,7 +101,7 @@ class Source(BaseModel):
 
 # --- Plan Models ---
 
-PLAN_ID_PATTERN: re.Pattern[str] = re.compile(r"^[A-Z]{2}_\d{3}_\d{4}$")
+PLAN_ID_PATTERN: str = r"^[A-Z]{2}_\d{3}_\d{4}$"
 
 
 class Plan(BaseModel):
@@ -130,13 +130,14 @@ class Plan(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     # Identity & provenance
-    plan_id: Annotated[str, Field(pattern=PLAN_ID_PATTERN.pattern, min_length=1)]
+    plan_id: Annotated[str, Field(pattern=PLAN_ID_PATTERN, min_length=1)]
     state: StateCode
     chamber: Literal["congressional"]
     congress_start: Annotated[int, Field(ge=103, le=130)]
     congress_end: Annotated[int, Field(ge=103, le=130)] | None
     source_file: Annotated[str, Field(min_length=1)]
     source_commit: Annotated[str, Field(min_length=1)]
+    # Plan-record schema version
     schema_version: Literal[1]
 
     # Dates
@@ -173,7 +174,7 @@ class Plan(BaseModel):
     @classmethod
     def _plan_id_matches_pattern(cls, value: str) -> str:
         """Ensures plan_id follows the STATE_CONGRESS_YEAR pattern."""
-        if not PLAN_ID_PATTERN.match(value):
+        if not re.match(PLAN_ID_PATTERN, value):
             raise ValueError(
                 f"plan_id must match pattern STATE_CONGRESS_YEAR (e.g., NC_118_2023); got {value!r}"
             )
@@ -185,7 +186,7 @@ class Plan(BaseModel):
         """A plan reference must be None, the sentinel 'pending', or a well-formed plan_id matching PLAN_ID_PATTERN."""
         if value is None or value == PENDING:
             return value
-        if not PLAN_ID_PATTERN.match(value):
+        if not re.match(PLAN_ID_PATTERN, value):
             raise ValueError(
                 f"plan reference must be null, 'pending', or a plan_id "
                 f"matching STATE_CONGRESS_YEAR (e.g., NC_118_2023); got {value!r}"

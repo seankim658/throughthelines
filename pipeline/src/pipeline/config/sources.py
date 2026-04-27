@@ -110,7 +110,7 @@ def _load_lewis_states(
                 f"unknown state code {state_code!r} in [lewis.states] in {path} "
                 f"(supported: {supported_list})"
             )
-        if not isinstance(states_raw, dict):
+        if not isinstance(state_raw, dict):
             raise FetchConfigError(
                 f"[lewis.states.{state_code}] must be a table in {path}"
             )
