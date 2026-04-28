@@ -225,3 +225,20 @@ class Plan(BaseModel):
                 f"plan_id congress ({congress_from_id}) does not match congress_start ({self.congress_start})"
             )
         return self
+
+    # Projections for downstream consumers
+    _FEATURE_PROP_FIELDS: tuple[str, ...] = (
+        "plan_id",
+        "origin",
+        "struck_down",
+        "curation_status",
+        "predecessor",
+        "superseded_by",
+    )
+
+    def to_feature_props(self) -> dict[str, Any]:
+        dumped: dict[str, Any] = self.model_dump(mode="json")
+        return {field: dumped[field] for field in self._FEATURE_PROP_FIELDS}
+
+    def to_index_record(self) -> dict[str, Any]:
+        return self.model_dump(mode="json")

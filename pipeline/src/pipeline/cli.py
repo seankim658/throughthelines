@@ -14,8 +14,10 @@ from pipeline.config.project import ProjectConfig, ProjectConfigError
 from pipeline.fetch import FetchError, fetch_all
 from pipeline.paths import RepoRootNotFoundError, find_repo_root
 from pipeline.scaffold import ScaffoldGeneratorError, ScaffoldResult, scaffold_all
-from pipeline.schema import StateCode
+from pipeline.schema import StateCode, PlanSetValidationError
 from pipeline.state_codes import SUPPORTED_STATES
+from pipeline.stitch import StitchError, stitch_state
+from pipeline.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_fetch(project_config)
     if args.command == "scaffold-plans":
         return _run_scaffold(project_config, args)
+    if args.command == "stitch":
+        return _run_stitch(project_config, args)
 
     parser.print_help()
     return 1
@@ -84,6 +88,22 @@ def _build_parser() -> argparse.ArgumentParser:
             "Optional glob patterns matched against Lewis filenames "
             "(e.g., '*119*'). Multiple patterns are OR-combined. "
             "If omitted, all files are processed."
+        ),
+    )
+
+    # Stitch
+    stitch_parser = subparsers.add_parser(
+        "stitch",
+        help="Stitch plan metadata onto Lewis polygons; emit per-state GeoJSON.",
+    )
+    stitch_parser.add_argument(
+        "--state",
+        action="append",
+        type=_validate_state,
+        metavar="STATE",
+        help=(
+            "Two-letter state code to stitch (repeatable). "
+            "If omitted, stitches every state configured in sources.toml."
         ),
     )
 
@@ -238,3 +258,69 @@ def _print_scaffold_results(
 
 def _status_marker(status: str) -> str:
     return {"wrote": "→", "force": "↻", "skip": "·", "fail": "x"}.get(status, "?")
+
+
+# Stitch
+
+
+def _run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
+    states_arg: list[StateCode] | None = args.state
+
+    try:
+        sources = load_fetch_config(project_config.sources_config_path)
+    except (OSError, ValueError) as e:
+        print(f"error loading config: {e}", file=sys.stderr)
+        return 2
+
+    configured: list[StateCode] = sorted(sources.lewis.states.keys())
+    if states_arg is None:
+        target_states: list[StateCode] = configured
+    else:
+        missing: list[StateCode] = [
+            s for s in states_arg if s not in sources.lewis.states
+        ]
+        if missing:
+            print(
+                f"error: state(s) {missing} not configured in sources.toml; "
+                f"available: {configured}",
+                file=sys.stderr,
+            )
+            return 2
+        target_states = _dedupe_states(states_arg)
+
+    paths = project_config.project_paths
+    failed: bool = False
+
+    for state in target_states:
+        print(f"\n[{state}]")
+        try:
+            plans = load_plans_dir(paths.plans_dir / state)
+        except (
+            FileNotFoundError,
+            NotADirectoryError,
+            PlanLoadError,
+            PlanSetLoadError,
+            PlanSetValidationError,
+        ) as e:
+            print(f"\terror loading plans: {e}", file=sys.stderr)
+            failed = True
+            continue
+
+        try:
+            result = stitch_state(
+                plans=plans,
+                state=state,
+                raw_dir=paths.raw_dir,
+                stitched_dir=paths.stitched_dir,
+            )
+        except StitchError as e:
+            print(f"\tstitch failed: {e}", file=sys.stderr)
+            failed = True
+            continue
+
+        print(
+            f"\t{result.plans_processed} plans, "
+            f"{result.features_written} features → {result.output_path}"
+        )
+
+    return 1 if failed else 0

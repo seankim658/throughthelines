@@ -45,6 +45,8 @@ class ProjectPaths:
     voteview_dir: Path
     manifest_file: Path
     plans_dir: Path
+    derived_dir: Path
+    stitched_dir: Path
 
 
 @dataclass(frozen=True)
@@ -137,6 +139,16 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         plans_dir=Path(
             require_string(
                 paths_raw, "plans_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        derived_dir=Path(
+            require_string(
+                paths_raw, "derived_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        stitched_dir=Path(
+            require_string(
+                paths_raw, "stitched_dir", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
     )
