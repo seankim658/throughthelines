@@ -4,13 +4,20 @@ from __future__ import annotations
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from importlib.metadata import version as _pkg_version, PackageNotFoundError
 
 from pipeline.config._common import (
     require_section,
     require_string,
+    require_int,
     require_supported_schema_version,
+)
+from pipeline.state_codes import (
+    ChamberType,
+    StateCode,
+    SUPPORTED_CHAMBERS,
+    SUPPORTED_STATES,
 )
 
 SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
@@ -35,6 +42,14 @@ class ProjectSettings:
 
 
 @dataclass(frozen=True)
+class ScopeSettings:
+
+    congress_start: int
+    congress_end: int
+    chambers: dict[StateCode, list[ChamberType]]
+
+
+@dataclass(frozen=True)
 class ProjectPaths:
 
     config_dir: Path
@@ -47,6 +62,7 @@ class ProjectPaths:
     plans_dir: Path
     derived_dir: Path
     stitched_dir: Path
+    members_file: Path
 
 
 @dataclass(frozen=True)
@@ -55,6 +71,7 @@ class ProjectConfig:
     schema_version: int
     project_settings: ProjectSettings
     project_paths: ProjectPaths
+    scope: ScopeSettings
 
     @property
     def user_agent(self) -> str:
@@ -151,10 +168,86 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
                 paths_raw, "stitched_dir", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
+        members_file=Path(
+            require_string(
+                paths_raw, "members_file", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
     )
+
+    scope: ScopeSettings = _load_scope_section(raw, path)
 
     return ProjectConfig(
         schema_version=schema_version,
         project_settings=project_settings,
         project_paths=project_paths,
+        scope=scope,
     )
+
+
+def _load_scope_section(raw: dict[str, Any], path: Path) -> ScopeSettings:
+    scope_raw: dict[str, Any] = require_section(raw, "scope", path, ProjectConfigError)
+
+    congress_start: int = require_int(
+        scope_raw, "congress_start", "scope", path, ProjectConfigError
+    )
+    congress_end: int = require_int(
+        scope_raw, "congress_end", "scope", path, ProjectConfigError
+    )
+
+    if not (103 <= congress_start <= 130):
+        raise ProjectConfigError(
+            f"scope.congress_start ({congress_start}) must be between 103 "
+            f"and 130 in {path}"
+        )
+    if not (103 <= congress_end <= 130):
+        raise ProjectConfigError(
+            f"scope.congress_end ({congress_end}) must be between 103 "
+            f"and 130 in {path}"
+        )
+
+    chambers: dict[StateCode, list[ChamberType]] = _load_scope_chambers(scope_raw, path)
+
+    return ScopeSettings(
+        congress_start=congress_start, congress_end=congress_end, chambers=chambers
+    )
+
+
+def _load_scope_chambers(
+    scope_raw: dict[str, Any], path: Path
+) -> dict[StateCode, list[ChamberType]]:
+    if "chambers" not in scope_raw:
+        raise ProjectConfigError(f"missing [scope.chambers] section in {path}")
+    chambers_raw = scope_raw["chambers"]
+    if not isinstance(chambers_raw, dict):
+        raise ProjectConfigError(f"[scope.chambers] must be a table in {path}")
+    if not chambers_raw:
+        raise ProjectConfigError(
+            f"[scope.chambers] in {path} must contain at least one state"
+        )
+
+    chambers: dict[StateCode, list[ChamberType]] = {}
+    for state_code, chamber_list in chambers_raw.items():
+        if state_code not in SUPPORTED_STATES:
+            supported_list: str = ", ".join(SUPPORTED_STATES)
+            raise ProjectConfigError(
+                f"unknown state code {state_code!r} in [scope.chambers] in "
+                f"{path} (supported: {supported_list})"
+            )
+        if not isinstance(chamber_list, list) or not chamber_list:
+            raise ProjectConfigError(
+                f"[scope.chambers.{state_code}] must be a non-empty list in " f"{path}"
+            )
+        validated: list[ChamberType] = []
+        for chamber in chamber_list:
+            if chamber not in SUPPORTED_CHAMBERS:
+                supported_chambers: str = ", ".join(SUPPORTED_CHAMBERS)
+                raise ProjectConfigError(
+                    f"unsupported chamber {chamber!r} for state {state_code} "
+                    f"in [scope.chambers] in {path} "
+                    f"(supported: {supported_chambers})"
+                )
+            validated.append(cast(ChamberType, chamber))
+        chambers[cast(StateCode, state_code)] = validated
+
+    return chambers

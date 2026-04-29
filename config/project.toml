@@ -1,10 +1,10 @@
 schema_version = 1
 
 [project]
-name = "Through the Lines"
-domain = "throughthelines.org"
-tagline = "Every congressional district your address has lived under."
-repo_url = "https://github.com/seankim658/through-the-lines"
+name="Through the Lines"
+domain="throughthelines.org"
+tagline="Every congressional district your address has lived under."
+repo_url="https://github.com/seankim658/through-the-lines"
 
 [paths]
 # Config files
@@ -24,3 +24,11 @@ plans_dir="{repo_root}/data/plans/"
 # Derived (build artifacts)
 derived_dir="{repo_root}/data/derived/"
 stitched_dir="{repo_root}/data/derived/stitched"
+members_file="{repo_root}/data/derived/members.json"
+
+[scope]
+congress_start=103
+congress_end=119
+
+[scope.chambers]
+NC=["congressional"]

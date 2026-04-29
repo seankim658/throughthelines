@@ -18,6 +18,7 @@ from pipeline.schema import StateCode, PlanSetValidationError
 from pipeline.state_codes import SUPPORTED_STATES
 from pipeline.stitch import StitchError, stitch_state
 from pipeline.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
+from pipeline.members import MembersBuildError, MembersBuildResult, build_members
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_scaffold(project_config, args)
     if args.command == "stitch":
         return _run_stitch(project_config, args)
+    if args.command == "members":
+        return _run_members(project_config)
 
     parser.print_help()
     return 1
@@ -106,6 +109,9 @@ def _build_parser() -> argparse.ArgumentParser:
             "If omitted, stitches every state configured in sources.toml."
         ),
     )
+
+    # Members
+    subparsers.add_parser("members", help="Slice Voteview CSV into members.json.")
 
     return parser
 
@@ -324,3 +330,34 @@ def _run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
         )
 
     return 1 if failed else 0
+
+
+# --- Members ---
+
+
+def _run_members(project_config: ProjectConfig) -> int:
+    paths = project_config.project_paths
+    voteview_csv_path: Path = paths.voteview_dir / "HSall_members.csv"
+
+    try:
+        result: MembersBuildResult = build_members(
+            scope=project_config.scope,
+            voteview_csv_path=voteview_csv_path,
+            output_path=paths.members_file,
+        )
+    except MembersBuildError as e:
+        print(f"members build failed: {e}", file=sys.stderr)
+        return 1
+
+    for warning in result.warnings:
+        print(f"\twarn: {warning}", file=sys.stderr)
+
+    print(
+        f"\n{result.rows_read} rows read, {result.rows_in_scope} in scope, "
+        f"{result.districts_covered} (state, congress, district) entries "
+        f"→ {result.output_path}"
+    )
+    if result.warnings:
+        print(f"({len(result.warnings)} warning(s))", file=sys.stderr)
+
+    return 0

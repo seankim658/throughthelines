@@ -5,6 +5,7 @@ from pipeline.config.project import (
     ProjectConfigError,
     ProjectSettings,
     ProjectPaths,
+    ScopeSettings,
     load_project_config,
 )
 from pipeline.config.request import (
@@ -26,6 +27,7 @@ __all__ = [
     "ProjectConfigError",
     "ProjectSettings",
     "ProjectPaths",
+    "ScopeSettings",
     "load_project_config",
     "FetchConfig",
     "FetchConfigError",
