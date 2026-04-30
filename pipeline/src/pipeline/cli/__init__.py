@@ -1,0 +1,114 @@
+from __future__ import annotations
+import argparse
+import sys
+from pathlib import Path
+
+from pipeline.cli._common import validate_state
+from pipeline.config import load_project_config, ProjectConfigError
+from pipeline.core import RepoRootNotFoundError, find_repo_root
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser: argparse.ArgumentParser = _build_parser()
+    args: argparse.Namespace = parser.parse_args(argv)
+
+    if args.command is None:
+        parser.print_help()
+        return 1
+
+    try:
+        repo_root: Path = find_repo_root()
+    except RepoRootNotFoundError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+    project_config_path: Path = repo_root / "config" / "project.toml"
+    try:
+        project_config = load_project_config(project_config_path, str(repo_root))
+    except ProjectConfigError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+
+    if args.command == "fetch":
+        from pipeline.cli.fetch import run_fetch
+
+        return run_fetch(project_config)
+
+    if args.command == "scaffold-plans":
+        from pipeline.cli.scaffold import run_scaffold
+
+        return run_scaffold(project_config, args)
+
+    if args.command == "stitch":
+        from pipeline.cli.stitch import run_stitch
+
+        return run_stitch(project_config, args)
+
+    if args.command == "members":
+        from pipeline.cli.members import run_members
+
+        return run_members(project_config)
+
+    parser.print_help()
+    return 1
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="pipeline", description="Build pipeline")
+    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
+
+    # Fetch
+    subparsers.add_parser("fetch", help="Download upstream sources to data/raw/.")
+
+    # Scaffold
+    scaffold_parser = subparsers.add_parser(
+        "scaffold-plans",
+        help="Generate placeholder plan-metadata YAMLs from Lewis GeoJSONs.",
+    )
+    scaffold_parser.add_argument(
+        "--state",
+        action="append",
+        type=validate_state,
+        metavar="STATE",
+        help=(
+            "Two-letter state code to scaffold (repeatable, e.g., "
+            "--state NC --state PA). If omitted, scaffolds every state "
+            "configured in sources.toml."
+        ),
+    )
+    scaffold_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing YAMLs. Off by default.",
+    )
+    scaffold_parser.add_argument(
+        "patterns",
+        nargs="*",
+        metavar="PATTERN",
+        help=(
+            "Optional glob patterns matched against Lewis filenames "
+            "(e.g., '*119*'). Multiple patterns are OR-combined. "
+            "If omitted, all files are processed."
+        ),
+    )
+
+    # Stitch
+    stitch_parser = subparsers.add_parser(
+        "stitch",
+        help="Stitch plan metadata onto Lewis polygons; emit per-state GeoJSON.",
+    )
+    stitch_parser.add_argument(
+        "--state",
+        action="append",
+        type=validate_state,
+        metavar="STATE",
+        help=(
+            "Two-letter state code to stitch (repeatable). "
+            "If omitted, stitches every state configured in sources.toml."
+        ),
+    )
+
+    # Members
+    subparsers.add_parser("members", help="Slice Voteview CSV into members.json.")
+
+    return parser

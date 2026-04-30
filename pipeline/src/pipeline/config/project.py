@@ -7,17 +7,12 @@ from pathlib import Path
 from typing import Any, cast
 from importlib.metadata import version as _pkg_version, PackageNotFoundError
 
+from pipeline.core import ChamberType, StateCode, SUPPORTED_CHAMBERS, SUPPORTED_STATES
 from pipeline.config._common import (
     require_section,
     require_string,
     require_int,
     require_supported_schema_version,
-)
-from pipeline.state_codes import (
-    ChamberType,
-    StateCode,
-    SUPPORTED_CHAMBERS,
-    SUPPORTED_STATES,
 )
 
 SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})

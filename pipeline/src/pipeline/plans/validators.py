@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pipeline.schema.models import PENDING, Plan
+from pipeline.plans.models import PENDING, Plan
 
 
 class PlanSetValidationError(ValueError):

@@ -11,8 +11,8 @@ from typing import Any, Literal
 import yaml
 from pydantic import ValidationError
 
-from pipeline.schema import Plan
-from pipeline.state_codes import StateCode
+from pipeline.plans.models import Plan
+from pipeline.core import StateCode
 
 ScaffoldStatus = Literal["wrote", "force", "skip", "fail"]
 

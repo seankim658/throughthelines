@@ -14,13 +14,12 @@ downstream artifacts:
 
 from __future__ import annotations
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pipeline.schema import Plan
-from pipeline.state_codes import StateCode
+from pipeline.plans.models import Plan
+from pipeline.core import StateCode, write_json_atomic
 
 # --- Errors ---
 
@@ -68,7 +67,7 @@ def stitch_state(
 
     stitched_dir.mkdir(parents=True, exist_ok=True)
     output_path: Path = stitched_dir / f"{state}.geojson"
-    _write_json_atomic(output_path, feature_collection)
+    write_json_atomic(output_path, feature_collection)
 
     return StitchResult(
         state=state,
@@ -140,10 +139,3 @@ def _attach_plan_props(
 
     merged_props: dict[str, Any] = {**existing_props, **plan_props}
     return {**feature, "properties": merged_props}
-
-
-def _write_json_atomic(dest_path: Path, payload: Any) -> None:
-    tmp_path: Path = dest_path.with_suffix(dest_path.suffix + ".tmp")
-    with tmp_path.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, separators=(",", ":"))
-    os.replace(tmp_path, dest_path)

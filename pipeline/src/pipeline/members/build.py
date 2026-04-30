@@ -7,15 +7,13 @@ strings, and writes a nested JSON lookup in the format:
 """
 
 from __future__ import annotations
-import os
-import json
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast, Any
+from typing import cast
 
 from pipeline.config import ScopeSettings
-from pipeline.state_codes import StateCode
+from pipeline.core import StateCode, write_json_atomic
 
 _REQUIRED_COLUMNS: frozenset[str] = frozenset(
     {
@@ -297,10 +295,3 @@ def _row_to_member_dict(row: _SliceRow) -> MemberRecord:
         "nokken_poole_dim1": row.nokken_poole_dim1,
         "nokken_poole_dim2": row.nokken_poole_dim2,
     }
-
-
-def _write_json_atomic(dest_path: Path, payload: Any) -> None:
-    tmp_path: Path = dest_path.with_suffix(dest_path.suffix + ".tmp")
-    with tmp_path.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, separators=(",", ":"))
-    os.replace(tmp_path, dest_path)
