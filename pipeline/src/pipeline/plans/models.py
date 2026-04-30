@@ -29,7 +29,7 @@ from pydantic import (
     model_validator,
 )
 
-from pipeline.state_codes import StateCode
+from pipeline.core import StateCode
 
 # Sentinel strings
 PENDING: Literal["pending"] = "pending"

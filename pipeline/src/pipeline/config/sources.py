@@ -7,13 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
+from pipeline.core import SUPPORTED_STATES, StateCode
 from pipeline.config._common import (
     require_section,
     require_string,
     require_string_list,
     require_supported_schema_version,
 )
-from pipeline.state_codes import SUPPORTED_STATES, StateCode
 
 SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
 

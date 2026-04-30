@@ -12,7 +12,8 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from pipeline.schema import Plan, validate_plan_set
+from pipeline.plans.models import Plan
+from pipeline.plans.validators import validate_plan_set
 
 YAML_EXTENSIONS: frozenset[str] = frozenset({".yaml", ".yml"})
 
