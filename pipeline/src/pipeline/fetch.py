@@ -102,7 +102,7 @@ def fetch_national(
     )
 
     # Census BEFs (one per published Congress)
-    bef_dir: Path = project_paths.census_dir / "bef"
+    bef_dir: Path = project_paths.bef_dir
     bef_dir.mkdir(parents=True, exist_ok=True)
     for entry in sources.census.befs:
         bef_local: Path = bef_dir / Path(entry.url).name

@@ -55,6 +55,7 @@ class ProjectPaths:
     voteview_dir: Path
     census_dir: Path
     tabblock_dir: Path
+    bef_dir: Path
     manifest_dir: Path
     plans_dir: Path
     derived_dir: Path
@@ -154,6 +155,11 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         tabblock_dir=Path(
             require_string(
                 paths_raw, "tabblock_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        bef_dir=Path(
+            require_string(
+                paths_raw, "bef_dir", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
         manifest_dir=Path(
