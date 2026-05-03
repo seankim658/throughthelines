@@ -5,10 +5,11 @@ import tomllib
 import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast, get_args
 
-from pipeline.core import SUPPORTED_STATES, StateCode
+from pipeline.core import SUPPORTED_STATES, StateCode, STATE_INFO
 from pipeline.config._common import (
+    require_int,
     require_section,
     require_string,
     require_string_list,
@@ -16,6 +17,13 @@ from pipeline.config._common import (
 )
 
 SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
+
+# Decade-vintage labels for Census tabulation block geometry
+# v2000 → 2000-Census blocks (used for 107th–112th Congress spatial joins)
+# v2010 → 2010-Census blocks (used for 113th–117th BEFs)
+# v2020 → 2020-Census blocks (used for 118th–119th BEFs; runtime pivot)
+BlockVintage = Literal["v2000", "v2010", "v2020"]
+SUPPORTED_VINTAGES: tuple[BlockVintage, ...] = get_args(BlockVintage)
 
 
 # --- Errors ---
@@ -50,11 +58,32 @@ class VoteviewSource:
 
 
 @dataclass(frozen=True)
+class CensusBefEntry:
+
+    congress: int
+    url: str
+    national_filename: str
+
+
+@dataclass(frozen=True)
+class CensusSource:
+
+    befs: list[CensusBefEntry]
+    tabblock_templates: dict[BlockVintage, str]
+
+    def tabblock_url(self, vintage: BlockVintage, state: StateCode) -> str:
+        info = STATE_INFO[state]
+        template: str = self.tabblock_templates[vintage]
+        return template.format(fips=info.fips, name_upper=info.name_upper)
+
+
+@dataclass(frozen=True)
 class FetchConfig:
 
     schema_version: int
     lewis: LewisSource
     voteview: VoteviewSource
+    census: CensusSource
 
 
 # --- Loader ---
@@ -86,7 +115,12 @@ def load_fetch_config(path: Path) -> FetchConfig:
         url=require_string(voteview_raw, "url", "voteview", path, FetchConfigError),
     )
 
-    return FetchConfig(schema_version=schema_version, lewis=lewis, voteview=voteview)
+    census_raw: dict[str, Any] = require_section(raw, "census", path, FetchConfigError)
+    census = _load_census(census_raw, path)
+
+    return FetchConfig(
+        schema_version=schema_version, lewis=lewis, voteview=voteview, census=census
+    )
 
 
 def _load_lewis_states(
@@ -120,3 +154,94 @@ def _load_lewis_states(
         states[cast(StateCode, state_code)] = files
 
     return states
+
+
+def _load_census(census_raw: dict[str, Any], path: Path) -> CensusSource:
+    befs: list[CensusBefEntry] = _load_census_befs(census_raw, path)
+    tabblock_templates: dict[BlockVintage, str] = _load_census_tabblock_templates(
+        census_raw, path
+    )
+    return CensusSource(befs=befs, tabblock_templates=tabblock_templates)
+
+
+def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefEntry]:
+    if "bef" not in census_raw:
+        raise FetchConfigError(f"missing [[census.bef]] entries in {path}")
+    bef_raw = census_raw["bef"]
+    if not isinstance(bef_raw, list) or not bef_raw:
+        raise FetchConfigError(
+            f"[[census.bef]] in {path} must be a non-empty array of tables"
+        )
+
+    seen_congresses: set[int] = set()
+    befs: list[CensusBefEntry] = []
+    for idx, entry_raw in enumerate(bef_raw):
+        if not isinstance(entry_raw, dict):
+            raise FetchConfigError(
+                f"[[census.bef]] entry at index {idx} in {path} is not a table"
+            )
+        section_label: str = f"census.bef[{idx}]"
+        congress: int = require_int(
+            entry_raw, "congress", section_label, path, FetchConfigError
+        )
+        if congress in seen_congresses:
+            raise FetchConfigError(
+                f"duplicate [[census.bef]] entry for congress {congress} in {path}"
+            )
+        seen_congresses.add(congress)
+
+        url: str = require_string(
+            entry_raw, "url", section_label, path, FetchConfigError
+        )
+        national_filename: str = require_string(
+            entry_raw, "national_filename", section_label, path, FetchConfigError
+        )
+        befs.append(
+            CensusBefEntry(
+                congress=congress, url=url, national_filename=national_filename
+            )
+        )
+
+    befs.sort(key=lambda entry: entry.congress)
+    return befs
+
+
+def _load_census_tabblock_templates(
+    census_raw: dict[str, Any], path: Path
+) -> dict[BlockVintage, str]:
+    tabblock_raw: dict[str, Any] = require_section(
+        census_raw, "tabblock", path, FetchConfigError
+    )
+
+    templates: dict[BlockVintage, str] = {}
+    for vintage_key, vintage_raw in tabblock_raw.items():
+        if vintage_key not in SUPPORTED_VINTAGES:
+            supported_list = ", ".join(SUPPORTED_VINTAGES)
+            raise FetchConfigError(
+                f"unknown tabblock vintage {vintage_key!r} in [census.tabblock] in "
+                f"{path} (supported: {supported_list})"
+            )
+        if not isinstance(vintage_raw, dict):
+            raise FetchConfigError(
+                f"[census.tabblock.{vintage_key}] must be a table in {path}"
+            )
+        template: str = require_string(
+            vintage_raw,
+            "url_template",
+            f"census.tabblock.{vintage_key}",
+            path,
+            FetchConfigError,
+        )
+        if "{fips}" not in template:
+            raise FetchConfigError(
+                f"census.tabblock.{vintage_key}.url_template missing required "
+                f"{{fips}} placeholder in {path}"
+            )
+        templates[cast(BlockVintage, vintage_key)] = template
+
+    if not templates:
+        raise FetchConfigError(
+            f"[census.tabblock] in {path} must contain at least one vintage entry"
+        )
+
+    return templates

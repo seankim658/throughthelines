@@ -1,10 +1,13 @@
-"""Fetch upstream sources data sources referenced in config/sources.toml.
+"""Fetch upstream sources referenced in config/sources.toml.
 
-Conditional fetching:
-    Reads the previous manifest (if any) and uses the recorded ETag / Last-Modified
-    per file to send conditional GET requets. If the server responds with a 304, trust
-    the local file and recompute hash defensively. If the local file is missing, fetch
-    unconditionally regardless of manifest claim.
+The fetch is split into two scopes:
+
+    fetch_national:
+        - Voteview HSall_members.csv (one CSV)
+        - Census BEFs (one zip per published Congress)
+    fetch_state:
+        - Lewis plan polygon GeoJSONs for one state
+        - Census tabblock shapefiles (one per vintage, for one state)
 """
 
 from __future__ import annotations
@@ -21,9 +24,10 @@ from typing import Any, Literal
 import yaml
 
 from pipeline.config import FetchConfig, RequestSettings, ProjectPaths
+from pipeline.core.state_codes import StateCode
 
 DEFAULT_USER_AGENT: str = "through-the-lines-pipeline/0.1"
-MANIFEST_FILENAME: str = "MANIFEST.yaml"
+NATIONAL_MANIFEST_FILENAME: str = "_national.yaml"
 
 FetchStatus = Literal["fetched", "unchanged"]
 
@@ -54,6 +58,7 @@ class FetchResult:
 
     files: list[FetchedFile]
     manifest_path: Path
+    state: StateCode | None  # None means national scope
 
 
 @dataclass(frozen=True)
@@ -64,44 +69,27 @@ class _PriorRecord:
     last_modified: str | None
 
 
-# --- Fetch ---
+# --- API ---
 
 
-def fetch_all(
+def fetch_national(
     sources: FetchConfig,
     request_settings: RequestSettings,
     user_agent: str | None,
     project_paths: ProjectPaths,
 ) -> FetchResult:
-    raw_dir = project_paths.raw_dir
-    raw_dir.mkdir(parents=True, exist_ok=True)
+    """Fetch Voteview and all Census BEFs."""
     user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
-    prior: dict[str, _PriorRecord] = _read_prior_manifest(raw_dir)
+    project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
+    project_paths.manifest_dir.mkdir(parents=True, exist_ok=True)
 
+    manifest_path: Path = project_paths.manifest_dir / NATIONAL_MANIFEST_FILENAME
+    prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
     fetched: list[FetchedFile] = []
 
-    # Lewis files
-    lewis_dir = project_paths.lewis_dir
-    lewis_dir.mkdir(exist_ok=True)
-    for state_code, state_files in sources.lewis.states.items():
-        state_dir: Path = lewis_dir / state_code
-        state_dir.mkdir(exist_ok=True)
-        for file_path in state_files:
-            source_url: str = sources.lewis.raw_url(file_path)
-            local_path: Path = state_dir / Path(file_path).name
-            fetched.append(
-                _fetch_one(
-                    source_url,
-                    local_path,
-                    request_settings,
-                    user_agent,
-                    prior.get(source_url),
-                )
-            )
-
     # Voteview file
-    voteview_dir = project_paths.voteview_dir
-    voteview_dir.mkdir(exist_ok=True)
+    voteview_dir: Path = project_paths.voteview_dir
+    voteview_dir.mkdir(parents=True, exist_ok=True)
     voteview_local: Path = voteview_dir / Path(sources.voteview.url).name
     fetched.append(
         _fetch_one(
@@ -113,8 +101,75 @@ def fetch_all(
         )
     )
 
-    manifest_path: Path = _write_manifest(sources, fetched, project_paths)
-    return FetchResult(files=fetched, manifest_path=manifest_path)
+    # Census BEFs (one per published Congress)
+    bef_dir: Path = project_paths.census_dir / "bef"
+    bef_dir.mkdir(parents=True, exist_ok=True)
+    for entry in sources.census.befs:
+        bef_local: Path = bef_dir / Path(entry.url).name
+        fetched.append(
+            _fetch_one(
+                entry.url, bef_local, request_settings, user_agent, prior.get(entry.url)
+            )
+        )
+
+    written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
+    return FetchResult(files=fetched, manifest_path=written_path, state=None)
+
+
+def fetch_state(
+    state: StateCode,
+    sources: FetchConfig,
+    request_settings: RequestSettings,
+    user_agent: str | None,
+    project_paths: ProjectPaths,
+) -> FetchResult:
+    user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
+    project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
+    project_paths.manifest_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest_path: Path = project_paths.manifest_dir / f"{state}.yaml"
+    prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
+    fetched: list[FetchedFile] = []
+
+    # Lewis file
+    if state not in sources.lewis.states:
+        raise FetchError(
+            f"sources.toml [lewis.states] has no entry for states {state!r}"
+        )
+    lewis_state_dir: Path = project_paths.lewis_dir / state
+    lewis_state_dir.mkdir(parents=True, exist_ok=True)
+    for file_path in sources.lewis.states[state]:
+        source_url: str = sources.lewis.raw_url(file_path)
+        local_path: Path = lewis_state_dir / Path(file_path).name
+        fetched.append(
+            _fetch_one(
+                source_url,
+                local_path,
+                request_settings,
+                user_agent,
+                prior.get(source_url),
+            )
+        )
+
+    # Census tabblock zips for every configured vintage
+    tabblock_dir: Path = project_paths.tabblock_dir
+    for vintage in sources.census.tabblock_templates:
+        vintage_year: str = _vintage_to_year(vintage)
+        vintage_state_dir: Path = tabblock_dir / vintage_year / state
+        vintage_state_dir.mkdir(parents=True, exist_ok=True)
+        tab_url: str = sources.census.tabblock_url(vintage, state)
+        tab_local: Path = vintage_state_dir / Path(tab_url).name
+        fetched.append(
+            _fetch_one(
+                tab_url, tab_local, request_settings, user_agent, prior.get(tab_url)
+            )
+        )
+
+    written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
+    return FetchResult(files=fetched, manifest_path=written_path, state=state)
+
+
+# --- Fetch ---
 
 
 def _http_get_with_retry(
@@ -245,9 +300,12 @@ def _record_unchanged(
 
 
 def _write_manifest(
-    sources: FetchConfig, fetched: list[FetchedFile], project_paths: ProjectPaths
+    sources: FetchConfig,
+    fetched: list[FetchedFile],
+    project_paths: ProjectPaths,
+    manifest_path: Path,
 ) -> Path:
-    manifest_path = project_paths.manifest_file
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, Any] = {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "lewis_commit_sha": sources.lewis.commit_sha,
@@ -267,8 +325,7 @@ def _write_manifest(
     return manifest_path
 
 
-def _read_prior_manifest(raw_dir: Path) -> dict[str, _PriorRecord]:
-    manifest_path: Path = raw_dir / MANIFEST_FILENAME
+def _read_prior_manifest(manifest_path: Path) -> dict[str, _PriorRecord]:
     if not manifest_path.exists():
         return {}
 
@@ -301,3 +358,12 @@ def _read_prior_manifest(raw_dir: Path) -> dict[str, _PriorRecord]:
         )
 
     return out
+
+
+# --- Helpers ---
+
+
+def _vintage_to_year(vintage: str) -> str:
+    if not vintage.startswith("v"):
+        raise ValueError(f"unexpected vintage format: {vintage!r}")
+    return vintage[1:]

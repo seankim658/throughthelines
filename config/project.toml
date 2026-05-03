@@ -1,34 +1,37 @@
 schema_version = 1
 
 [project]
-name="Through the Lines"
-domain="throughthelines.org"
-tagline="Every congressional district your address has lived under."
-repo_url="https://github.com/seankim658/through-the-lines"
+name = "Through the Lines"
+domain = "throughthelines.org"
+tagline = "Every congressional district your address has lived under."
+repo_url = "https://github.com/seankim658/through-the-lines"
 
 [paths]
 # Config files
-config_dir="{repo_root}/config/"
-request_filename="request.toml"
-sources_filename="sources.toml"
+config_dir = "{repo_root}/config/"
+request_filename = "request.toml"
+sources_filename = "sources.toml"
 
 # Data
-raw_dir="{repo_root}/data/raw/"
-lewis_dir="{repo_root}/data/raw/lewis"
-voteview_dir="{repo_root}/data/raw/voteview/"
-manifest_file="{repo_root}/data/raw/MANIFEST.yaml"
+raw_dir = "{repo_root}/data/raw/"
+lewis_dir = "{repo_root}/data/raw/lewis"
+voteview_dir = "{repo_root}/data/raw/voteview/"
+census_dir = "{repo_root}/data/raw/census"
+tabblock_dir = "{repo_root}/data/raw/census/tabblock/"
+manifest_dir = "{repo_root}/data/raw/manifests/"
 
 # Plans
-plans_dir="{repo_root}/data/plans/"
+plans_dir = "{repo_root}/data/plans/"
 
 # Derived (build artifacts)
-derived_dir="{repo_root}/data/derived/"
-stitched_dir="{repo_root}/data/derived/stitched"
-members_file="{repo_root}/data/derived/members.json"
+derived_dir = "{repo_root}/data/derived/"
+stitched_dir = "{repo_root}/data/derived/stitched"
+members_file = "{repo_root}/data/derived/members.json"
+block_lookup_dir = "{repo_root}/data/derived/block_lookup/"
 
 [scope]
-congress_start=103
-congress_end=119
+congress_start = 107
+congress_end = 119
 
 [scope.chambers]
-NC=["congressional"]
+NC = ["congressional"]

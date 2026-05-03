@@ -34,3 +34,79 @@ files = [
 [voteview]
 # Voteview's member-level data (HSall = all House members across all Congresses).
 url = "https://voteview.com/static/data/out/members/HSall_members.csv"
+
+[census]
+# Census Bureau resources for the block-lookup pipeline
+# 
+# Two source types live under this block:
+#   - bef     : Block Equivalency Files, one per Congress. Maps every Census
+#               tabulation block to its congressional district under that
+#               Congress's plan. Authoritative when published by Census.
+#   - tabblock: Per-decade Census tabulation block shapefiles. Polygons +
+#               precomputed internal-point centroids (INTPTLAT/INTPTLON).
+#               Used for cross-decade block linkage and for spatial joins
+#               against Lewis plan polygons (107th-112th Congresses, no BEF).
+#
+# BEF inner-file naming: each zip contains a national-level file named
+# National_CD{NNN}.txt and per-state files {ST}_CD{NNN}.txt for states that
+# reported changes in that cycle.
+#
+# BEF coverage gaps: Census's RDO program does not collect boundaries for
+# the Congress that aligns with the decennial census, so there is no 117th
+# BEF. For NC, the 117th plan came from the NC General Assembly (boundaries
+# enacted 2019 post-Harper v. Hall, available at ncleg.gov/redistricting);
+# for the other 49 states, the 116th BEF data is identical to the 117th and
+# carries forward unchanged. 
+# Source: https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.117th_Congress.html
+#
+# BEF URL pattern note: the 119th release uses the directory name
+# "119-congressional-district-befs" (plural), while older releases (113-118)
+# use "...-bef" (singular).
+
+# --- Block Equivalency Files ---
+
+[[census.bef]]
+congress = 113
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2013/113-congressional-district-bef/cd113.zip"
+national_filename = "National_CD113.txt"
+
+[[census.bef]]
+congress = 114
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2015/114-congressional-district-bef/cd114.zip"
+national_filename = "National_CD114.txt"
+
+[[census.bef]]
+congress = 115
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2017/115-congressional-district-bef/cd115.zip"
+national_filename = "National_CD115.txt"
+
+[[census.bef]]
+congress = 116
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2019/116-congressional-district-bef/cd116.zip"
+national_filename = "National_CD116.txt"
+
+[[census.bef]]
+congress = 118
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip"
+national_filename = "National_CD118.txt"
+
+[[census.bef]]
+congress = 119
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
+national_filename = "National_CD119.txt"
+
+# --- Tabulation block shapefiles, per decade ---
+
+[census.tabblock.v2020]
+# 2020-Census blocks. State-level zip nested under STATE/{fips}_{name_upper}/{fips}/
+url_template = "https://www2.census.gov/geo/tiger/TIGER2020PL/STATE/{fips}_{name_upper}/{fips}/tl_2020_{fips}_tabblock20.zip"
+
+[census.tabblock.v2010]
+# 2010-Census blocks (TIGER 2010 vintage release). Flat directory, state-level rollup.
+url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2010/tl_2010_{fips}_tabblock10.zip"
+
+[census.tabblock.v2000]
+# 2000-Census blocks repackaged in the TIGER 2010 vintage release.
+# Note: tl_2010_ prefix is the release vintage; _tabblock00 suffix is the
+# block geometry vintage. Confusing but correct.
+url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2000/tl_2010_{fips}_tabblock00.zip"

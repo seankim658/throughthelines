@@ -53,11 +53,14 @@ class ProjectPaths:
     raw_dir: Path
     lewis_dir: Path
     voteview_dir: Path
-    manifest_file: Path
+    census_dir: Path
+    tabblock_dir: Path
+    manifest_dir: Path
     plans_dir: Path
     derived_dir: Path
     stitched_dir: Path
     members_file: Path
+    block_lookup_dir: Path
 
 
 @dataclass(frozen=True)
@@ -143,9 +146,19 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
                 paths_raw, "voteview_dir", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
-        manifest_file=Path(
+        census_dir=Path(
             require_string(
-                paths_raw, "manifest_file", "paths", path, ProjectConfigError
+                paths_raw, "census_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        tabblock_dir=Path(
+            require_string(
+                paths_raw, "tabblock_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        manifest_dir=Path(
+            require_string(
+                paths_raw, "manifest_dir", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
         plans_dir=Path(
@@ -166,6 +179,11 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         members_file=Path(
             require_string(
                 paths_raw, "members_file", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        block_lookup_dir=Path(
+            require_string(
+                paths_raw, "block_lookup_dir", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
     )

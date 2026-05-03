@@ -19,6 +19,9 @@ from pipeline.config.sources import (
     FetchConfigError,
     LewisSource,
     VoteviewSource,
+    CensusBefEntry,
+    BlockVintage,
+    CensusSource,
     load_fetch_config,
 )
 
@@ -37,5 +40,8 @@ __all__ = [
     "RequestSettings",
     "VoteviewSource",
     "load_fetch_config",
+    "CensusBefEntry",
+    "BlockVintage",
+    "CensusSource",
     "load_request_config",
 ]

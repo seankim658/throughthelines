@@ -9,7 +9,7 @@ The stitched GeoJSON is an internal build artifact. It feeds two
 downstream artifacts:
 
     - tippecanoe -> {STATE}.pmtiles  (map tiles)
-    - spatial join with Census 2020 BAF -> block_lookup.json (address lookup)
+    - spatial join with Census 2020 BEF -> block_lookup.json (address lookup)
 """
 
 from __future__ import annotations

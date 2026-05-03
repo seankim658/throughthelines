@@ -6,6 +6,7 @@ validators, YAML loading from disk, scaffolding  for the plan-metadata YAML file
 
 from pipeline.plans.models import PENDING, UNKNOWN, CourtCitation, Plan, Source
 from pipeline.plans.validators import PlanSetValidationError, validate_plan_set
+from pipeline.plans.scope import plan_in_scope
 from pipeline.plans.loader import (
     LoadFailure,
     PlanLoadError,
@@ -35,6 +36,7 @@ __all__ = [
     # Validator
     "PlanSetValidationError",
     "validate_plan_set",
+    "plan_in_scope",
     # Loader
     "LoadFailure",
     "PlanLoadError",

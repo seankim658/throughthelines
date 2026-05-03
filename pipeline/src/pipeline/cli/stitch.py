@@ -11,6 +11,7 @@ from pipeline.plans import (
     PlanSetValidationError,
     StitchError,
     load_plans_dir,
+    plan_in_scope,
     stitch_state,
 )
 
@@ -57,6 +58,8 @@ def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
             print(f"\terror loading plans: {e}", file=sys.stderr)
             failed = True
             continue
+
+        plans = [p for p in plans if plan_in_scope(p, project_config.scope)]
 
         try:
             result = stitch_state(
