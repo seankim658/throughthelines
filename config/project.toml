@@ -18,6 +18,7 @@ lewis_dir = "{repo_root}/data/raw/lewis"
 voteview_dir = "{repo_root}/data/raw/voteview/"
 census_dir = "{repo_root}/data/raw/census"
 tabblock_dir = "{repo_root}/data/raw/census/tabblock/"
+bef_dir = "{repo_root}/data/raw/census/bef/"
 manifest_dir = "{repo_root}/data/raw/manifests/"
 
 # Plans

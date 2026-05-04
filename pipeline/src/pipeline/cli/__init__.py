@@ -49,6 +49,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_members(project_config)
 
+    if args.command == "blocks":
+        from pipeline.cli.blocks import run_blocks
+
+        return run_blocks(project_config, args)
+
     parser.print_help()
     return 1
 
@@ -110,5 +115,29 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # Members
     subparsers.add_parser("members", help="Slice Voteview CSV into members.json.")
+
+    # Blocks
+    blocks_parser = subparsers.add_parser(
+        "blocks",
+        help="Build per-state block-lookup JSON for the address-lookup pipeline.",
+    )
+    blocks_parser.add_argument(
+        "--state",
+        action="append",
+        type=validate_state,
+        metavar="STATE",
+        help=(
+            "Two-letter state code to build (repeatable). "
+            "If omitted, builds every state configured in sources.toml."
+        ),
+    )
+    blocks_parser.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help=(
+            "Fill Congresses with no available BEF or spatial-join source "
+            "with JSON null instead of aborting. Off by default."
+        ),
+    )
 
     return parser

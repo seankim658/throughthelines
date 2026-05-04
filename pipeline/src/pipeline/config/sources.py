@@ -61,6 +61,7 @@ class VoteviewSource:
 class CensusBefEntry:
 
     congress: int
+    vintage: BlockVintage
     url: str
     national_filename: str
 
@@ -190,6 +191,16 @@ def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefE
             )
         seen_congresses.add(congress)
 
+        vintage_raw: str = require_string(
+            entry_raw, "vintage", section_label, path, FetchConfigError
+        )
+        if vintage_raw not in SUPPORTED_VINTAGES:
+            supported_list: str = ", ".join(SUPPORTED_VINTAGES)
+            raise FetchConfigError(
+                f"unknown vintage {vintage_raw!r} in [[{section_label}]] in "
+                f"{path} (supported: {supported_list})"
+            )
+
         url: str = require_string(
             entry_raw, "url", section_label, path, FetchConfigError
         )
@@ -198,7 +209,10 @@ def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefE
         )
         befs.append(
             CensusBefEntry(
-                congress=congress, url=url, national_filename=national_filename
+                congress=congress,
+                vintage=cast(BlockVintage, vintage_raw),
+                url=url,
+                national_filename=national_filename,
             )
         )
 
