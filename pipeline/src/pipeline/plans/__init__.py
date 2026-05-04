@@ -25,6 +25,11 @@ from pipeline.plans.stitch import (
     StitchResult,
     stitch_state,
 )
+from pipeline.plans.plan_index import (
+    PlanIndexBuildError,
+    PlanIndexBuildResult,
+    build_plan_index,
+)
 
 __all__ = [
     # Model
@@ -52,4 +57,8 @@ __all__ = [
     "StitchError",
     "StitchResult",
     "stitch_state",
+    # Plan index
+    "PlanIndexBuildError",
+    "PlanIndexBuildResult",
+    "build_plan_index",
 ]

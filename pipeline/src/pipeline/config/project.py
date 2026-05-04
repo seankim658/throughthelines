@@ -62,6 +62,8 @@ class ProjectPaths:
     stitched_dir: Path
     members_file: Path
     block_lookup_dir: Path
+    tiles_dir: Path
+    plan_index_file: Path
 
 
 @dataclass(frozen=True)
@@ -190,6 +192,16 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         block_lookup_dir=Path(
             require_string(
                 paths_raw, "block_lookup_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        tiles_dir=Path(
+            require_string(
+                paths_raw, "tiles_dir", "paths", path, ProjectConfigError
+            ).format(repo_root=repo_root)
+        ),
+        plan_index_file=Path(
+            require_string(
+                paths_raw, "plan_index_file", "paths", path, ProjectConfigError
             ).format(repo_root=repo_root)
         ),
     )

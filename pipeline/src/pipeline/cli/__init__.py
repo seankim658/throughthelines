@@ -54,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_blocks(project_config, args)
 
+    if args.command == "plan-index":
+        from pipeline.cli.plan_index import run_plan_index
+
+        return run_plan_index(project_config)
+
     parser.print_help()
     return 1
 
@@ -138,6 +143,11 @@ def _build_parser() -> argparse.ArgumentParser:
             "Fill Congresses with no available BEF or spatial-join source "
             "with JSON null instead of aborting. Off by default."
         ),
+    )
+
+    # Plan index
+    subparsers.add_parser(
+        "plan-index", help="Build plan_index.json metadata index for the frontend."
     )
 
     return parser
