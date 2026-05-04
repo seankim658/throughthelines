@@ -54,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_blocks(project_config, args)
 
+    if args.command == "tiles":
+        from pipeline.cli.tiles import run_tiles
+
+        return run_tiles(project_config, args)
+
     if args.command == "plan-index":
         from pipeline.cli.plan_index import run_plan_index
 
@@ -142,6 +147,22 @@ def _build_parser() -> argparse.ArgumentParser:
         help=(
             "Fill Congresses with no available BEF or spatial-join source "
             "with JSON null instead of aborting. Off by default."
+        ),
+    )
+
+    # Tiles
+    tiles_parser = subparsers.add_parser(
+        "tiles",
+        help="Build per-state PMTiles archive from stitched GeoJSON via tippecanoe.",
+    )
+    tiles_parser.add_argument(
+        "--state",
+        action="append",
+        type=validate_state,
+        metavar="STATE",
+        help=(
+            "Two-letter state code to file (repeatable). "
+            "If omitted, tiles every state configured in sources.toml."
         ),
     )
 
