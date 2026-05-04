@@ -3,7 +3,7 @@
 For every polygon feature in a plan's source GeoJSON, attach the slim
 subset of plan metadata defined by `Plan.to_feature_props()` as feature
 properties. Concatenate every plan's stitched features into one
-FeatureCollection per state, written to data/derived/stitched/.
+FeatureCollection per state.
 
 The stitched GeoJSON is an internal build artifact. It feeds two
 downstream artifacts:
