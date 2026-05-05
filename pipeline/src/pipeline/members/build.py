@@ -10,7 +10,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TypedDict, cast
 
 from pipeline.config import ScopeSettings
 from pipeline.core import StateCode, write_json_atomic
@@ -38,7 +38,22 @@ _PARTY_CODES: dict[str, str] = {"100": "D", "200": "R", "328": "I"}
 
 _UNKNOWN_PARTY: str = "?"
 
-MemberRecord = dict[str, object]
+
+class MemberRecord(TypedDict):
+    """One House member's appearance in a single Congress."""
+
+    name: str
+    party: str
+    icpsr: int
+    bioguide_id: str
+    born: int | None
+    died: int | None
+    nominate_dim1: float | None
+    nominate_dim2: float | None
+    nokken_poole_dim1: float | None
+    nokken_poole_dim2: float | None
+
+
 MembersByDistrict = dict[str, list[MemberRecord]]
 MembersByCongress = dict[str, MembersByDistrict]
 MembersByState = dict[str, MembersByCongress]
@@ -123,7 +138,7 @@ def build_members(
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    _write_json_atomic(output_path, grouped)
+    write_json_atomic(output_path, grouped)
 
     return MembersBuildResult(
         output_path=output_path,
@@ -277,7 +292,7 @@ def _group_and_sort(rows: list[_SliceRow]) -> MembersByState:
     for by_congress in out.values():
         for by_district in by_congress.values():
             for leaf in by_district.values():
-                leaf.sort(key=lambda member: cast(int, member["icpsr"]))
+                leaf.sort(key=lambda member: member["icpsr"])
 
     return out
 
