@@ -232,8 +232,6 @@ class Plan(BaseModel):
         "origin",
         "struck_down",
         "curation_status",
-        "predecessor",
-        "superseded_by",
     )
 
     def to_feature_props(self) -> dict[str, Any]:
