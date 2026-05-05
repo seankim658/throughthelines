@@ -2,7 +2,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from pipeline.cli._common import dedupe_states, status_marker
+from pipeline.cli._common import resolve_target_states, status_marker
 from pipeline.config import ProjectConfig, load_fetch_config
 from pipeline.core import StateCode
 from pipeline.plans import ScaffoldGeneratorError, ScaffoldResult, scaffold_all
@@ -19,21 +19,11 @@ def run_scaffold(project_config: ProjectConfig, args: argparse.Namespace) -> int
         print(f"error loading config: {e}", file=sys.stderr)
         return 2
 
-    configured: list[StateCode] = sorted(sources.lewis.states.keys())
-    if states_arg is None:
-        target_states: list[StateCode] = configured
-    else:
-        missing: list[StateCode] = [
-            s for s in states_arg if s not in sources.lewis.states
-        ]
-        if missing:
-            print(
-                f"error: state(s) {missing} not configured in sources.toml; "
-                f"available: {configured}",
-                file=sys.stderr,
-            )
-            return 2
-        target_states = dedupe_states(states_arg)
+    target_states, error = resolve_target_states(states_arg, sources.lewis.states)
+    if error is not None:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    assert target_states is not None
 
     counts: dict[str, int] = {"wrote": 0, "force": 0, "skip": 0, "fail": 0}
 
