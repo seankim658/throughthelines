@@ -134,12 +134,43 @@ def _validate_inputs(
            in their range.
     """
     state_info = STATE_INFO[state]
-    bef_by_congress = {e.congress: e for e in census_source.befs}
-    in_scope_congresses: list[int] = list(
-        range(scope.congress_start, scope.congress_end + 1)
+    bef_by_congress: dict[int, CensusBefEntry] = {
+        e.congress: e for e in census_source.befs
+    }
+
+    plan_by_congress: dict[int, Plan] = _resolve_plan_coverage(plans, state, scope)
+    sources, unsourced, needed_vintages = _resolve_congress_sources(
+        plan_by_congress=plan_by_congress,
+        scope=scope,
+        bef_by_congress=bef_by_congress,
+        project_paths=project_paths,
+        state=state,
+        allow_missing=allow_missing,
+    )
+    tabblock_paths: dict[BlockVintage, Path] = _resolve_tabblock_paths(
+        needed_vintages=needed_vintages,
+        state=state,
+        project_paths=project_paths,
+        census_source=census_source,
     )
 
-    # Plan-set coverage: every in-scope Congress claimed exactly once
+    return _BuildPlan(
+        state=state,
+        scope=scope,
+        state_fips=state_info.fips,
+        tabblock_paths=tabblock_paths,
+        sources=sources,
+        unsourced=unsourced,
+    )
+
+
+def _resolve_plan_coverage(
+    plans: list[Plan], state: StateCode, scope: ScopeSettings
+) -> dict[int, Plan]:
+    """Map each in-scope Congress to the plan that claims it.
+
+    Plans with `congress_end is None` extend forward to `scope.congress_end`.
+    """
     plan_by_congress: dict[int, Plan] = {}
     for plan in plans:
         plan_end: int = (
@@ -155,69 +186,107 @@ def _validate_inputs(
                 )
             plan_by_congress[congress] = plan
 
-    uncovered: list[int] = [c for c in in_scope_congresses if c not in plan_by_congress]
+    uncovered: list[int] = [
+        c
+        for c in range(scope.congress_start, scope.congress_end + 1)
+        if c not in plan_by_congress
+    ]
     if uncovered:
         raise BlocksBuildError(
             f"no in-scope plan covers Congress(es) {uncovered} for state {state}"
         )
 
-    # Per-Congress sourcing
+    return plan_by_congress
+
+
+def _resolve_congress_sources(
+    plan_by_congress: dict[int, Plan],
+    scope: ScopeSettings,
+    bef_by_congress: dict[int, CensusBefEntry],
+    project_paths: ProjectPaths,
+    state: StateCode,
+    allow_missing: bool,
+) -> tuple[dict[int, _CongressSource], list[int], set[BlockVintage]]:
+    """Decide BEF / Lewis spatial-join / unsourced for each in-scope Congress.
+
+    Returns the resolved sources, any unsourced Congresses, and the set of block
+    vintages needed downstream.
+    """
     sources: dict[int, _CongressSource] = {}
     unsourced: list[int] = []
     needed_vintages: set[BlockVintage] = set()
 
-    bef_dir: Path = project_paths.bef_dir
-
-    for congress in in_scope_congresses:
-        plan = plan_by_congress[congress]
+    for congress in range(scope.congress_start, scope.congress_end + 1):
+        plan: Plan = plan_by_congress[congress]
         bef_entry: CensusBefEntry | None = bef_by_congress.get(congress)
 
         if bef_entry is not None:
-            bef_zip_path: Path = bef_dir / Path(bef_entry.url).name
-            if not bef_zip_path.exists():
-                raise BlocksBuildError(
-                    f"BEF zip for Congress {congress} not found at {bef_zip_path} "
-                    f"(did you run `pipeline fetch`?)"
-                )
-            vintage: BlockVintage = bef_entry.vintage
-            sources[congress] = _BefSource(
-                congress=congress,
-                bef_zip_path=bef_zip_path,
-                inner_filename=bef_entry.national_filename,
-                block_vintage=vintage,
-                district_column=bef_entry.district_column,
+            sources[congress] = _make_bef_source(
+                congress, bef_entry, project_paths.bef_dir
             )
-            needed_vintages.add(vintage)
-            continue
-
-        # No BEF for this Congress, two cases:
-        #
-        #   1. Pre-BEF era (pre-112th). Census never published BEFs for these Congresses,
-        #      so compute district-per-block by spatial join against the Lewis plan polygons.
-        #   2. BEF era (113+) but the BEF isn't on disk. Do not silently substitute Lewis spatial
-        #      join here. Either abort (default) or fill the column with null and continue.
-        if congress < _FIRST_BEF_CONGRESS:
-            geojson_path: Path = project_paths.raw_dir / plan.source_file
-            if not geojson_path.exists():
-                raise BlocksBuildError(
-                    f"Lewis GeoJSON for plan {plan.plan_id!r} (Congress {congress}) "
-                    f"not found at {geojson_path} "
-                    f"(did you run `pipeline fetch`?)"
-                )
-            sources[congress] = _LewisSource(
-                congress=congress, geojson_path=geojson_path, plan_id=plan.plan_id
+            needed_vintages.add(bef_entry.vintage)
+        elif congress < _FIRST_BEF_CONGRESS:
+            # Pre-BEF era: Census never published BEFs for these Congresses,
+            # so compute district-per-block by spatial join against the
+            # Lewis plan polygons.
+            sources[congress] = _make_lewis_source(
+                plan, congress, project_paths.raw_dir
             )
             needed_vintages.add(_PRE_BEF_VINTAGE)
-        else:
-            if not allow_missing:
-                raise BlocksBuildError(
-                    f"no BEF configured for Congress {congress} (state {state}); "
-                    f"expected in BEF era ({_FIRST_BEF_CONGRESS}th+). "
-                    f"Use --allow-missing to skip."
-                )
+        elif allow_missing:
+            # BEF era (113+) but the BEF isn't on disk
             unsourced.append(congress)
+        else:
+            raise BlocksBuildError(
+                f"no BEF configured for Congress {congress} (state {state}); "
+                f"expected in BEF era ({_FIRST_BEF_CONGRESS}th+). "
+                f"Use --allow-missing to skip."
+            )
 
-    # Tabblock paths
+    return sources, unsourced, needed_vintages
+
+
+def _make_bef_source(
+    congress: int, bef_entry: CensusBefEntry, bef_dir: Path
+) -> _BefSource:
+    """Resolve and validate a BEF source for one Congress."""
+    bef_zip_path: Path = bef_dir / Path(bef_entry.url).name
+    if not bef_zip_path.exists():
+        raise BlocksBuildError(
+            f"BEF zip for Congress {congress} not found at {bef_zip_path} "
+            f"(did you run `pipeline fetch`?)"
+        )
+    return _BefSource(
+        congress=congress,
+        bef_zip_path=bef_zip_path,
+        inner_filename=bef_entry.national_filename,
+        block_vintage=bef_entry.vintage,
+        district_column=bef_entry.district_column,
+    )
+
+
+def _make_lewis_source(plan: Plan, congress: int, raw_dir: Path) -> _LewisSource:
+    """Resolve and validate a Lewis spatial-join source for one Congress."""
+    geojson_path: Path = raw_dir / plan.source_file
+    if not geojson_path.exists():
+        raise BlocksBuildError(
+            f"Lewis GeoJSON for plan {plan.plan_id!r} (Congress {congress}) "
+            f"not found at {geojson_path} "
+            f"(did you run `pipeline fetch`?)"
+        )
+    return _LewisSource(
+        congress=congress, geojson_path=geojson_path, plan_id=plan.plan_id
+    )
+
+
+def _resolve_tabblock_paths(
+    needed_vintages: set[BlockVintage],
+    state: StateCode,
+    project_paths: ProjectPaths,
+    census_source: CensusSource,
+) -> dict[BlockVintage, Path]:
+    """Verify the tabblock zip exists on disk for every needed vintage."""
+    needed_vintages = set(needed_vintages)
     needed_vintages.add("v2020")
     if "v2000" in needed_vintages:
         needed_vintages.add("v2010")
@@ -241,14 +310,7 @@ def _validate_inputs(
             )
         tabblock_paths[vintage] = expected_path
 
-    return _BuildPlan(
-        state=state,
-        scope=scope,
-        state_fips=state_info.fips,
-        tabblock_paths=tabblock_paths,
-        sources=sources,
-        unsourced=unsourced,
-    )
+    return tabblock_paths
 
 
 # --- API ---
