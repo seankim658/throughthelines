@@ -1,8 +1,12 @@
 from __future__ import annotations
-from typing import cast, Any
 import argparse
+from typing import Collection, cast
 
 from pipeline.core import StateCode, SUPPORTED_STATES
+
+
+class CliArgError(Exception):
+    """Raised when a CLI argument fails resolution against configured state."""
 
 
 def validate_state(value: str) -> StateCode:
@@ -29,19 +33,18 @@ def status_marker(status: str) -> str:
 
 def resolve_target_states(
     states_arg: list[StateCode] | None,
-    configured_states: dict[StateCode, Any],
-) -> tuple[list[StateCode] | None, str | None]:
+    configured_states: Collection[StateCode],
+) -> list[StateCode]:
     """Resolve the `--state` CLI argument against the configured state set."""
-    configured: list[StateCode] = sorted(configured_states.keys())
+    configured: list[StateCode] = sorted(configured_states)
     if states_arg is None:
-        return configured, None
+        return configured
 
     missing: list[StateCode] = [s for s in states_arg if s not in configured_states]
     if missing:
-        message: str = (
+        raise CliArgError(
             f"state(s) {missing} not configured in sources.toml; "
             f"available: {configured}"
         )
-        return None, message
 
-    return dedupe_states(states_arg), None
+    return dedupe_states(states_arg)
