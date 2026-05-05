@@ -137,7 +137,6 @@ def build_members(
         for by_district in by_congress.values()
     )
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(output_path, grouped)
 
     return MembersBuildResult(

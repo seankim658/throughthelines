@@ -388,7 +388,6 @@ def build_blocks(
     )
     blocks_map, unique_histories = _deduplicate_histories(histories_by_block)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(
         output_path,
         {

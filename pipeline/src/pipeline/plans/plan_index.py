@@ -117,7 +117,6 @@ def build_plan_index(
         "plans": plans_by_state,
     }
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(output_path, output)
 
     return PlanIndexBuildResult(

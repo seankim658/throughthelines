@@ -8,13 +8,12 @@ External dependency: `tippecanoe` must be on $PATH at build time.
 """
 
 from __future__ import annotations
-import os
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from pipeline.core import StateCode
+from pipeline.core import StateCode, replace_atomic
 
 # Name of the binary to shell out to
 _TIPPECANOE_BIN: str = "tippecanoe"
@@ -99,7 +98,7 @@ def build_tiles(
             f"tippecanoe completed for {state} but produced no output at {tmp_path}"
         )
 
-    os.replace(tmp_path, output_path)
+    replace_atomic(tmp_path, output_path)
 
     return TilesBuildResult(
         state=state, output_path=output_path, file_size_bytes=output_path.stat().st_size
