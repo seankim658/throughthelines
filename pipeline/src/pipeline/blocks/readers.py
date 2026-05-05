@@ -3,7 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import NamedTuple, TYPE_CHECKING
+from typing import Any, NamedTuple, Iterable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from geopandas import GeoDataFrame
@@ -40,6 +40,24 @@ TABBLOCK_COLUMNS: dict[str, TabblockColumns] = {
     "v2000": TabblockColumns(geoid="BLKIDFP00", lon="INTPTLON00", lat="INTPTLAT00"),
 }
 
+# --- Helpers ---
+
+
+def _centroids_from_columns(
+    geoids: Iterable[Any],
+    lons: Iterable[Any],
+    lats: Iterable[Any],
+    state_fips: str | None,
+) -> dict[str, Centroid]:
+    """Build a {geoid: Centroid} dict from three parallel column iterables."""
+    centroids: dict[str, Centroid] = {}
+    for geoid_raw, lon_raw, lat_raw in zip(geoids, lons, lats):
+        geoid: str = str(geoid_raw)
+        if state_fips is not None and not geoid.startswith(state_fips):
+            continue
+        centroids[geoid] = Centroid(lon=float(lon_raw), lat=float(lat_raw))
+    return centroids
+
 
 # --- API ---
 
@@ -58,17 +76,12 @@ def load_centroids(
 
     fields = [columns.geoid, columns.lon, columns.lat]
     df = pyogrio.read_dataframe(tabblock_path, columns=fields, read_geometry=False)
-
-    centroids: dict[str, Centroid] = {}
-    for geoid_raw, lon_raw, lat_raw in zip(
-        df[columns.geoid], df[columns.lon], df[columns.lat]
-    ):
-        geoid: str = str(geoid_raw)
-        if state_fips is not None and not geoid.startswith(state_fips):
-            continue
-        centroids[geoid] = Centroid(lon=float(lon_raw), lat=float(lat_raw))
-
-    return centroids
+    return _centroids_from_columns(
+        geoids=df[columns.geoid],
+        lons=df[columns.lon],
+        lats=df[columns.lat],
+        state_fips=state_fips,
+    )
 
 
 def load_block_polygons(
@@ -87,12 +100,12 @@ def load_block_polygons(
         keep = gdf[columns.geoid].astype(str).str.startswith(state_fips)
         gdf = gdf[keep].copy()
 
-    centroids: dict[str, Centroid] = {}
-    for geoid_raw, lon_raw, lat_raw in zip(
-        gdf[columns.geoid], gdf[columns.lon], gdf[columns.lat]
-    ):
-        centroids[str(geoid_raw)] = Centroid(lon=float(lon_raw), lat=float(lat_raw))
-
+    centroids: dict[str, Centroid] = _centroids_from_columns(
+        geoids=gdf[columns.geoid],
+        lons=gdf[columns.lon],
+        lats=gdf[columns.lat],
+        state_fips=None,
+    )
     return gdf, centroids
 
 
