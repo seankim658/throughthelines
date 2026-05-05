@@ -15,6 +15,8 @@ schema_version = 1
 [lewis]
 # Jeffrey Lewis's congressional-district-boundaries repo.
 # https://github.com/JeffreyBLewis/congressional-district-boundaries
+# Filenames carry Lewis's upstrea mnaming convention (literal 
+# spaces, mixed case).
 repo = "JeffreyBLewis/congressional-district-boundaries"
 commit_sha = "f107b1b6c149c1b759cbb9b5bb14111a2355d6a1"
 
