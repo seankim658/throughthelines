@@ -31,6 +31,6 @@ def run_plan_index(project_config: ProjectConfig) -> int:
     )
 
     if result.warnings:
-        print(f"({len(result.warnings)}) warning(s)", file=sys.stderr)
+        print(f"({len(result.warnings)} warning(s))", file=sys.stderr)
 
     return 0

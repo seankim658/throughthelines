@@ -193,8 +193,8 @@ def _validate_inputs(
         # No BEF for this Congress, two cases:
         #
         #   1. Pre-BEF era (pre-112th). Census never published BEFs for these Congresses,
-        #      so cmopute district-per-block by spatial join against the Lewis plan polygons.
-        #   2. BEF era (113+) but the BEF isn't on disk. Do not silently substitue Lewis spatial
+        #      so compute district-per-block by spatial join against the Lewis plan polygons.
+        #   2. BEF era (113+) but the BEF isn't on disk. Do not silently substitute Lewis spatial
         #      join here. Either abort (default) or fill the column with null and continue.
         if congress < _FIRST_BEF_CONGRESS:
             geojson_path: Path = project_paths.raw_dir / plan.source_file

@@ -3,7 +3,7 @@
 Reads every plan-metadata YAML in scope, serializes the full plan records
 into a single JSON file keyed by state and plan_id. Frontend uses this
 for timeline rendering, side-panel details, per-district landing pages,
-data export, and metdata-completeness indicators.
+data export, and metadata-completeness indicators.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from pipeline.plans.scope import plan_in_scope
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 
-# Fields that are build-pipeline internals and are not be exposed to the frontend
+# Fields that are build-pipeline internals and should not be exposed to the frontend
 _EXCLUDED_FIELDS: frozenset[str] = frozenset({"source_file", "source_commit"})
 
 # --- Errors ---
@@ -55,7 +55,7 @@ class PlanIndexBuildResult:
 
 
 def _plan_to_record(plan: Plan) -> dict[str, Any]:
-    """Serialize a Plan t oa dict, dropping build internal fields."""
+    """Serialize a Plan to a dict, dropping build internal fields."""
     record: dict[str, Any] = plan.model_dump(mode="json")
     for key in _EXCLUDED_FIELDS:
         record.pop(key, None)

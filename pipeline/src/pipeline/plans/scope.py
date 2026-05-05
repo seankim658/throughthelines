@@ -1,6 +1,6 @@
 """Scope-oeverlap predicate for plan-metadata records.
 
-A plan with `congress_end is None` is treated as still in action
+A plan with `congress_end is None` is treated as still in effect
 and extends forward indefinitely from `congress_start`.
 """
 

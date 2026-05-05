@@ -63,7 +63,7 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
                 allow_missing=allow_missing,
             )
         except BlocksBuildError as e:
-            print(f"\tblocked build failed: {e}", file=sys.stderr)
+            print(f"\tblocks build failed: {e}", file=sys.stderr)
             failed = True
             continue
 

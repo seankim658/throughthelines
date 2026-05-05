@@ -69,7 +69,7 @@ def load_centroids(
 ) -> dict[str, Centroid]:
     """Read a tabblock zip and return {geoid: (lon, lat)} without loading geometry.
 
-    The centroid columns (INTPTLAT/INTPTLON) are pre-computed attribtues on every
+    The centroid columns (INTPTLAT/INTPTLON) are pre-computed attributes on every
     Census TIGER tabblock shapefile.
     """
     import pyogrio
@@ -87,7 +87,7 @@ def load_centroids(
 def load_block_polygons(
     tabblock_path: Path, columns: TabblockColumns, state_fips: str | None = None
 ) -> tuple[GeoDataFrame, dict[str, Centroid]]:
-    """Read a tabblock zip and return polygons + pre-comptued centroids. The
+    """Read a tabblock zip and return polygons + pre-computed centroids. The
     centroids are extracted from attribute columns (not computed from geometry).
     """
     import geopandas as gpd

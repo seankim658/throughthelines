@@ -48,7 +48,7 @@ def build_tiles(
 ) -> TilesBuildResult:
     """Build one state's PMTiles file from its stitched GeoJSON.
 
-    Writes automatically: tippecanoe outputs to a `.tmp` sibling,
+    Writes atomically: tippecanoe outputs to a `.tmp` sibling,
     which is renamed onto the final path only after a successful
     exit and a non-empty output check.
     """
@@ -61,7 +61,7 @@ def build_tiles(
     if not stitched_path.exists():
         raise TilesBuildError(
             f"stitched GeoJSON not found at {stitched_path} "
-            f"(did you run `pipeline sticht --state {state}`?)"
+            f"(did you run `pipeline stitch --state {state}`?)"
         )
 
     tiles_dir.mkdir(parents=True, exist_ok=True)
