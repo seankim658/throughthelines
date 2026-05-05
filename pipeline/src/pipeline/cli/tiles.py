@@ -40,18 +40,28 @@ def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
 
     for state in target_states:
         print(f"\n[{state}]")
+        # NOTE : stitched_path is per-state for now, will need to add chamber
+        # dimension if state legislature gets added
         stitched_path = paths.stitched_dir / f"{state}.geojson"
-        try:
-            result: TilesBuildResult = build_tiles(
-                state=state, stitched_path=stitched_path, tiles_dir=paths.tiles_dir
-            )
-        except TilesBuildError as e:
-            print(f"\ttiles failed: {e}", file=sys.stderr)
-            failed = True
-            continue
+        chambers = project_config.scope.chambers[state]
+        for chamber in chambers:
+            try:
+                result: TilesBuildResult = build_tiles(
+                    state=state,
+                    chamber=chamber,
+                    stitched_path=stitched_path,
+                    tiles_dir=paths.tiles_dir,
+                )
+            except TilesBuildError as e:
+                print(f"\t[{chamber}] tiles failed: {e}", file=sys.stderr)
+                failed = True
+                continue
 
-        print(f"\t→ {result.output_path} ({_format_bytes(result.file_size_bytes)})")
-        succeeded += 1
+            print(
+                f"\t[{chamber}] → {result.output_path} "
+                f"({_format_bytes(result.file_size_bytes)})"
+            )
+            succeeded += 1
 
     print(f"\n{succeeded} state(s) tiled.")
 

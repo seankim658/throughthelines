@@ -51,37 +51,43 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
             failed = True
             continue
 
-        plans = [p for p in plans if plan_in_scope(p, project_config.scope)]
-        output_path = paths.block_lookup_dir / f"block_lookup_{state}.json"
-
-        try:
-            result: BlocksBuildResult = build_blocks(
-                plans=plans,
-                state=state,
-                scope=project_config.scope,
-                project_paths=paths,
-                census_source=sources.census,
-                output_path=output_path,
-                allow_missing=allow_missing,
+        in_scope_plans = [p for p in plans if plan_in_scope(p, project_config.scope)]
+        chambers = project_config.scope.chambers[state]
+        for chamber in chambers:
+            chamber_plans = [p for p in in_scope_plans if p.chamber == chamber]
+            output_path = (
+                paths.block_lookup_dir / f"block_lookup_{state}_{chamber}.json"
             )
-        except BlocksBuildError as e:
-            print(f"\tblocks build failed: {e}", file=sys.stderr)
-            failed = True
-            continue
 
-        for warning in result.warnings:
-            print(f"\twarn: {warning}", file=sys.stderr)
+            try:
+                result: BlocksBuildResult = build_blocks(
+                    plans=chamber_plans,
+                    state=state,
+                    chamber=chamber,
+                    scope=project_config.scope,
+                    project_paths=paths,
+                    census_source=sources.census,
+                    output_path=output_path,
+                    allow_missing=allow_missing,
+                )
+            except BlocksBuildError as e:
+                print(f"\t[{chamber}] blocks build failed: {e}", file=sys.stderr)
+                failed = True
+                continue
 
-        unsourced: list[int] = result.unsourced_congresses
-        unsourced_label: str = (
-            f", {len(unsourced)} unsourced congress(es): {unsourced}"
-            if unsourced
-            else ""
-        )
-        print(
-            f"\t{result.blocks_count} blocks, "
-            f"{result.histories_count} unique histories"
-            f"{unsourced_label} → {result.output_path}"
-        )
+            for warning in result.warnings:
+                print(f"\t[{chamber}] warn: {warning}", file=sys.stderr)
+
+            unsourced: list[int] = result.unsourced_congresses
+            unsourced_label: str = (
+                f", {len(unsourced)} unsourced congress(es): {unsourced}"
+                if unsourced
+                else ""
+            )
+            print(
+                f"\t[{chamber}] {result.blocks_count} blocks, "
+                f"{result.histories_count} unique histories"
+                f"{unsourced_label} → {result.output_path}"
+            )
 
     return 1 if failed else 0

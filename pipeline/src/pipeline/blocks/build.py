@@ -16,7 +16,7 @@ from pipeline.config import (
     ProjectPaths,
     ScopeSettings,
 )
-from pipeline.core import STATE_INFO, StateCode, write_json_atomic
+from pipeline.core import STATE_INFO, ChamberType, StateCode, write_json_atomic
 from pipeline.plans import Plan
 from pipeline.blocks.readers import (
     TABBLOCK_COLUMNS,
@@ -353,6 +353,7 @@ def _summarize_linkage(linkage: _BlockLinkage) -> str:
 def build_blocks(
     plans: list[Plan],
     state: StateCode,
+    chamber: ChamberType,
     scope: ScopeSettings,
     project_paths: ProjectPaths,
     census_source: CensusSource,
@@ -393,6 +394,7 @@ def build_blocks(
         {
             "schema_version": _OUTPUT_SCHEMA_VERSION,
             "state": state,
+            "chamber": chamber,
             "congress_start": scope.congress_start,
             "congress_end": scope.congress_end,
             "histories": unique_histories,
