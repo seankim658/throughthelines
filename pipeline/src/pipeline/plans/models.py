@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, ClassVar
 
 from pydantic import (
     BaseModel,
@@ -227,18 +227,13 @@ class Plan(BaseModel):
         return self
 
     # Projections for downstream consumers
-    _FEATURE_PROP_FIELDS: tuple[str, ...] = (
+    _FEATURE_PROP_FIELDS: ClassVar[tuple[str, ...]] = (
         "plan_id",
         "origin",
         "struck_down",
         "curation_status",
-        "predecessor",
-        "superseded_by",
     )
 
     def to_feature_props(self) -> dict[str, Any]:
         dumped: dict[str, Any] = self.model_dump(mode="json")
         return {field: dumped[field] for field in self._FEATURE_PROP_FIELDS}
-
-    def to_index_record(self) -> dict[str, Any]:
-        return self.model_dump(mode="json")

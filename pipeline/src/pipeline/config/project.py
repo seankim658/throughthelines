@@ -92,6 +92,16 @@ class ProjectConfig:
         return self.project_paths.config_dir / Path(self.project_paths.sources_filename)
 
 
+# --- Helpers ---
+
+
+def _require_path(
+    paths_raw: dict[str, Any], key: str, path: Path, repo_root: str
+) -> Path:
+    raw_value: str = require_string(paths_raw, key, "paths", path, ProjectConfigError)
+    return Path(raw_value.format(repo_root=repo_root))
+
+
 # --- Loader ---
 
 
@@ -123,87 +133,27 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
 
     paths_raw: dict[str, Any] = require_section(raw, "paths", path, ProjectConfigError)
     project_paths = ProjectPaths(
-        config_dir=Path(
-            require_string(
-                paths_raw, "config_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
+        config_dir=_require_path(paths_raw, "config_dir", path, repo_root),
         request_filename=require_string(
             paths_raw, "request_filename", "paths", path, ProjectConfigError
         ),
         sources_filename=require_string(
             paths_raw, "sources_filename", "paths", path, ProjectConfigError
         ),
-        raw_dir=Path(
-            require_string(
-                paths_raw, "raw_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        lewis_dir=Path(
-            require_string(
-                paths_raw, "lewis_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        voteview_dir=Path(
-            require_string(
-                paths_raw, "voteview_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        census_dir=Path(
-            require_string(
-                paths_raw, "census_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        tabblock_dir=Path(
-            require_string(
-                paths_raw, "tabblock_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        bef_dir=Path(
-            require_string(
-                paths_raw, "bef_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        manifest_dir=Path(
-            require_string(
-                paths_raw, "manifest_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        plans_dir=Path(
-            require_string(
-                paths_raw, "plans_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        derived_dir=Path(
-            require_string(
-                paths_raw, "derived_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        stitched_dir=Path(
-            require_string(
-                paths_raw, "stitched_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        members_file=Path(
-            require_string(
-                paths_raw, "members_file", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        block_lookup_dir=Path(
-            require_string(
-                paths_raw, "block_lookup_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        tiles_dir=Path(
-            require_string(
-                paths_raw, "tiles_dir", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
-        plan_index_file=Path(
-            require_string(
-                paths_raw, "plan_index_file", "paths", path, ProjectConfigError
-            ).format(repo_root=repo_root)
-        ),
+        raw_dir=_require_path(paths_raw, "raw_dir", path, repo_root),
+        lewis_dir=_require_path(paths_raw, "lewis_dir", path, repo_root),
+        voteview_dir=_require_path(paths_raw, "voteview_dir", path, repo_root),
+        census_dir=_require_path(paths_raw, "census_dir", path, repo_root),
+        tabblock_dir=_require_path(paths_raw, "tabblock_dir", path, repo_root),
+        bef_dir=_require_path(paths_raw, "bef_dir", path, repo_root),
+        manifest_dir=_require_path(paths_raw, "manifest_dir", path, repo_root),
+        plans_dir=_require_path(paths_raw, "plans_dir", path, repo_root),
+        derived_dir=_require_path(paths_raw, "derived_dir", path, repo_root),
+        stitched_dir=_require_path(paths_raw, "stitched_dir", path, repo_root),
+        members_file=_require_path(paths_raw, "members_file", path, repo_root),
+        block_lookup_dir=_require_path(paths_raw, "block_lookup_dir", path, repo_root),
+        tiles_dir=_require_path(paths_raw, "tiles_dir", path, repo_root),
+        plan_index_file=_require_path(paths_raw, "plan_index_file", path, repo_root),
     )
 
     scope: ScopeSettings = _load_scope_section(raw, path)

@@ -8,7 +8,7 @@ from pipeline.core.state_codes import (
     SUPPORTED_STATES,
     SUPPORTED_CHAMBERS,
 )
-from pipeline.core.atomic_io import write_json_atomic
+from pipeline.core.atomic_io import replace_atomic, write_text_atomic, write_json_atomic
 
 __all__ = [
     "RepoRootNotFoundError",
@@ -18,5 +18,7 @@ __all__ = [
     "STATE_INFO",
     "SUPPORTED_STATES",
     "SUPPORTED_CHAMBERS",
+    "replace_atomic",
+    "write_text_atomic",
     "write_json_atomic",
 ]

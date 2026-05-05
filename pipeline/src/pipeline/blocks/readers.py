@@ -3,7 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import NamedTuple, TYPE_CHECKING
+from typing import Any, NamedTuple, Iterable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from geopandas import GeoDataFrame
@@ -40,6 +40,24 @@ TABBLOCK_COLUMNS: dict[str, TabblockColumns] = {
     "v2000": TabblockColumns(geoid="BLKIDFP00", lon="INTPTLON00", lat="INTPTLAT00"),
 }
 
+# --- Helpers ---
+
+
+def _centroids_from_columns(
+    geoids: Iterable[Any],
+    lons: Iterable[Any],
+    lats: Iterable[Any],
+    state_fips: str | None,
+) -> dict[str, Centroid]:
+    """Build a {geoid: Centroid} dict from three parallel column iterables."""
+    centroids: dict[str, Centroid] = {}
+    for geoid_raw, lon_raw, lat_raw in zip(geoids, lons, lats):
+        geoid: str = str(geoid_raw)
+        if state_fips is not None and not geoid.startswith(state_fips):
+            continue
+        centroids[geoid] = Centroid(lon=float(lon_raw), lat=float(lat_raw))
+    return centroids
+
 
 # --- API ---
 
@@ -51,30 +69,25 @@ def load_centroids(
 ) -> dict[str, Centroid]:
     """Read a tabblock zip and return {geoid: (lon, lat)} without loading geometry.
 
-    The centroid columns (INTPTLAT/INTPTLON) are pre-computed attribtues on every
+    The centroid columns (INTPTLAT/INTPTLON) are pre-computed attributes on every
     Census TIGER tabblock shapefile.
     """
     import pyogrio
 
     fields = [columns.geoid, columns.lon, columns.lat]
     df = pyogrio.read_dataframe(tabblock_path, columns=fields, read_geometry=False)
-
-    centroids: dict[str, Centroid] = {}
-    for geoid_raw, lon_raw, lat_raw in zip(
-        df[columns.geoid], df[columns.lon], df[columns.lat]
-    ):
-        geoid: str = str(geoid_raw)
-        if state_fips is not None and not geoid.startswith(state_fips):
-            continue
-        centroids[geoid] = Centroid(lon=float(lon_raw), lat=float(lat_raw))
-
-    return centroids
+    return _centroids_from_columns(
+        geoids=df[columns.geoid],
+        lons=df[columns.lon],
+        lats=df[columns.lat],
+        state_fips=state_fips,
+    )
 
 
 def load_block_polygons(
     tabblock_path: Path, columns: TabblockColumns, state_fips: str | None = None
 ) -> tuple[GeoDataFrame, dict[str, Centroid]]:
-    """Read a tabblock zip and return polygons + pre-comptued centroids. The
+    """Read a tabblock zip and return polygons + pre-computed centroids. The
     centroids are extracted from attribute columns (not computed from geometry).
     """
     import geopandas as gpd
@@ -87,12 +100,12 @@ def load_block_polygons(
         keep = gdf[columns.geoid].astype(str).str.startswith(state_fips)
         gdf = gdf[keep].copy()
 
-    centroids: dict[str, Centroid] = {}
-    for geoid_raw, lon_raw, lat_raw in zip(
-        gdf[columns.geoid], gdf[columns.lon], gdf[columns.lat]
-    ):
-        centroids[str(geoid_raw)] = Centroid(lon=float(lon_raw), lat=float(lat_raw))
-
+    centroids: dict[str, Centroid] = _centroids_from_columns(
+        geoids=gdf[columns.geoid],
+        lons=gdf[columns.lon],
+        lats=gdf[columns.lat],
+        state_fips=None,
+    )
     return gdf, centroids
 
 
@@ -116,12 +129,13 @@ def load_lewis_polygons(
 
 
 def load_bef(
-    bef_zip_path: Path, inner_filename: str, state_fips: str
+    bef_zip_path: Path, inner_filename: str, state_fips: str, district_column: str
 ) -> dict[str, int]:
     """Reads a Census BEF zip and return {block_geoid: district} for one state."""
     import csv
     import zipfile
 
+    geoid_aliases: frozenset[str] = frozenset({"BLOCKID", "GEOID"})
     assignments: dict[str, int] = {}
 
     with zipfile.ZipFile(bef_zip_path, "r") as zf:
@@ -131,16 +145,24 @@ def load_bef(
 
             geoid_idx: int | None = None
             district_idx: int | None = None
+            district_column_upper: str = district_column.strip().upper()
             for i, col in enumerate(header):
                 col_stripped: str = col.strip().upper()
-                if col_stripped in ("BLOCKID", "GEOID"):
+                if col_stripped in geoid_aliases:
                     geoid_idx = i
-                elif col_stripped == "CDFP" or col_stripped.startswith("CD"):
+                elif col_stripped == district_column_upper:
                     district_idx = i
 
-            if geoid_idx is None or district_idx is None:
+            if geoid_idx is None:
                 raise BlocksReadError(
-                    f"could not identify BLOCKID and DISTRICT columns in "
+                    f"could not identify block-GEOID column "
+                    f"(expected one of {sorted(geoid_aliases)}) in "
+                    f"{inner_filename} within {bef_zip_path}; "
+                    f"header: {header}"
+                )
+            if district_idx is None:
+                raise BlocksReadError(
+                    f"could not find district column {district_column!r} in "
                     f"{inner_filename} within {bef_zip_path}; "
                     f"header: {header}"
                 )

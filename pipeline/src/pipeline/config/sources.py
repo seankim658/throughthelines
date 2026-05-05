@@ -64,6 +64,7 @@ class CensusBefEntry:
     vintage: BlockVintage
     url: str
     national_filename: str
+    district_column: str
 
 
 @dataclass(frozen=True)
@@ -207,12 +208,16 @@ def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefE
         national_filename: str = require_string(
             entry_raw, "national_filename", section_label, path, FetchConfigError
         )
+        district_column: str = require_string(
+            entry_raw, "district_column", section_label, path, FetchConfigError
+        )
         befs.append(
             CensusBefEntry(
                 congress=congress,
                 vintage=cast(BlockVintage, vintage_raw),
                 url=url,
                 national_filename=national_filename,
+                district_column=district_column,
             )
         )
 

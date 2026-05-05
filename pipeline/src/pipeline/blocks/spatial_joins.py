@@ -1,4 +1,4 @@
-"""Build stages for the block-lookup pipeline."""
+"""Spatial join primitives for the block-lookup pipeline."""
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
@@ -33,7 +33,7 @@ def cross_decade_join(
     """Spatial-join source centroids against target-decade block polygons.
 
     For each source centroid, finds which target-decade polygon it falls
-    inside, producing a {sosurce_geoid: target_geoid} linkage.
+    inside, producing a {source_geoid: target_geoid} linkage.
     """
     import geopandas as gpd
     from shapely import Point
@@ -87,8 +87,8 @@ def lewis_spatial_join(
     has_match = joined[district_col].notna()
     matched = joined[has_match]
 
-    assignements: dict[str, int] = dict(
+    assignments: dict[str, int] = dict(
         zip(matched["block_geoid"].astype(str), matched[district_col].astype(int))
     )
 
-    return assignements
+    return assignments

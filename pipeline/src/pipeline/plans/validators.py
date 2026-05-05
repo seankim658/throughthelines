@@ -52,13 +52,13 @@ def _check_references_resolve(
     plans: list[Plan], plans_by_id: dict[str, Plan], errors: list[str]
 ) -> None:
     for plan in plans:
-        predecessor: str | None = _real_reference(plan.predecessor)
+        predecessor: str | None = _resolved_plan_id(plan.predecessor)
         if predecessor is not None and predecessor not in plans_by_id:
             errors.append(
                 f"{plan.plan_id}.predecessor references unknown plan_id {predecessor!r}"
             )
 
-        successor: str | None = _real_reference(plan.superseded_by)
+        successor: str | None = _resolved_plan_id(plan.superseded_by)
         if successor is not None and successor not in plans_by_id:
             errors.append(
                 f"{plan.plan_id}.superseded_by references unknown plan_id {successor!r}"
@@ -68,29 +68,34 @@ def _check_references_resolve(
 def _check_successor_predecessor_symmetry(
     plans: list[Plan], plans_by_id: dict[str, Plan], errors: list[str]
 ) -> None:
+    """Validate that A.superseded_by = B implies B.predecessor = A.
+
+    Comparison rules:
+        - If plan.superseded_by is pending or null, we have no claim to check
+        - If the named successor is unknown to the plan set, that's caught by
+          _check_references_resolve and skipped here
+        - If successor.predecessor is null, the curator declared the successor
+          has no predecessor, which is flagged as a contradiction
+        - Otherwise, compare predecessor against plan.plan_id, flag as asymmetric
+    """
     for plan in plans:
-        successor_id: str | None = _real_reference(plan.superseded_by)
+        successor_id: str | None = _resolved_plan_id(plan.superseded_by)
         if successor_id is None or successor_id not in plans_by_id:
             continue
 
         successor: Plan = plans_by_id[successor_id]
-        predecessor_of_successor: str | None = _real_reference(successor.predecessor)
-
         if successor.predecessor == PENDING:
             continue
-        if predecessor_of_successor != plan.plan_id:
+
+        if successor.predecessor != plan.plan_id:
             errors.append(
                 f"asymmetric relation: {plan.plan_id}.superseded_by = {successor_id!r}, "
                 f"but {successor_id}.predecessor = {successor.predecessor!r}"
             )
 
 
-def _real_reference(value: str | None) -> str | None:
-    """Return the underlying plan_id reference, or None if not applicable.
-
-    Both None (not applicable) and "pending" (not yet curated) are
-    collapsed to None for the purpose of cross-reference checking.
-    """
+def _resolved_plan_id(value: str | None) -> str | None:
+    """Return a real plan_id, or None if the reference is null or pending."""
     if value is None or value == PENDING:
         return None
     return value

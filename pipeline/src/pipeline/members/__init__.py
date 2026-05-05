@@ -1,6 +1,6 @@
 """Members module.
 
-SLices the voteview HSall_members.csv into per-state/congress/district
+Slices the voteview HSall_members.csv into per-state/congress/district
 JSON lookup consumed by the frontend at runtime.
 """
 

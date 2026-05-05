@@ -65,7 +65,6 @@ def stitch_state(
         "features": all_features,
     }
 
-    stitched_dir.mkdir(parents=True, exist_ok=True)
     output_path: Path = stitched_dir / f"{state}.geojson"
     write_json_atomic(output_path, feature_collection)
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 class RepoRootNotFoundError(Exception):
-    """Raised whe nthe repo root cannot be located."""
+    """Raised when the repo root cannot be located."""
 
 
 def find_repo_root(start: Path | None = None) -> Path:
