@@ -116,12 +116,13 @@ def load_lewis_polygons(
 
 
 def load_bef(
-    bef_zip_path: Path, inner_filename: str, state_fips: str
+    bef_zip_path: Path, inner_filename: str, state_fips: str, district_column: str
 ) -> dict[str, int]:
     """Reads a Census BEF zip and return {block_geoid: district} for one state."""
     import csv
     import zipfile
 
+    geoid_aliases: frozenset[str] = frozenset({"BLOCKID", "GEOID"})
     assignments: dict[str, int] = {}
 
     with zipfile.ZipFile(bef_zip_path, "r") as zf:
@@ -131,16 +132,24 @@ def load_bef(
 
             geoid_idx: int | None = None
             district_idx: int | None = None
+            district_column_upper: str = district_column.strip().upper()
             for i, col in enumerate(header):
                 col_stripped: str = col.strip().upper()
-                if col_stripped in ("BLOCKID", "GEOID"):
+                if col_stripped in geoid_aliases:
                     geoid_idx = i
-                elif col_stripped == "CDFP" or col_stripped.startswith("CD"):
+                elif col_stripped == district_column_upper:
                     district_idx = i
 
-            if geoid_idx is None or district_idx is None:
+            if geoid_idx is None:
                 raise BlocksReadError(
-                    f"could not identify BLOCKID and DISTRICT columns in "
+                    f"could not identify block-GEOID column "
+                    f"(expected one of {sorted(geoid_aliases)}) in "
+                    f"{inner_filename} within {bef_zip_path}; "
+                    f"header: {header}"
+                )
+            if district_idx is None:
+                raise BlocksReadError(
+                    f"could not find district column {district_column!r} in "
                     f"{inner_filename} within {bef_zip_path}; "
                     f"header: {header}"
                 )

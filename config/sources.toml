@@ -71,6 +71,7 @@ vintage = "v2020"
 # https://www.census.gov/geographies/mapping-files/2013/dec/rdo/113-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2013/113-congressional-district-bef/cd113.zip"
 national_filename = "National_CD113.txt"
+district_column = "CD113"
 
 [[census.bef]]
 congress = 114
@@ -78,6 +79,7 @@ vintage = "v2010"
 # https://www.census.gov/geographies/mapping-files/2015/dec/rdo/114-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2015/114-congressional-district-bef/cd114.zip"
 national_filename = "National_CD114.txt"
+district_column = "CD114"
 
 [[census.bef]]
 congress = 115
@@ -85,6 +87,7 @@ vintage = "v2010"
 # https://www.census.gov/geographies/mapping-files/2017/dec/rdo/115-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2017/115-congressional-district-bef/cd115.zip"
 national_filename = "National_CD115.txt"
+district_column = "CD115"
 
 [[census.bef]]
 congress = 116
@@ -92,6 +95,7 @@ vintage = "v2010"
 # https://www.census.gov/geographies/mapping-files/2019/dec/rdo/116-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2019/116-congressional-district-bef/cd116.zip"
 national_filename = "National_CD116.txt"
+district_column = "CD116"
 
 # There is no 117th Census BEF (RDO does not collect for sessions whose elections coincide with the decennial year). 
 # https://www.census.gov/newsroom/press-releases/2023/dhc-file-118th-congress.html
@@ -102,6 +106,7 @@ vintage = "v2020"
 # https://www.census.gov/geographies/mapping-files/2023/dec/rdo/118-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip"
 national_filename = "National_CD118.txt"
+district_column = "CD118"
 
 [[census.bef]]
 congress = 119
@@ -109,6 +114,7 @@ vintage = "v2020"
 # https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
 national_filename = "NationalCD119.txt"
+district_column = "CD119"
 
 # --- Tabulation block shapefiles, per decade ---
 

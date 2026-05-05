@@ -51,6 +51,7 @@ class _BefSource:
     bef_zip_path: Path
     inner_filename: str
     block_vintage: BlockVintage
+    district_column: str
 
 
 @dataclass(frozen=True)
@@ -184,6 +185,7 @@ def _validate_inputs(
                 bef_zip_path=bef_zip_path,
                 inner_filename=bef_entry.national_filename,
                 block_vintage=vintage,
+                district_column=bef_entry.district_column,
             )
             needed_vintages.add(vintage)
             continue
@@ -405,6 +407,7 @@ def _load_bef_assignments(build_plan: _BuildPlan) -> dict[int, dict[str, int]]:
             bef_zip_path=source.bef_zip_path,
             inner_filename=source.inner_filename,
             state_fips=build_plan.state_fips,
+            district_column=source.district_column,
         )
     return assignments
 
