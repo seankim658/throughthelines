@@ -82,8 +82,9 @@ class _BlockLinkage:
     """Cross-decade linkage of 2020 blocks to their 2010 and 2000 equivalents."""
 
     centroids_2020: dict[str, Centroid]
-    centroids_2000: dict[str, Centroid]
-    linkage: dict[str, tuple[str, str]]
+    centroids_2000: dict[str, Centroid] | None
+    linkage_2020_to_2010: dict[str, str] | None
+    linkage_2020_to_2000: dict[str, str] | None
     warnings: list[str]
 
 
@@ -313,6 +314,39 @@ def _resolve_tabblock_paths(
     return tabblock_paths
 
 
+# --- Helpers ---
+
+
+def _classify_linkage_needs(build_plan: _BuildPlan) -> tuple[bool, bool]:
+    """Determine which cross-decade linkages the sourcing matrix requires."""
+    needs_2010: bool = False
+    needs_2000: bool = False
+    for source in build_plan.sources.values():
+        if isinstance(source, _LewisSource):
+            needs_2000 = True
+        elif isinstance(source, _BefSource):
+            if source.block_vintage == "v2010":
+                needs_2010 = True
+            elif source.block_vintage == "v2000":
+                needs_2000 = True
+    return needs_2010, needs_2000
+
+
+def _summarize_linkage(linkage: _BlockLinkage) -> str:
+    total: int = len(linkage.centroids_2020)
+    if linkage.linkage_2020_to_2000 is not None:
+        return (
+            f"{len(linkage.linkage_2020_to_2000)} of {total} 2020 blocks "
+            f"linked through to 2000 vintage"
+        )
+    if linkage.linkage_2020_to_2010 is not None:
+        return (
+            f"{len(linkage.linkage_2020_to_2010)} of {total} 2020 blocks "
+            f"linked to 2010 vintage"
+        )
+    return f"{total} 2020 blocks loaded; no cross-decade linkage required"
+
+
 # --- API ---
 
 
@@ -335,7 +369,12 @@ def build_blocks(
         allow_missing=allow_missing,
     )
 
-    linkage: _BlockLinkage = _build_block_linkage(build_plan)
+    needs_2010_linkage, needs_2000_linkage = _classify_linkage_needs(build_plan)
+    linkage: _BlockLinkage = _build_block_linkage(
+        build_plan,
+        needs_2010_linkage=needs_2010_linkage,
+        needs_2000_linkage=needs_2000_linkage,
+    )
     bef_assignments: dict[int, dict[str, int]] = _load_bef_assignments(build_plan)
     lewis_assignments: dict[str, dict[str, int]] = _build_lewis_assignments(
         build_plan, linkage.centroids_2000
@@ -362,30 +401,43 @@ def build_blocks(
         },
     )
 
-    summary_warning: str = (
-        f"{len(linkage.linkage)} of {len(linkage.centroids_2020)} 2020 blocks "
-        f"linked across all decades"
-    )
     return BlocksBuildResult(
         state=state,
         output_path=output_path,
         blocks_count=len(blocks_map),
         histories_count=len(unique_histories),
         unsourced_congresses=build_plan.unsourced,
-        warnings=linkage.warnings + [summary_warning],
+        warnings=linkage.warnings + [_summarize_linkage(linkage)],
     )
 
 
 # --- Stages ---
 
 
-def _build_block_linkage(build_plan: _BuildPlan) -> _BlockLinkage:
-    """Chain 2020 block centroids through 2010 then 2000 block polygons."""
+def _build_block_linkage(
+    build_plan: _BuildPlan, *, needs_2010_linkage: bool, needs_2000_linkage: bool
+) -> _BlockLinkage:
+    """Load 2020 block centroids and build cross-decade linkages on demand.
+
+    The chain extends only as deep as the sourcing matrix requires:
+        - Neither flag set: load 2020 centroids only (no chain)
+        - `needs_2010_linkage=True`: build 2020 → 2010 linkage
+        - `needs_2000_linkage=True`: build 2020 → 2000 linkage
+    """
     centroids_2020: dict[str, Centroid] = load_centroids(
         tabblock_path=build_plan.tabblock_paths["v2020"],
         columns=TABBLOCK_COLUMNS["v2020"],
         state_fips=build_plan.state_fips,
     )
+
+    if not needs_2010_linkage and not needs_2000_linkage:
+        return _BlockLinkage(
+            centroids_2020=centroids_2020,
+            centroids_2000=None,
+            linkage_2020_to_2010=None,
+            linkage_2020_to_2000=None,
+            warnings=[],
+        )
 
     polys_2010, centroids_2010 = load_block_polygons(
         tabblock_path=build_plan.tabblock_paths["v2010"],
@@ -400,6 +452,22 @@ def _build_block_linkage(build_plan: _BuildPlan) -> _BlockLinkage:
     )
     del polys_2010
 
+    warnings: list[str] = []
+    dropped_at_2010: int = len(centroids_2020) - len(join_2020_to_2010.linkage)
+    if dropped_at_2010 > 0:
+        warnings.append(
+            f"{dropped_at_2010} 2020 block(s) unmatched in 2020 → 2010 join"
+        )
+
+    if not needs_2000_linkage:
+        return _BlockLinkage(
+            centroids_2020=centroids_2020,
+            centroids_2000=None,
+            linkage_2020_to_2010=join_2020_to_2010.linkage,
+            linkage_2020_to_2000=None,
+            warnings=warnings,
+        )
+
     polys_2000, centroids_2000 = load_block_polygons(
         tabblock_path=build_plan.tabblock_paths["v2000"],
         columns=TABBLOCK_COLUMNS["v2000"],
@@ -413,50 +481,40 @@ def _build_block_linkage(build_plan: _BuildPlan) -> _BlockLinkage:
     )
     del polys_2000
 
-    chained, warnings = _chain_linkages(
-        centroids_2020=centroids_2020,
-        join_2020_to_2010=join_2020_to_2010,
-        join_2010_to_2000=join_2010_to_2000,
+    linkage_2020_to_2000: dict[str, str] = _compose_chain(
+        join_2020_to_2010.linkage, join_2010_to_2000.linkage
     )
-    return _BlockLinkage(
-        centroids_2020=centroids_2020,
-        centroids_2000=centroids_2000,
-        linkage=chained,
-        warnings=warnings,
-    )
-
-
-def _chain_linkages(
-    centroids_2020: dict[str, Centroid],
-    join_2020_to_2010: CrossDecadeResult,
-    join_2010_to_2000: CrossDecadeResult,
-) -> tuple[dict[str, tuple[str, str]], list[str]]:
-    """Combine two single-decade linkages into a single 2020 → (2010, 2000) chain.
-
-    Blocks that fail to match at either boundary are omitted from the chain.
-    """
-    chained: dict[str, tuple[str, str]] = {}
-    for geoid_2020 in centroids_2020:
-        geoid_2010: str | None = join_2020_to_2010.linkage.get(geoid_2020)
-        if geoid_2010 is None:
-            continue
-        geoid_2000: str | None = join_2010_to_2000.linkage.get(geoid_2010)
-        if geoid_2000 is None:
-            continue
-        chained[geoid_2020] = (geoid_2010, geoid_2000)
-
-    warnings: list[str] = []
-    dropped_at_2010: int = len(centroids_2020) - len(join_2020_to_2010.linkage)
-    dropped_at_2000: int = len(join_2020_to_2010.linkage) - len(chained)
-    if dropped_at_2010 > 0:
-        warnings.append(
-            f"{dropped_at_2010} 2020 block(s) unmatched in 2020 → 2010 join"
-        )
+    dropped_at_2000: int = len(join_2020_to_2010.linkage) - len(linkage_2020_to_2000)
     if dropped_at_2000 > 0:
         warnings.append(
             f"{dropped_at_2000} 2010 block(s) unmatched in 2010 → 2000 join"
         )
-    return chained, warnings
+
+    return _BlockLinkage(
+        centroids_2020=centroids_2020,
+        centroids_2000=centroids_2000,
+        linkage_2020_to_2010=(
+            join_2020_to_2010.linkage if needs_2010_linkage else None
+        ),
+        linkage_2020_to_2000=linkage_2020_to_2000,
+        warnings=warnings,
+    )
+
+
+def _compose_chain(
+    map_a_to_b: dict[str, str], map_b_to_c: dict[str, str]
+) -> dict[str, str]:
+    """Compose two single-step linkages into a direct A → C lookup.
+
+    Entries in `map_a_to_b` whose target is missing from `map_b_to_c` are
+    dropped (the chain doesn't reach all the way through for them).
+    """
+    composed: dict[str, str] = {}
+    for a, b in map_a_to_b.items():
+        c: str | None = map_b_to_c.get(b)
+        if c is not None:
+            composed[a] = c
+    return composed
 
 
 def _load_bef_assignments(build_plan: _BuildPlan) -> dict[int, dict[str, int]]:
@@ -476,13 +534,27 @@ def _load_bef_assignments(build_plan: _BuildPlan) -> dict[int, dict[str, int]]:
 
 def _build_lewis_assignments(
     build_plan: _BuildPlan,
-    centroids_2000: dict[str, Centroid],
+    centroids_2000: dict[str, Centroid] | None,
 ) -> dict[str, dict[str, int]]:
     """Spatial-join 2000 block centroids against each Lewis plan's polygons.
 
     Deduplicated by plan_id: a single Lewis plan that spans multiple Congresses
     is joined exactly once and the result is reused for every Congress it covers.
     """
+    has_lewis: bool = any(
+        isinstance(s, _LewisSource) for s in build_plan.sources.values()
+    )
+    if not has_lewis:
+        return {}
+    if centroids_2000 is None:
+        # Invariant: Lewis sources require the 2020 → 2000 chain, which
+        # populates centroids_2000. If we got here with None, the linkage
+        # classifier disagreed with the linkage builder.
+        raise BlocksBuildError(
+            "internal error: Lewis sources present but 2000-vintage centroids "
+            "were not loaded; the linkage builder skipped a required chain depth"
+        )
+
     assignments: dict[str, dict[str, int]] = {}
     for source in build_plan.sources.values():
         if not isinstance(source, _LewisSource):
@@ -490,8 +562,7 @@ def _build_lewis_assignments(
         if source.plan_id in assignments:
             continue
         plan_polys, district_col = load_lewis_polygons(
-            geojson_path=source.geojson_path,
-            district_property=source.district_property,
+            geojson_path=source.geojson_path, district_property=source.district_property
         )
         assignments[source.plan_id] = lewis_spatial_join(
             centroids=centroids_2000,
@@ -511,10 +582,13 @@ def _build_block_histories(
     """Build the per-block district-history array, one slot per Congress in scope."""
     scope: ScopeSettings = build_plan.scope
     congress_count: int = scope.congress_end - scope.congress_start + 1
+    map_2010: dict[str, str] | None = linkage.linkage_2020_to_2010
+    map_2000: dict[str, str] | None = linkage.linkage_2020_to_2000
     histories: dict[str, list[int | None]] = {}
 
     for geoid_2020 in linkage.centroids_2020:
-        linkage_entry: tuple[str, str] | None = linkage.linkage.get(geoid_2020)
+        geoid_2010: str | None = map_2010.get(geoid_2020) if map_2010 else None
+        geoid_2000: str | None = map_2000.get(geoid_2020) if map_2000 else None
         history: list[int | None] = [None] * congress_count
 
         for congress in range(scope.congress_start, scope.congress_end + 1):
@@ -523,7 +597,8 @@ def _build_block_histories(
                 congress=congress,
                 build_plan=build_plan,
                 geoid_2020=geoid_2020,
-                linkage_entry=linkage_entry,
+                geoid_2010=geoid_2010,
+                geoid_2000=geoid_2000,
                 bef_assignments=bef_assignments,
                 lewis_assignments=lewis_assignments,
             )
@@ -536,7 +611,8 @@ def _district_for_congress(
     congress: int,
     build_plan: _BuildPlan,
     geoid_2020: str,
-    linkage_entry: tuple[str, str] | None,
+    geoid_2010: str | None,
+    geoid_2000: str | None,
     bef_assignments: dict[int, dict[str, int]],
     lewis_assignments: dict[str, dict[str, int]],
 ) -> int | None:
@@ -551,12 +627,12 @@ def _district_for_congress(
         if source.block_vintage == "v2020":
             return bef_dict.get(geoid_2020)
         if source.block_vintage == "v2010":
-            geoid_2010: str | None = linkage_entry[0] if linkage_entry else None
             return bef_dict.get(geoid_2010) if geoid_2010 else None
+        if source.block_vintage == "v2000":
+            return bef_dict.get(geoid_2000) if geoid_2000 else None
         return None
 
     # _LewisSource
-    geoid_2000: str | None = linkage_entry[1] if linkage_entry else None
     if geoid_2000 is None:
         return None
     return lewis_assignments[source.plan_id].get(geoid_2000)
