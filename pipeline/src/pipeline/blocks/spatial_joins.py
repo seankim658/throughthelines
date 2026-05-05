@@ -1,4 +1,4 @@
-"""Build stages for the block-lookup pipeline."""
+"""Spatial join primitives for the block-lookup pipeline."""
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple

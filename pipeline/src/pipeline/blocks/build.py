@@ -20,12 +20,17 @@ from pipeline.core import STATE_INFO, StateCode, write_json_atomic
 from pipeline.plans import Plan
 from pipeline.blocks.readers import (
     TABBLOCK_COLUMNS,
+    Centroid,
     load_bef,
     load_block_polygons,
     load_centroids,
     load_lewis_polygons,
 )
-from pipeline.blocks.stages import cross_decade_join, lewis_spatial_join
+from pipeline.blocks.spatial_joins import (
+    CrossDecadeResult,
+    cross_decade_join,
+    lewis_spatial_join,
+)
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 
@@ -36,7 +41,7 @@ class BlocksBuildError(Exception):
     """Raised when the block-lookup build cannot complete."""
 
 
-# --- Validation Models ---
+# --- Internal Models ---
 
 
 @dataclass(frozen=True)
@@ -69,6 +74,16 @@ class _BuildPlan:
     tabblock_paths: dict[BlockVintage, Path]
     sources: dict[int, _CongressSource]
     unsourced: list[int]
+
+
+@dataclass(frozen=True)
+class _BlockLinkage:
+    """Cross-decade linkage of 2020 blocks to their 2010 and 2000 equivalents."""
+
+    centroids_2020: dict[str, Centroid]
+    centroids_2000: dict[str, Centroid]
+    linkage: dict[str, tuple[str, str]]
+    warnings: list[str]
 
 
 # Block-vintage assignment for pre-BEF Congress (pre 112th)
@@ -256,147 +271,19 @@ def build_blocks(
         allow_missing=allow_missing,
     )
 
-    # Stage A: load 2020 block centroids
-    centroids_2020 = load_centroids(
-        tabblock_path=build_plan.tabblock_paths["v2020"],
-        columns=TABBLOCK_COLUMNS["v2020"],
-        state_fips=build_plan.state_fips,
+    linkage: _BlockLinkage = _build_block_linkage(build_plan)
+    bef_assignments: dict[int, dict[str, int]] = _load_bef_assignments(build_plan)
+    lewis_assignments: dict[str, dict[str, int]] = _build_lewis_assignments(
+        build_plan, linkage.centroids_2000
     )
 
-    # Stage B: spatial-join 2020 centroids against 2010 polygons
-    polys_2010, centroids_2010 = load_block_polygons(
-        tabblock_path=build_plan.tabblock_paths["v2010"],
-        columns=TABBLOCK_COLUMNS["v2010"],
-        state_fips=build_plan.state_fips,
+    histories_by_block: dict[str, list[int | None]] = _build_block_histories(
+        build_plan=build_plan,
+        linkage=linkage,
+        bef_assignments=bef_assignments,
+        lewis_assignments=lewis_assignments,
     )
-    join_2020_to_2010 = cross_decade_join(
-        source_centroids=centroids_2020,
-        target_polygons=polys_2010,
-        target_geoid_col=TABBLOCK_COLUMNS["v2010"].geoid,
-        target_centroids=centroids_2010,
-    )
-    del polys_2010
-
-    # Stage C: spatial-join 2010 centroids against 2000 polygons
-    polys_2000, centroids_2000 = load_block_polygons(
-        tabblock_path=build_plan.tabblock_paths["v2000"],
-        columns=TABBLOCK_COLUMNS["v2000"],
-        state_fips=build_plan.state_fips,
-    )
-    join_2010_to_2000 = cross_decade_join(
-        source_centroids=join_2020_to_2010.target_centroids,
-        target_polygons=polys_2000,
-        target_geoid_col=TABBLOCK_COLUMNS["v2000"].geoid,
-        target_centroids=centroids_2000,
-    )
-    del polys_2000
-
-    # Stage D: chain {geoid_2020: (geoid_2010, geoid_2000)}
-    block_linkage: dict[str, tuple[str, str]] = {}
-    linkage_warnings: list[str] = []
-    for geoid_2020 in centroids_2020:
-        geoid_2010 = join_2020_to_2010.linkage.get(geoid_2020)
-        if geoid_2010 is None:
-            continue
-        geoid_2000 = join_2010_to_2000.linkage.get(geoid_2010)
-        if geoid_2000 is None:
-            continue
-        block_linkage[geoid_2020] = (geoid_2010, geoid_2000)
-
-    dropped_at_2010: int = len(centroids_2020) - len(join_2020_to_2010.linkage)
-    dropped_at_2000: int = len(join_2020_to_2010.linkage) - len(block_linkage)
-    if dropped_at_2010 > 0:
-        linkage_warnings.append(
-            f"{dropped_at_2010} 2020 block(s) unmatched in 2020 → 2010 join"
-        )
-    if dropped_at_2000 > 0:
-        linkage_warnings.append(
-            f"{dropped_at_2000} 2010 block(s) unmatched in 2010 → 2000 join"
-        )
-
-    # Free linkage intermediates
-    del join_2020_to_2010, join_2010_to_2000, centroids_2010
-
-    # Stage E: load BEF assignments per congress
-    # Each BEF dict is keyed by the decade-appropriate GEOID
-    bef_assignments: dict[int, dict[str, int]] = {}
-    for congress, source in build_plan.sources.items():
-        if not isinstance(source, _BefSource):
-            continue
-        bef_assignments[congress] = load_bef(
-            bef_zip_path=source.bef_zip_path,
-            inner_filename=source.inner_filename,
-            state_fips=build_plan.state_fips,
-        )
-
-    # Stage F: Lewis spatial joins, deduplicated by plan_id
-    # Multiple congresses can share a plan, so we join once
-    # per plan and reuse the result for every congress it covers.
-    lewis_assignments: dict[str, dict[str, int]] = {}
-    for source in build_plan.sources.values():
-        if not isinstance(source, _LewisSource):
-            continue
-        if source.plan_id in lewis_assignments:
-            continue
-        plan_polys, district_col = load_lewis_polygons(
-            geojson_path=source.geojson_path, district_property=source.district_property
-        )
-        lewis_assignments[source.plan_id] = lewis_spatial_join(
-            centroids=centroids_2000,
-            plan_polygons=plan_polys,
-            district_col=district_col,
-        )
-        del plan_polys
-
-    del centroids_2000
-
-    # Stage G: build per-block history arrays
-    congress_count: int = scope.congress_end - scope.congress_start + 1
-    histories_by_block: dict[str, list[int | None]] = {}
-
-    for geoid_2020 in centroids_2020:
-        linkage_entry = block_linkage.get(geoid_2020)
-        history: list[int | None] = [None] * congress_count
-
-        for congress in range(scope.congress_start, scope.congress_end + 1):
-            idx: int = congress - scope.congress_start
-            congress_source = build_plan.sources.get(congress)
-
-            if congress_source is None:
-                # Unsourced congress (e.g., 117th)
-                continue
-
-            if isinstance(congress_source, _BefSource):
-                bef_dict = bef_assignments[congress]
-                if congress_source.block_vintage == "v2020":
-                    district = bef_dict.get(geoid_2020)
-                elif congress_source.block_vintage == "v2010":
-                    geoid_2010 = linkage_entry[0] if linkage_entry else None
-                    district = bef_dict.get(geoid_2010) if geoid_2010 else None
-                else:
-                    district = None
-                history[idx] = district
-
-            elif isinstance(congress_source, _LewisSource):
-                geoid_2000 = linkage_entry[1] if linkage_entry else None
-                if geoid_2000 is not None:
-                    lewis_dict = lewis_assignments[congress_source.plan_id]
-                    history[idx] = lewis_dict.get(geoid_2000)
-
-        histories_by_block[geoid_2020] = history
-
-    history_to_index: dict[tuple[int | None, ...], int] = {}
-    unique_histories: list[list[int | None]] = []
-    blocks_map: dict[str, int] = {}
-
-    for geoid, history in sorted(histories_by_block.items()):
-        key: tuple[int | None, ...] = tuple(history)
-        if key not in history_to_index:
-            history_to_index[key] = len(unique_histories)
-            unique_histories.append(history)
-        blocks_map[geoid] = history_to_index[key]
-
-    del histories_by_block
+    blocks_map, unique_histories = _deduplicate_histories(histories_by_block)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(
@@ -411,16 +298,223 @@ def build_blocks(
         },
     )
 
-    warnings: list[str] = linkage_warnings + [
-        f"{len(block_linkage)} of {len(centroids_2020)} 2020 blocks linked "
-        f"across all decades"
-    ]
-
+    summary_warning: str = (
+        f"{len(linkage.linkage)} of {len(linkage.centroids_2020)} 2020 blocks "
+        f"linked across all decades"
+    )
     return BlocksBuildResult(
         state=state,
         output_path=output_path,
         blocks_count=len(blocks_map),
         histories_count=len(unique_histories),
         unsourced_congresses=build_plan.unsourced,
+        warnings=linkage.warnings + [summary_warning],
+    )
+
+
+# --- Stages ---
+
+
+def _build_block_linkage(build_plan: _BuildPlan) -> _BlockLinkage:
+    """Chain 2020 block centroids through 2010 then 2000 block polygons."""
+    centroids_2020: dict[str, Centroid] = load_centroids(
+        tabblock_path=build_plan.tabblock_paths["v2020"],
+        columns=TABBLOCK_COLUMNS["v2020"],
+        state_fips=build_plan.state_fips,
+    )
+
+    polys_2010, centroids_2010 = load_block_polygons(
+        tabblock_path=build_plan.tabblock_paths["v2010"],
+        columns=TABBLOCK_COLUMNS["v2010"],
+        state_fips=build_plan.state_fips,
+    )
+    join_2020_to_2010: CrossDecadeResult = cross_decade_join(
+        source_centroids=centroids_2020,
+        target_polygons=polys_2010,
+        target_geoid_col=TABBLOCK_COLUMNS["v2010"].geoid,
+        target_centroids=centroids_2010,
+    )
+    del polys_2010
+
+    polys_2000, centroids_2000 = load_block_polygons(
+        tabblock_path=build_plan.tabblock_paths["v2000"],
+        columns=TABBLOCK_COLUMNS["v2000"],
+        state_fips=build_plan.state_fips,
+    )
+    join_2010_to_2000: CrossDecadeResult = cross_decade_join(
+        source_centroids=join_2020_to_2010.target_centroids,
+        target_polygons=polys_2000,
+        target_geoid_col=TABBLOCK_COLUMNS["v2000"].geoid,
+        target_centroids=centroids_2000,
+    )
+    del polys_2000
+
+    chained, warnings = _chain_linkages(
+        centroids_2020=centroids_2020,
+        join_2020_to_2010=join_2020_to_2010,
+        join_2010_to_2000=join_2010_to_2000,
+    )
+    return _BlockLinkage(
+        centroids_2020=centroids_2020,
+        centroids_2000=centroids_2000,
+        linkage=chained,
         warnings=warnings,
     )
+
+
+def _chain_linkages(
+    centroids_2020: dict[str, Centroid],
+    join_2020_to_2010: CrossDecadeResult,
+    join_2010_to_2000: CrossDecadeResult,
+) -> tuple[dict[str, tuple[str, str]], list[str]]:
+    """Combine two single-decade linkages into a single 2020 → (2010, 2000) chain.
+
+    Blocks that fail to match at either boundary are omitted from the chain.
+    """
+    chained: dict[str, tuple[str, str]] = {}
+    for geoid_2020 in centroids_2020:
+        geoid_2010: str | None = join_2020_to_2010.linkage.get(geoid_2020)
+        if geoid_2010 is None:
+            continue
+        geoid_2000: str | None = join_2010_to_2000.linkage.get(geoid_2010)
+        if geoid_2000 is None:
+            continue
+        chained[geoid_2020] = (geoid_2010, geoid_2000)
+
+    warnings: list[str] = []
+    dropped_at_2010: int = len(centroids_2020) - len(join_2020_to_2010.linkage)
+    dropped_at_2000: int = len(join_2020_to_2010.linkage) - len(chained)
+    if dropped_at_2010 > 0:
+        warnings.append(
+            f"{dropped_at_2010} 2020 block(s) unmatched in 2020 → 2010 join"
+        )
+    if dropped_at_2000 > 0:
+        warnings.append(
+            f"{dropped_at_2000} 2010 block(s) unmatched in 2010 → 2000 join"
+        )
+    return chained, warnings
+
+
+def _load_bef_assignments(build_plan: _BuildPlan) -> dict[int, dict[str, int]]:
+    """Load BEF block-to-district mappings, one per BEF-sourced Congress."""
+    assignments: dict[int, dict[str, int]] = {}
+    for congress, source in build_plan.sources.items():
+        if not isinstance(source, _BefSource):
+            continue
+        assignments[congress] = load_bef(
+            bef_zip_path=source.bef_zip_path,
+            inner_filename=source.inner_filename,
+            state_fips=build_plan.state_fips,
+        )
+    return assignments
+
+
+def _build_lewis_assignments(
+    build_plan: _BuildPlan,
+    centroids_2000: dict[str, Centroid],
+) -> dict[str, dict[str, int]]:
+    """Spatial-join 2000 block centroids against each Lewis plan's polygons.
+
+    Deduplicated by plan_id: a single Lewis plan that spans multiple Congresses
+    is joined exactly once and the result is reused for every Congress it covers.
+    """
+    assignments: dict[str, dict[str, int]] = {}
+    for source in build_plan.sources.values():
+        if not isinstance(source, _LewisSource):
+            continue
+        if source.plan_id in assignments:
+            continue
+        plan_polys, district_col = load_lewis_polygons(
+            geojson_path=source.geojson_path,
+            district_property=source.district_property,
+        )
+        assignments[source.plan_id] = lewis_spatial_join(
+            centroids=centroids_2000,
+            plan_polygons=plan_polys,
+            district_col=district_col,
+        )
+        del plan_polys
+    return assignments
+
+
+def _build_block_histories(
+    build_plan: _BuildPlan,
+    linkage: _BlockLinkage,
+    bef_assignments: dict[int, dict[str, int]],
+    lewis_assignments: dict[str, dict[str, int]],
+) -> dict[str, list[int | None]]:
+    """Build the per-block district-history array, one slot per Congress in scope."""
+    scope: ScopeSettings = build_plan.scope
+    congress_count: int = scope.congress_end - scope.congress_start + 1
+    histories: dict[str, list[int | None]] = {}
+
+    for geoid_2020 in linkage.centroids_2020:
+        linkage_entry: tuple[str, str] | None = linkage.linkage.get(geoid_2020)
+        history: list[int | None] = [None] * congress_count
+
+        for congress in range(scope.congress_start, scope.congress_end + 1):
+            idx: int = congress - scope.congress_start
+            history[idx] = _district_for_congress(
+                congress=congress,
+                build_plan=build_plan,
+                geoid_2020=geoid_2020,
+                linkage_entry=linkage_entry,
+                bef_assignments=bef_assignments,
+                lewis_assignments=lewis_assignments,
+            )
+        histories[geoid_2020] = history
+
+    return histories
+
+
+def _district_for_congress(
+    congress: int,
+    build_plan: _BuildPlan,
+    geoid_2020: str,
+    linkage_entry: tuple[str, str] | None,
+    bef_assignments: dict[int, dict[str, int]],
+    lewis_assignments: dict[str, dict[str, int]],
+) -> int | None:
+    """Resolve a single (block, congress) -> district lookup."""
+    source: _CongressSource | None = build_plan.sources.get(congress)
+    if source is None:
+        # Unsourced congress (e.g., 117th when allow_missing=True)
+        return None
+
+    if isinstance(source, _BefSource):
+        bef_dict: dict[str, int] = bef_assignments[congress]
+        if source.block_vintage == "v2020":
+            return bef_dict.get(geoid_2020)
+        if source.block_vintage == "v2010":
+            geoid_2010: str | None = linkage_entry[0] if linkage_entry else None
+            return bef_dict.get(geoid_2010) if geoid_2010 else None
+        return None
+
+    # _LewisSource
+    geoid_2000: str | None = linkage_entry[1] if linkage_entry else None
+    if geoid_2000 is None:
+        return None
+    return lewis_assignments[source.plan_id].get(geoid_2000)
+
+
+def _deduplicate_histories(
+    histories_by_block: dict[str, list[int | None]],
+) -> tuple[dict[str, int], list[list[int | None]]]:
+    """Collapse identical per-block histories into a shared index.
+
+    Returns `(blocks_map, unique_histories)` where `blocks_map[geoid]` is an
+    index into `unique_histories`. Iteration over `histories_by_block` is sorted
+    by GEOID so output is deterministic.
+    """
+    history_to_index: dict[tuple[int | None, ...], int] = {}
+    unique_histories: list[list[int | None]] = []
+    blocks_map: dict[str, int] = {}
+
+    for geoid, history in sorted(histories_by_block.items()):
+        key: tuple[int | None, ...] = tuple(history)
+        if key not in history_to_index:
+            history_to_index[key] = len(unique_histories)
+            unique_histories.append(history)
+        blocks_map[geoid] = history_to_index[key]
+
+    return blocks_map, unique_histories
