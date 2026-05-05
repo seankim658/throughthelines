@@ -20,6 +20,9 @@ STATE_INFO: dict[StateCode, StateInfo] = {
 
 SUPPORTED_STATES: tuple[StateCode, ...] = tuple(STATE_INFO.keys())
 
-assert set(STATE_INFO.keys()) == set(
-    get_args(StateCode)
-), "STATE_INFO keys and StateCode literal members must match"
+if set(STATE_INFO.keys()) != set(get_args(StateCode)):
+    raise RuntimeError(
+        "STATE_INFO keys and StateCode literal members must match: "
+        f"STATE_INFO has {sorted(STATE_INFO.keys())}, "
+        f"StateCode has {sorted(get_args(StateCode))}"
+    )
