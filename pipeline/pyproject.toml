@@ -1,7 +1,7 @@
 [project]
 name = "pipeline"
 version = "0.1.0"
-description = "Add your description here"
+description = "Build pipeline for Through the Lines: address-keyed congressional district history."
 readme = "README.md"
 authors = [
     { name = "Sean Kim", email = "33474168+seankim658@users.noreply.github.com" }
