@@ -56,7 +56,7 @@ class ProjectPaths:
     census_dir: Path
     tabblock_dir: Path
     bef_dir: Path
-    manifest_dir: Path
+    fetch_state_dir: Path
     plans_dir: Path
     derived_dir: Path
     stitched_dir: Path
@@ -64,6 +64,7 @@ class ProjectPaths:
     block_lookup_dir: Path
     tiles_dir: Path
     plan_index_file: Path
+    manifest_file: Path
 
 
 @dataclass(frozen=True)
@@ -146,7 +147,7 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         census_dir=_require_path(paths_raw, "census_dir", path, repo_root),
         tabblock_dir=_require_path(paths_raw, "tabblock_dir", path, repo_root),
         bef_dir=_require_path(paths_raw, "bef_dir", path, repo_root),
-        manifest_dir=_require_path(paths_raw, "manifest_dir", path, repo_root),
+        fetch_state_dir=_require_path(paths_raw, "fetch_state_dir", path, repo_root),
         plans_dir=_require_path(paths_raw, "plans_dir", path, repo_root),
         derived_dir=_require_path(paths_raw, "derived_dir", path, repo_root),
         stitched_dir=_require_path(paths_raw, "stitched_dir", path, repo_root),
@@ -154,6 +155,7 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         block_lookup_dir=_require_path(paths_raw, "block_lookup_dir", path, repo_root),
         tiles_dir=_require_path(paths_raw, "tiles_dir", path, repo_root),
         plan_index_file=_require_path(paths_raw, "plan_index_file", path, repo_root),
+        manifest_file=_require_path(paths_raw, "manifest_file", path, repo_root),
     )
 
     scope: ScopeSettings = _load_scope_section(raw, path)

@@ -48,7 +48,7 @@ def run_fetch(project_config: ProjectConfig) -> int:
             print(f"\t{marker} {entry.status:9s} {entry.source_url}")
         total_fetched += sum(1 for f in result.files if f.status == "fetched")
         total_unchanged += sum(1 for f in result.files if f.status == "unchanged")
-        print(f"\tmanifest: {result.manifest_path}")
+        print(f"\tfetch-state: {result.state_path}")
 
     print(
         f"\n{total_fetched} fetched, {total_unchanged} unchanged "

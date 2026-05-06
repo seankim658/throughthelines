@@ -19,7 +19,7 @@ voteview_dir = "{repo_root}/data/raw/voteview/"
 census_dir = "{repo_root}/data/raw/census"
 tabblock_dir = "{repo_root}/data/raw/census/tabblock/"
 bef_dir = "{repo_root}/data/raw/census/bef/"
-manifest_dir = "{repo_root}/data/raw/manifests/"
+fetch_state_dir = "{repo_root}/data/raw/fetch_state/"
 
 # Plans
 plans_dir = "{repo_root}/data/plans/"
@@ -31,6 +31,7 @@ members_file = "{repo_root}/data/derived/members.json"
 block_lookup_dir = "{repo_root}/data/derived/block_lookup/"
 tiles_dir = "{repo_root}/data/derived/tiles/"
 plan_index_file = "{repo_root}/data/derived/plan_index.json"
+manifest_file = "{repo_root}/data/derived/manifest.json"
 
 [scope]
 congress_start = 107

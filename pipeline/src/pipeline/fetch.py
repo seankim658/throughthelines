@@ -27,7 +27,7 @@ from pipeline.config import FetchConfig, RequestSettings, ProjectPaths
 from pipeline.core.state_codes import StateCode
 
 DEFAULT_USER_AGENT: str = "through-the-lines-pipeline/0.1"
-NATIONAL_MANIFEST_FILENAME: str = "_national.yaml"
+NATIONAL_FETCH_STATE_FILENAME: str = "_national.yaml"
 
 FetchStatus = Literal["fetched", "unchanged"]
 
@@ -57,13 +57,13 @@ class FetchedFile:
 class FetchResult:
 
     files: list[FetchedFile]
-    manifest_path: Path
+    state_path: Path
     state: StateCode | None  # None means national scope
 
 
 @dataclass(frozen=True)
 class _PriorRecord:
-    """Single file entry from a previously-written manifest."""
+    """Single file entry from a previously-written fetch-state record."""
 
     etag: str | None
     last_modified: str | None
@@ -81,9 +81,9 @@ def fetch_national(
     """Fetch Voteview and all Census BEFs."""
     user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
     project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
-    project_paths.manifest_dir.mkdir(parents=True, exist_ok=True)
+    project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
-    manifest_path: Path = project_paths.manifest_dir / NATIONAL_MANIFEST_FILENAME
+    manifest_path: Path = project_paths.fetch_state_dir / NATIONAL_FETCH_STATE_FILENAME
     prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
     fetched: list[FetchedFile] = []
 
@@ -113,7 +113,7 @@ def fetch_national(
         )
 
     written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
-    return FetchResult(files=fetched, manifest_path=written_path, state=None)
+    return FetchResult(files=fetched, state_path=written_path, state=None)
 
 
 def fetch_state(
@@ -125,10 +125,10 @@ def fetch_state(
 ) -> FetchResult:
     user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
     project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
-    project_paths.manifest_dir.mkdir(parents=True, exist_ok=True)
+    project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
-    manifest_path: Path = project_paths.manifest_dir / f"{state}.yaml"
-    prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
+    state_path: Path = project_paths.fetch_state_dir / f"{state}.yaml"
+    prior: dict[str, _PriorRecord] = _read_prior_manifest(state_path)
     fetched: list[FetchedFile] = []
 
     # Lewis file
@@ -165,8 +165,8 @@ def fetch_state(
             )
         )
 
-    written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
-    return FetchResult(files=fetched, manifest_path=written_path, state=state)
+    written_path: Path = _write_manifest(sources, fetched, project_paths, state_path)
+    return FetchResult(files=fetched, state_path=written_path, state=state)
 
 
 # --- Fetch ---
@@ -303,9 +303,9 @@ def _write_manifest(
     sources: FetchConfig,
     fetched: list[FetchedFile],
     project_paths: ProjectPaths,
-    manifest_path: Path,
+    state_path: Path,
 ) -> Path:
-    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, Any] = {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "lewis_commit_sha": sources.lewis.commit_sha,
@@ -321,16 +321,16 @@ def _write_manifest(
             for item in fetched
         ],
     }
-    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
-    return manifest_path
+    state_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
+    return state_path
 
 
-def _read_prior_manifest(manifest_path: Path) -> dict[str, _PriorRecord]:
-    if not manifest_path.exists():
+def _read_prior_fetch_state(state_path: Path) -> dict[str, _PriorRecord]:
+    if not state_path.exists():
         return {}
 
     try:
-        raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        raw = yaml.safe_load(state_path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError):
         return {}
 

@@ -12,10 +12,13 @@ class StateInfo:
     code: StateCode
     fips: str  # 2-digit Census FIPS
     name_upper: str  # TIGER URL slug
+    display_name: str
 
 
 STATE_INFO: dict[StateCode, StateInfo] = {
-    "NC": StateInfo(code="NC", fips="37", name_upper="NORTH_CAROLINA")
+    "NC": StateInfo(
+        code="NC", fips="37", name_upper="NORTH_CAROLINA", display_name="North Carolina"
+    )
 }
 
 SUPPORTED_STATES: tuple[StateCode, ...] = tuple(STATE_INFO.keys())

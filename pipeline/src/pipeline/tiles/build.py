@@ -13,7 +13,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from pipeline.core import StateCode, replace_atomic
+from pipeline.core import StateCode, ChamberType, replace_atomic
 
 # Name of the binary to shell out to
 _TIPPECANOE_BIN: str = "tippecanoe"
@@ -43,7 +43,7 @@ class TilesBuildResult:
 
 
 def build_tiles(
-    state: StateCode, stitched_path: Path, tiles_dir: Path
+    state: StateCode, chamber: ChamberType, stitched_path: Path, tiles_dir: Path
 ) -> TilesBuildResult:
     """Build one state's PMTiles file from its stitched GeoJSON.
 
@@ -64,7 +64,7 @@ def build_tiles(
         )
 
     tiles_dir.mkdir(parents=True, exist_ok=True)
-    output_path: Path = tiles_dir / f"{state}.pmtiles"
+    output_path: Path = tiles_dir / f"{state}_{chamber}.pmtiles"
     tmp_path: Path = output_path.with_suffix(output_path.suffix + ".tmp")
 
     args: list[str] = [
