@@ -93,10 +93,10 @@ def build_manifest(
     artifacts_count: int = len(global_artifacts)
 
     for state in sorted(scope.chambers.keys()):
-        states_section, state_artifact_count, state_chamber_count = (
+        state_section, state_artifact_count, state_chamber_count = (
             _assemble_state_section(state, project_config)
         )
-        states_section[state] = states_section
+        states_section[state] = state_section
         chambers_count += state_chamber_count
         artifacts_count += state_artifact_count
 
