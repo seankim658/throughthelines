@@ -138,6 +138,7 @@ def _validate_inputs(
     project_paths: ProjectPaths,
     census_source: CensusSource,
     allow_missing: bool,
+    lewis_fallback: bool,
 ) -> _BuildPlan:
     """Run the upfront checks. Return a frozen build-plan or raise.
 
@@ -164,6 +165,7 @@ def _validate_inputs(
         project_paths=project_paths,
         state=state,
         allow_missing=allow_missing,
+        lewis_fallback=lewis_fallback,
     )
     tabblock_paths: dict[BlockVintage, Path] = _resolve_tabblock_paths(
         needed_vintages=needed_vintages,
@@ -223,6 +225,7 @@ def _resolve_congress_sources(
     project_paths: ProjectPaths,
     state: StateCode,
     allow_missing: bool,
+    lewis_fallback: bool,
 ) -> tuple[dict[int, _CongressSource], set[BlockVintage]]:
     """Decide BEF / Lewis spatial-join / unsourced for each in-scope Congress.
 
@@ -249,6 +252,22 @@ def _resolve_congress_sources(
                 plan, congress, project_paths.raw_dir
             )
             needed_vintages.add(_PRE_BEF_VINTAGE)
+        elif lewis_fallback:
+            # BEF era (113+) but not BEF is configured for this Congress
+            # (e.g., 117th). Caller opted into Lewis fallback. If the
+            # Lewis source file doesn't exist fall through to allow_missing.
+            try:
+                sources[congress] = _make_lewis_source(
+                    plan, congress, project_paths.raw_dir
+                )
+                needed_vintages.add(_PRE_BEF_VINTAGE)
+            except BlocksBuildError:
+                if allow_missing:
+                    sources[congress] = _UnsourcedSource(
+                        congress=congress, plan_id=plan.plan_id
+                    )
+                else:
+                    raise
         elif allow_missing:
             # BEF era (113+) but the BEF isn't on disk
             sources[congress] = _UnsourcedSource(
@@ -381,6 +400,7 @@ def build_blocks(
     census_source: CensusSource,
     output_path: Path,
     allow_missing: bool = False,
+    lewis_fallback: bool = False,
 ) -> BlocksBuildResult:
     """Build the per-state block-lookup JSON for one state."""
     build_plan: _BuildPlan = _validate_inputs(
@@ -390,6 +410,7 @@ def build_blocks(
         project_paths=project_paths,
         census_source=census_source,
         allow_missing=allow_missing,
+        lewis_fallback=lewis_fallback,
     )
 
     needs_2010_linkage, needs_2000_linkage = _classify_linkage_needs(build_plan)

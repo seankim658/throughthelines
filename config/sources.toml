@@ -108,7 +108,7 @@ vintage = "v2020"
 # https://www.census.gov/geographies/mapping-files/2023/dec/rdo/118-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip"
 national_filename = "National_CD118.txt"
-district_column = "CD118"
+district_column = "CDFP"
 
 [[census.bef]]
 congress = 119
@@ -116,7 +116,7 @@ vintage = "v2020"
 # https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119-congressional-district-bef.html
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
 national_filename = "NationalCD119.txt"
-district_column = "CD119"
+district_column = "CDFP"
 
 # --- Tabulation block shapefiles, per decade ---
 

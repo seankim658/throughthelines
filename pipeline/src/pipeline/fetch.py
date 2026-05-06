@@ -84,7 +84,7 @@ def fetch_national(
     project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
     manifest_path: Path = project_paths.fetch_state_dir / NATIONAL_FETCH_STATE_FILENAME
-    prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
+    prior: dict[str, _PriorRecord] = _read_prior_fetch_state(manifest_path)
     fetched: list[FetchedFile] = []
 
     # Voteview file
@@ -128,7 +128,7 @@ def fetch_state(
     project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
     state_path: Path = project_paths.fetch_state_dir / f"{state}.yaml"
-    prior: dict[str, _PriorRecord] = _read_prior_manifest(state_path)
+    prior: dict[str, _PriorRecord] = _read_prior_fetch_state(state_path)
     fetched: list[FetchedFile] = []
 
     # Lewis file

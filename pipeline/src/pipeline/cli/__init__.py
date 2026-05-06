@@ -154,6 +154,14 @@ def _build_parser() -> argparse.ArgumentParser:
             "with JSON null instead of aborting. Off by default."
         ),
     )
+    blocks_parser.add_argument(
+        "--lewis-fallback",
+        action="store_true",
+        help=(
+            "When a Congress in the BEF era (113+) has no BEF, fall back to "
+            "a spatial join against its Lewis plan polygon if available."
+        ),
+    )
 
     # Tiles
     tiles_parser = subparsers.add_parser(
