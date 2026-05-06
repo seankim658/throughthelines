@@ -81,9 +81,9 @@ def fetch_national(
     """Fetch Voteview and all Census BEFs."""
     user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
     project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
-    project_paths.manifest_dir.mkdir(parents=True, exist_ok=True)
+    project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
-    manifest_path: Path = project_paths.manifest_dir / NATIONAL_MANIFEST_FILENAME
+    manifest_path: Path = project_paths.fetch_state_dir / NATIONAL_MANIFEST_FILENAME
     prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
     fetched: list[FetchedFile] = []
 
@@ -125,9 +125,9 @@ def fetch_state(
 ) -> FetchResult:
     user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
     project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
-    project_paths.manifest_dir.mkdir(parents=True, exist_ok=True)
+    project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
-    manifest_path: Path = project_paths.manifest_dir / f"{state}.yaml"
+    manifest_path: Path = project_paths.fetch_state_dir / f"{state}.yaml"
     prior: dict[str, _PriorRecord] = _read_prior_manifest(manifest_path)
     fetched: list[FetchedFile] = []
 

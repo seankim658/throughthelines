@@ -64,6 +64,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_plan_index(project_config)
 
+    if args.command == "manifest":
+        from pipeline.cli.manifest import run_manifest
+
+        return run_manifest(project_config)
+
     parser.print_help()
     return 1
 
@@ -169,6 +174,14 @@ def _build_parser() -> argparse.ArgumentParser:
     # Plan index
     subparsers.add_parser(
         "plan-index", help="Build plan_index.json metadata index for the frontend."
+    )
+
+    # Manifest
+    subparsers.add_parser(
+        "manifest",
+        help=(
+            "Build manifest.json, the frontend discovery document. " "Must be run last."
+        ),
     )
 
     return parser
