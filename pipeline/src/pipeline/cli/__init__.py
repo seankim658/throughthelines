@@ -74,7 +74,25 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="pipeline", description="Build pipeline")
+    parser = argparse.ArgumentParser(
+        prog="pipeline",
+        description="Build pipeline",
+        epilog=(
+            "Recommended run order:\n"
+            "  1. fetch           Download upstream sources to \n"
+            "  2. scaffold-plans  Generate placeholder plan-metadata YAMLs\n"
+            "  3. stitch          Stitch plan metadata onto Lewis polygons\n"
+            "  4. members         Slice Voteview into per-state members.json\n"
+            "  5. blocks          Build per-state block-lookup JSON\n"
+            "                     (use --lewis-fallback for the 117th)\n"
+            "  6. tiles           Build PMTiles archives via tippecanoe\n"
+            "  7. plan-index      Build plan_index.json for the frontend\n"
+            "  8. manifest        Build manifest.json (run last)\n"
+            "\n"
+            "Steps 4-7 are independent and can run in any order after step 3."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     # Fetch
