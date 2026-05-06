@@ -189,7 +189,7 @@ def _parse_row(
 
     icpsr: int = _parse_int(raw, "icpsr", row_idx)
 
-    party_code: str = (raw.get("party_code") or "").strip()
+    party_code: str = _normalize_party_code(raw.get("party_code"))
     party: str = _PARTY_CODES.get(party_code, _UNKNOWN_PARTY)
     if party == _UNKNOWN_PARTY:
         warnings.append(
@@ -275,6 +275,20 @@ def _parse_optional_float(
             f"row {row_index}: malformed {column!r} value {value!r} "
             f"(expected float or empty)"
         ) from e
+
+
+def _normalize_party_code(raw_value: str | None) -> str:
+    value: str = (raw_value or "").strip()
+    if not value:
+        return value
+    try:
+        as_float: float = float(value)
+    except ValueError:
+        return value
+    as_int: int = int(as_float)
+    if as_int != as_float:
+        return value
+    return str(as_int)
 
 
 def _group_and_sort(rows: list[_SliceRow]) -> MembersByState:
