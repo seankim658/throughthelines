@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+ * Design tokens
+ *
+ * Naming:
+ *   surface-*  page and panel backgrounds
+ *   ink-*      foreground text and icon colors
+ *   line-*     borders, dividers, separators
+ *   accent-*   the single editorial accent (burnt orange/amber)
+ *   party-*    QUARANTINED. Used only for political-party affiliation.
+ *              Never reuse as a generic UI color.
+ *   feedback-* semantic colors for status messages (error, warning, success)
+ * ------------------------------------------------------------------------- */
+
+@theme {
+	/* Type families */
+	--font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	--font-serif: 'Source Serif 4', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+
+	/* Surfaces, ink, lines, accents */
+	--color-surface-page: var(--surface-page);
+	--color-surface-raised: var(--surface-raised);
+	--color-surface-sunken: var(--surface-sunken);
+
+	--color-ink-primary: var(--ink-primary);
+	--color-ink-secondary: var(--ink-secondary);
+	--color-ink-muted: var(--ink-muted);
+	--color-ink-inverse: var(--ink-inverse);
+
+	--color-line-default: var(--line-default);
+	--color-line-subtle: var(--line-subtle);
+	--color-line-strong: var(--line-strong);
+
+	--color-accent: var(--accent);
+	--color-accent-hover: var(--accent-hover);
+	--color-accent-active: var(--accent-active);
+	--color-accent-ink: var(--accent-ink);
+
+	--color-party-d: var(--party-d);
+	--color-party-r: var(--party-r);
+	--color-party-i: var(--party-i);
+
+	--color-feedback-error: var(--feedback-error);
+	--color-feedback-warning: var(--feedback-warning);
+	--color-feedback-success: var(--feedback-success);
+}
+
+/* Light mode (default) */
+:root {
+	--surface-page: #faf8f5;
+	--surface-raised: #ffffff;
+	--surface-sunken: #f1ede6;
+
+	--ink-primary: #1c1a17;
+	--ink-secondary: #4a453e;
+	--ink-muted: #807a70;
+	--ink-inverse: #faf8f5;
+
+	--line-default: #d9d3c8;
+	--line-subtle: #ebe6dc;
+	--line-strong: #a8a195;
+
+	--accent: #b8541f;
+	--accent-hover: #9d4719;
+	--accent-active: #823a14;
+	--accent-ink: #ffffff;
+
+	--party-d: #1f4e9c;
+	--party-r: #a8221c;
+	--party-i: #6b6b6b;
+
+	--feedback-error: #a8221c;
+	--feedback-warning: #b8821f;
+	--feedback-success: #2e6b3b;
+}
+
+/* Dark mode */
+:root[data-theme='dark'] {
+	--surface-page: #1a1815;
+	--surface-raised: #232017;
+	--surface-sunken: #131210;
+
+	--ink-primary: #f0ebe2;
+	--ink-secondary: #c2bcb1;
+	--ink-muted: #8a8478;
+	--ink-inverse: #1a1815;
+
+	--line-default: #3a342c;
+	--line-subtle: #2a261f;
+	--line-strong: #5a5247;
+
+	--accent: #d96b2c;
+	--accent-hover: #e07b3f;
+	--accent-active: #c25a1f;
+	--accent-ink: #1a1815;
+
+	--party-d: #5a8acc;
+	--party-r: #d4584f;
+	--party-i: #9a9388;
+
+	--feedback-error: #d4584f;
+	--feedback-warning: #d4a64a;
+	--feedback-success: #5fa67a;
+}
+
+/* Body-level defaults */
+body {
+	background: var(--surface-page);
+	color: var(--ink-primary);
+	font-family: var(--font-sans);
+	font-feature-settings: 'ss01', 'cv11';
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: var(--font-serif);
+	font-weight: 600;
+}
