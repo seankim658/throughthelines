@@ -7,7 +7,13 @@ from pathlib import Path
 from typing import Any, cast
 from importlib.metadata import version as _pkg_version, PackageNotFoundError
 
-from pipeline.core import ChamberType, StateCode, SUPPORTED_CHAMBERS, SUPPORTED_STATES
+from pipeline.core import (
+    SupportedChamberType,
+    SupportedStateCode,
+    SUPPORTED_CHAMBERS,
+    SUPPORTED_STATES,
+    ALL_US_STATE_CODES,
+)
 from pipeline.config._common import (
     require_section,
     require_string,
@@ -41,7 +47,8 @@ class ScopeSettings:
 
     congress_start: int
     congress_end: int
-    chambers: dict[StateCode, list[ChamberType]]
+    chambers: dict[SupportedStateCode, list[SupportedChamberType]]
+    planned: list[str]
 
 
 @dataclass(frozen=True)
@@ -189,16 +196,22 @@ def _load_scope_section(raw: dict[str, Any], path: Path) -> ScopeSettings:
             f"and 130 in {path}"
         )
 
-    chambers: dict[StateCode, list[ChamberType]] = _load_scope_chambers(scope_raw, path)
+    chambers: dict[SupportedStateCode, list[SupportedChamberType]] = (
+        _load_scope_chambers(scope_raw, path)
+    )
+    planned: list[SupportedStateCode] = _load_scope_planned(scope_raw, chambers, path)
 
     return ScopeSettings(
-        congress_start=congress_start, congress_end=congress_end, chambers=chambers
+        congress_start=congress_start,
+        congress_end=congress_end,
+        chambers=chambers,
+        planned=planned,
     )
 
 
 def _load_scope_chambers(
     scope_raw: dict[str, Any], path: Path
-) -> dict[StateCode, list[ChamberType]]:
+) -> dict[SupportedStateCode, list[SupportedChamberType]]:
     if "chambers" not in scope_raw:
         raise ProjectConfigError(f"missing [scope.chambers] section in {path}")
     chambers_raw = scope_raw["chambers"]
@@ -209,7 +222,7 @@ def _load_scope_chambers(
             f"[scope.chambers] in {path} must contain at least one state"
         )
 
-    chambers: dict[StateCode, list[ChamberType]] = {}
+    chambers: dict[SupportedStateCode, list[SupportedChamberType]] = {}
     for state_code, chamber_list in chambers_raw.items():
         if state_code not in SUPPORTED_STATES:
             supported_list: str = ", ".join(SUPPORTED_STATES)
@@ -221,7 +234,7 @@ def _load_scope_chambers(
             raise ProjectConfigError(
                 f"[scope.chambers.{state_code}] must be a non-empty list in " f"{path}"
             )
-        validated: list[ChamberType] = []
+        validated: list[SupportedChamberType] = []
         for chamber in chamber_list:
             if chamber not in SUPPORTED_CHAMBERS:
                 supported_chambers: str = ", ".join(SUPPORTED_CHAMBERS)
@@ -230,7 +243,32 @@ def _load_scope_chambers(
                     f"in [scope.chambers] in {path} "
                     f"(supported: {supported_chambers})"
                 )
-            validated.append(cast(ChamberType, chamber))
-        chambers[cast(StateCode, state_code)] = validated
+            validated.append(cast(SupportedChamberType, chamber))
+        chambers[cast(SupportedStateCode, state_code)] = validated
 
     return chambers
+
+
+def _load_scope_planned(
+    scope_raw: dict[str, Any],
+    chambers: dict[SupportedStateCode, list[SupportedChamberType]],
+    path: Path,
+) -> list[str]:
+    planned_raw: Any = scope_raw.get("planned", [])
+    if not isinstance(planned_raw, list):
+        raise ProjectConfigError(f"scope.planned must be a list in {path}")
+
+    planned: list[str] = []
+    for entry in planned_raw:
+        if not isinstance(entry, str) or entry not in ALL_US_STATE_CODES:
+            raise ProjectConfigError(
+                f"unknown state code {entry!r} in scope.planned in "
+                f"{path} (expected a valid US state code)"
+            )
+        if entry in chambers:
+            raise ProjectConfigError(
+                f"state {entry!r} cannot appear in both scope.planned and "
+                f"scope.chambers in {path}"
+            )
+        planned.append(entry)
+    return planned

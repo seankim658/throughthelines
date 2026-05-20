@@ -8,6 +8,8 @@
 	import AddressForm from '$lib/lookup/AddressForm.svelte';
 	import type { BlockSource } from '$lib/manifest/types';
 	import type { LookupState } from '$lib/lookup/types';
+	import StateMap from '$lib/map/StateMap.svelte';
+	import { resolveArtifactUrl } from '$lib/manifest/loader';
 
 	let { data }: { data: PageData } = $props();
 
@@ -30,6 +32,14 @@
 	const activeCongressEntry = $derived(
 		data.coverage === 'covered'
 			? (data.blockLookup.congresses.find((c) => c.congress === activeCongress) ?? null)
+			: null
+	);
+	const tilesUrl = $derived(
+		data.coverage === 'covered'
+			? resolveArtifactUrl(
+					data.manifest,
+					data.manifest.states[data.stateCode].chambers.congressional.artifacts.tiles
+				)
 			: null
 	);
 
@@ -101,25 +111,28 @@
 
 {#if data.coverage === 'planned'}
 	<div class="mx-auto max-w-3xl space-y-4 p-8">
-		<h1 class="text-4xl">{data.stateName}</h1>
+		<h1 class="tracking-light font-serif text-5xl font-semibold">{data.stateName}</h1>
 		<p>
 			{data.stateName} is planned for V1 of Through the Lines. The current release covers North Carolina;
 			Pennsylvania and Texas are next on the roadmap.
 		</p>
-		<p><a href="/" class="text-accent underline">Back to the home page</a></p>
+		<p>
+			<a href="/" class="decoration-accent underline underline-offset-4">Back to the home page</a>
+		</p>
 	</div>
 {:else if data.coverage === 'not_yet'}
 	<div class="mx-auto max-w-3xl space-y-4 p-8">
-		<h1 class="text-4xl">{data.stateName}</h1>
+		<h1 class="tracking-light font-serif text-5xl font-semibold">{data.stateName}</h1>
 		<p>
-			{data.stateName} isn't yet covered by Through the Lines. The current release covers North Carolina;
-			Pennsylvania and Texas are planned for V1.
+			{data.stateName} isn't yet covered by Through the Lines.
 		</p>
-		<p><a href="/" class="text-accent underline">Back to the home page</a></p>
+		<p>
+			<a href="/" class="decoration-accent underline underline-offset-4">Back to the home page</a>
+		</p>
 	</div>
 {:else}
-	<div class="mx-auto max-w-5xl space-y-1 p-8 pt-4">
-		<h1 class="text-4xl pb-4">{data.stateName}</h1>
+	<div class="mx-auto max-w-5xl space-y-2 p-8">
+		<h1 class="tracking-light font-serif text-5xl font-semibold">{data.stateName}</h1>
 
 		<AddressForm
 			disabled={lookup.status === 'geocoding'}
@@ -131,11 +144,11 @@
 		<LookupStatus {lookup} stateName={data.stateName} />
 
 		<div class="grid grid-cols-[1fr_240px] gap-4">
-			<div
-				class="bg-surface-sunken text-ink-muted flex h-[520px] items-center justify-center rounded"
-			>
-				Map placeholder
-			</div>
+			{#if tilesUrl && activeCongressEntry}
+				<StateMap {tilesUrl} activePlanId={activeCongressEntry.plan_id} {activeDistrict} />
+			{:else}
+				<div class="bg-surface-sunken h-[520px] w-full rounded"></div>
+			{/if}
 			<div
 				class="h-[520px] overflow-y-auto pr-1 [scrollbar-color:var(--color-ink-muted)_transparent] [scrollbar-width:thin]"
 			>

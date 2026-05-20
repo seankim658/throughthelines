@@ -4,12 +4,12 @@ import sys
 
 from pipeline.cli._common import CliArgError, resolve_target_states, status_marker
 from pipeline.config import ProjectConfig, load_fetch_config
-from pipeline.core import StateCode
+from pipeline.core import SupportedStateCode
 from pipeline.plans import ScaffoldGeneratorError, ScaffoldResult, scaffold_all
 
 
 def run_scaffold(project_config: ProjectConfig, args: argparse.Namespace) -> int:
-    states_arg: list[StateCode] | None = args.state
+    states_arg: list[SupportedStateCode] | None = args.state
     patterns: list[str] = list(args.patterns)
     force: bool = args.force
 
@@ -20,7 +20,7 @@ def run_scaffold(project_config: ProjectConfig, args: argparse.Namespace) -> int
         return 2
 
     try:
-        target_states: list[StateCode] = resolve_target_states(
+        target_states: list[SupportedStateCode] = resolve_target_states(
             states_arg, sources.lewis.states
         )
     except CliArgError as e:

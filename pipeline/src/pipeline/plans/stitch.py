@@ -2,8 +2,14 @@
 
 For every polygon feature in a plan's source GeoJSON, attach the slim
 subset of plan metadata defined by `Plan.to_feature_props()` as feature
-properties. Concatenate every plan's stitched features into one
-FeatureCollection per state.
+properties. Emit one FeatureCollection per output tile-layer per state:
+
+    - {state}_districts.geojson -> polygon features (district shapes)
+    - {state}_labels.geojson    -> point features (one per district,
+                                   positioned via representative_point)
+
+The per-layer split lets the tiles step feed tippecanoe via the `-L name:file`
+multi-layer syntax.
 
 The stitched GeoJSON is an internal build artifact. It feeds two
 downstream artifacts:
@@ -18,8 +24,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from shapely.geometry import mapping, shape, Polygon, MultiPolygon
+from shapely.geometry.base import BaseGeometry
+from shapely.ops import polylabel, unary_union
+
 from pipeline.plans.models import Plan
-from pipeline.core import StateCode, write_json_atomic
+from pipeline.core import SupportedStateCode, write_json_atomic
 
 # --- Errors ---
 
@@ -34,52 +44,62 @@ class StitchError(Exception):
 @dataclass(frozen=True)
 class StitchResult:
 
-    state: StateCode
-    output_path: Path
+    state: SupportedStateCode
+    polygons_path: Path
+    labels_path: Path
     plans_processed: int
-    features_written: int
+    polygon_features_written: int
+    label_features_written: int
 
 
 # --- API ---
 
 
 def stitch_state(
-    plans: list[Plan], state: StateCode, raw_dir: Path, stitched_dir: Path
+    plans: list[Plan], state: SupportedStateCode, raw_dir: Path, stitched_dir: Path
 ) -> StitchResult:
-    """Stitch every plan for state into one FeatureCollection.
+    """Stitch every plan for state into per-layer FeatureCollections.
 
-    Fails atomically, if any plan's source GeoJSON is missing, malformed,
-    or has a property collision no output is written.
+    Writes one file per output tile-layer. Fails atomically.
     """
     state_plans: list[Plan] = [p for p in plans if p.state == state]
     if not state_plans:
         raise StitchError(f"no plans found for state {state}")
 
-    all_features: list[dict[str, Any]] = []
+    all_polygons: list[dict[str, Any]] = []
+    all_labels: list[dict[str, Any]] = []
     for plan in state_plans:
-        plan_features: list[dict[str, Any]] = _stitch_one_plan(plan, raw_dir)
-        all_features.extend(plan_features)
+        polygons, labels = _stitch_one_plan(plan, raw_dir)
+        all_polygons.extend(polygons)
+        all_labels.extend(labels)
 
-    feature_collection: dict[str, Any] = {
-        "type": "FeatureCollection",
-        "features": all_features,
-    }
+    stitched_dir.mkdir(parents=True, exist_ok=True)
+    polygons_path: Path = stitched_dir / f"{state}_districts.geojson"
+    labels_path: Path = stitched_dir / f"{state}_labels.geojson"
 
-    output_path: Path = stitched_dir / f"{state}.geojson"
-    write_json_atomic(output_path, feature_collection)
+    write_json_atomic(
+        polygons_path, {"type": "FeatureCollection", "features": all_polygons}
+    )
+    write_json_atomic(
+        labels_path, {"type": "FeatureCollection", "features": all_labels}
+    )
 
     return StitchResult(
         state=state,
-        output_path=output_path,
+        polygons_path=polygons_path,
+        labels_path=labels_path,
         plans_processed=len(state_plans),
-        features_written=len(all_features),
+        polygon_features_written=len(all_polygons),
+        label_features_written=len(all_labels),
     )
 
 
 # --- Helpers ---
 
 
-def _stitch_one_plan(plan: Plan, raw_dir: Path) -> list[dict[str, Any]]:
+def _stitch_one_plan(
+    plan: Plan, raw_dir: Path
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     source_path: Path = raw_dir / plan.source_file
     if not source_path.exists():
         raise StitchError(
@@ -112,7 +132,9 @@ def _stitch_one_plan(plan: Plan, raw_dir: Path) -> list[dict[str, Any]]:
                 f"{plan.plan_id}: feature at index {idx} is not a mapping"
             )
         out.append(_attach_plan_props(feature, plan_props, plan.plan_id, idx))
-    return out
+
+    label_features: list[dict[str, Any]] = _compute_label_points(out)
+    return out, label_features
 
 
 def _attach_plan_props(
@@ -138,3 +160,47 @@ def _attach_plan_props(
 
     merged_props: dict[str, Any] = {**existing_props, **plan_props}
     return {**feature, "properties": merged_props}
+
+
+def _compute_label_points(
+    polygon_features: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Emit one Point feature per district for symbol-layer label placement."""
+    by_district: dict[int, list[dict[str, Any]]] = {}
+
+    for feat in polygon_features:
+        district: Any = feat["properties"].get("district")
+        if district is None:
+            continue
+        by_district.setdefault(int(district), []).append(feat)
+
+    label_features: list[dict[str, Any]] = []
+    for district_feats in by_district.values():
+        geoms = [shape(f["geometry"]) for f in district_feats]
+        unified = geoms[0] if len(geoms) == 1 else unary_union(geoms)
+        anchor: Polygon = _largest_polygon(unified)
+        point = polylabel(anchor, tolerance=0.001)
+
+        props: dict[str, Any] = dict(district_feats[0]["properties"])
+        props["feature_type"] = "label"
+
+        label_features.append(
+            {
+                "type": "Feature",
+                "properties": props,
+                "geometry": mapping(point),
+            }
+        )
+
+    return label_features
+
+
+def _largest_polygon(geom: BaseGeometry) -> Polygon:
+    if isinstance(geom, Polygon):
+        return geom
+    if isinstance(geom, MultiPolygon):
+        return max(geom.geoms, key=lambda p: p.area)
+    raise StitchError(
+        f"expected Polygon or MultiPolygon for label anchor, "
+        f"got {type(geom).__name__}"
+    )

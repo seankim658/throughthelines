@@ -2,15 +2,16 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
+from pathlib import Path
 
 from pipeline.cli._common import CliArgError, resolve_target_states
 from pipeline.config import ProjectConfig, load_fetch_config
-from pipeline.core import StateCode
+from pipeline.core import SupportedStateCode
 from pipeline.tiles import TilesBuildError, TilesBuildResult, build_tiles
 
 
 def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
-    states_arg: list[StateCode] | None = args.state
+    states_arg: list[SupportedStateCode] | None = args.state
 
     if shutil.which("tippecanoe") is None:
         print(
@@ -27,7 +28,7 @@ def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
         return 2
 
     try:
-        target_states: list[StateCode] = resolve_target_states(
+        target_states: list[SupportedStateCode] = resolve_target_states(
             states_arg, sources.lewis.states
         )
     except CliArgError as e:
@@ -42,14 +43,17 @@ def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
         print(f"\n[{state}]")
         # NOTE : stitched_path is per-state for now, will need to add chamber
         # dimension if state legislature gets added
-        stitched_path = paths.stitched_dir / f"{state}.geojson"
+        layer_inputs: dict[str, Path] = {
+            "districts": paths.stitched_dir / f"{state}_districts.geojson",
+            "labels": paths.stitched_dir / f"{state}_labels.geojson",
+        }
         chambers = project_config.scope.chambers[state]
         for chamber in chambers:
             try:
                 result: TilesBuildResult = build_tiles(
                     state=state,
                     chamber=chamber,
-                    stitched_path=stitched_path,
+                    layer_inputs=layer_inputs,
                     tiles_dir=paths.tiles_dir,
                 )
             except TilesBuildError as e:

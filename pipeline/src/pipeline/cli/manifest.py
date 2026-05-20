@@ -32,7 +32,10 @@ def run_manifest(project_config: ProjectConfig) -> int:
         f"\n{result.states_count} state(s), {result.chambers_count} chamber(s), "
         f"{result.total_artifacts} artifact(s) → {result.output_path}"
     )
-    print(f"build: {sha_label} at {result.built_at} (url_prefix: {prefix_label})")
+    print(
+        f"build: v{result.version} ({sha_label}) at {result.built_at} "
+        f"(url_prefix: {prefix_label})"
+    )
 
     if result.warnings:
         print(f"({len(result.warnings)} warning(s))", file=sys.stderr)

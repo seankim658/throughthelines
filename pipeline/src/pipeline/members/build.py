@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TypedDict, cast
 
 from pipeline.config import ScopeSettings
-from pipeline.core import StateCode, write_json_atomic
+from pipeline.core import SupportedStateCode, write_json_atomic
 
 _REQUIRED_COLUMNS: frozenset[str] = frozenset(
     {
@@ -71,7 +71,7 @@ class MembersBuildError(Exception):
 @dataclass(frozen=True)
 class _SliceRow:
 
-    state: StateCode
+    state: SupportedStateCode
     congress: int
     district: int
     icpsr: int
@@ -164,7 +164,7 @@ def _parse_row(
     state_abbrev: str = (raw.get("state_abbrev") or "").strip()
     if state_abbrev not in scope.chambers:
         return None
-    state: StateCode = cast(StateCode, state_abbrev)
+    state: SupportedStateCode = cast(SupportedStateCode, state_abbrev)
 
     chamber_raw: str = (raw.get("chamber") or "").strip()
     if chamber_raw != "House":

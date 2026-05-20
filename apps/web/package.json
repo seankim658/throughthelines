@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"gen:map": "node scripts/generate-map-paths.mjs"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
@@ -21,6 +22,7 @@
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@tailwindcss/vite": "^4.2.4",
 		"@types/node": "^22",
+		"d3-geo": "^3.1.1",
 		"eslint": "^10.2.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.17.0",
@@ -31,12 +33,17 @@
 		"svelte": "^5.55.2",
 		"svelte-check": "^4.4.6",
 		"tailwindcss": "^4.2.4",
+		"topojson-client": "^3.1.0",
+		"topojson-simplify": "^3.0.3",
 		"typescript": "^6.0.2",
 		"typescript-eslint": "^8.58.1",
+		"us-atlas": "^3.0.1",
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
 		"@fontsource/inter": "^5.2.8",
-		"@fontsource/source-serif-4": "^5.2.9"
+		"@fontsource/source-serif-4": "^5.2.9",
+		"maplibre-gl": "^5.24.0",
+		"pmtiles": "^4.4.1"
 	}
 }

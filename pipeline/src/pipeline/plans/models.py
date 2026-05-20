@@ -29,7 +29,7 @@ from pydantic import (
     model_validator,
 )
 
-from pipeline.core import StateCode
+from pipeline.core import SupportedStateCode
 
 # Sentinel strings
 PENDING: Literal["pending"] = "pending"
@@ -131,7 +131,7 @@ class Plan(BaseModel):
 
     # Identity & provenance
     plan_id: Annotated[str, Field(pattern=PLAN_ID_PATTERN, min_length=1)]
-    state: StateCode
+    state: SupportedStateCode
     chamber: Literal["congressional"]
     congress_start: Annotated[int, Field(ge=103, le=130)]
     congress_end: Annotated[int, Field(ge=103, le=130)] | None

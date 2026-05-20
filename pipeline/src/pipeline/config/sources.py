@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast, get_args
 
-from pipeline.core import SUPPORTED_STATES, StateCode, STATE_INFO
+from pipeline.core import SUPPORTED_STATES, SupportedStateCode, STATE_INFO
 from pipeline.config._common import (
     require_int,
     require_section,
@@ -41,7 +41,8 @@ class LewisSource:
 
     repo: str
     commit_sha: str
-    states: dict[StateCode, list[str]]
+    landing_url: str
+    states: dict[SupportedStateCode, list[str]]
 
     def raw_url(self, file_path: str) -> str:
         encoded: str = urllib.parse.quote(file_path)
@@ -63,6 +64,7 @@ class CensusBefEntry:
     congress: int
     vintage: BlockVintage
     url: str
+    landing_url: str
     national_filename: str
     district_column: str
 
@@ -73,7 +75,7 @@ class CensusSource:
     befs: list[CensusBefEntry]
     tabblock_templates: dict[BlockVintage, str]
 
-    def tabblock_url(self, vintage: BlockVintage, state: StateCode) -> str:
+    def tabblock_url(self, vintage: BlockVintage, state: SupportedStateCode) -> str:
         info = STATE_INFO[state]
         template: str = self.tabblock_templates[vintage]
         return template.format(fips=info.fips, name_upper=info.name_upper)
@@ -107,6 +109,9 @@ def load_fetch_config(path: Path) -> FetchConfig:
         commit_sha=require_string(
             lewis_raw, "commit_sha", "lewis", path, FetchConfigError
         ),
+        landing_url=require_string(
+            lewis_raw, "landing_url", "lewis", path, FetchConfigError
+        ),
         states=_load_lewis_states(lewis_raw, path),
     )
 
@@ -127,7 +132,7 @@ def load_fetch_config(path: Path) -> FetchConfig:
 
 def _load_lewis_states(
     lewis_raw: dict[str, Any], path: Path
-) -> dict[StateCode, list[str]]:
+) -> dict[SupportedStateCode, list[str]]:
     if "states" not in lewis_raw:
         raise FetchConfigError(f"missing [lewis.states] section in {path}")
     states_raw = lewis_raw["states"]
@@ -138,7 +143,7 @@ def _load_lewis_states(
             f"[lewis.states] in {path} must contain at least one state"
         )
 
-    states: dict[StateCode, list[str]] = {}
+    states: dict[SupportedStateCode, list[str]] = {}
     for state_code, state_raw in states_raw.items():
         if state_code not in SUPPORTED_STATES:
             supported_list: str = ", ".join(SUPPORTED_STATES)
@@ -153,7 +158,7 @@ def _load_lewis_states(
         files: list[str] = require_string_list(
             state_raw, "files", f"lewis.states.{state_code}", path, FetchConfigError
         )
-        states[cast(StateCode, state_code)] = files
+        states[cast(SupportedStateCode, state_code)] = files
 
     return states
 
@@ -205,6 +210,9 @@ def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefE
         url: str = require_string(
             entry_raw, "url", section_label, path, FetchConfigError
         )
+        landing_url: str = require_string(
+            entry_raw, "landing_url", section_label, path, FetchConfigError
+        )
         national_filename: str = require_string(
             entry_raw, "national_filename", section_label, path, FetchConfigError
         )
@@ -216,6 +224,7 @@ def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefE
                 congress=congress,
                 vintage=cast(BlockVintage, vintage_raw),
                 url=url,
+                landing_url=landing_url,
                 national_filename=national_filename,
                 district_column=district_column,
             )

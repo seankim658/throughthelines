@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import ScopeSettings
-from pipeline.core import StateCode, write_json_atomic
+from pipeline.core import SupportedStateCode, write_json_atomic
 from pipeline.plans.models import Plan
 from pipeline.plans.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
 from pipeline.plans.validators import PlanSetValidationError
@@ -63,7 +63,7 @@ def _plan_to_record(plan: Plan) -> dict[str, Any]:
 
 
 def _load_state_plans(
-    plans_dir: Path, state: StateCode, scope: ScopeSettings
+    plans_dir: Path, state: SupportedStateCode, scope: ScopeSettings
 ) -> _StatePlansResult:
     """Load and filter plans for one state."""
     state_dir: Path = plans_dir / state
@@ -97,7 +97,7 @@ def build_plan_index(
     scope: ScopeSettings, plans_dir: Path, output_path: Path
 ) -> PlanIndexBuildResult:
     """Build plan index JSON covering every state in scope."""
-    states: list[StateCode] = sorted(scope.chambers.keys())
+    states: list[SupportedStateCode] = sorted(scope.chambers.keys())
 
     all_warnings: list[str] = []
     plans_by_state: dict[str, dict[str, dict[str, Any]]] = {}

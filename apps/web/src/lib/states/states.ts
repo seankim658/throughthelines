@@ -114,8 +114,6 @@ export const STATE_NAMES: Readonly<Record<string, string>> = {
 	DC: 'District of Columbia'
 };
 
-export const PLANNED_STATE_CODES: ReadonlySet<string> = new Set(['PA', 'TX', 'VA']);
-
 export function isRealStateCode(code: string): boolean {
 	return ALL_STATE_CODES.has(code);
 }
@@ -124,7 +122,7 @@ export function classifyCoverage(code: string, manifest: Manifest): Coverage {
 	if (manifest.states[code] !== undefined) {
 		return 'covered';
 	}
-	if (PLANNED_STATE_CODES.has(code)) {
+	if (manifest.scope.planned.includes(code)) {
 		return 'planned';
 	}
 	return 'not_yet';

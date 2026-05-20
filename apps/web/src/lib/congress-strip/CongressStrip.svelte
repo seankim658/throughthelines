@@ -35,11 +35,11 @@
 		<li>
 			<button
 				type="button"
-				class="text-ink-primary hover:bg-surface-sunken aria-pressed:bg-accent aria-pressed:text-accent-ink w-full cursor-pointer rounded px-3 py-2 text-left transition-colors"
+				class="group text-ink-primary hover:bg-surface-sunken aria-pressed:bg-accent aria-pressed:text-accent-ink w-full cursor-pointer rounded px-3 py-2 text-left transition-colors"
 				aria-pressed={entry.congress === activeCongress}
 				onclick={() => (activeCongress = entry.congress)}
 			>
-				<div class="text-ink-muted aria-[pressed=true]:text-accent-ink/80 text-xs">
+				<div class="text-ink-muted group-aria-pressed:text-accent-ink text-xs">
 					{entry.congress}th · {formatCongressYears(entry.congress)}
 				</div>
 				<div class="text-base font-medium">{districtLabel(entry.congress)}</div>

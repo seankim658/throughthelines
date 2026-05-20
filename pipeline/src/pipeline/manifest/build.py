@@ -11,6 +11,7 @@ missing artifact aborts the build rather than producing downstream 404s.
 """
 
 from __future__ import annotations
+from importlib.metadata import version as _pkg_version
 import hashlib
 import json
 import os
@@ -21,7 +22,12 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import ProjectConfig
-from pipeline.core import STATE_INFO, ChamberType, StateCode, write_json_atomic
+from pipeline.core import (
+    STATE_INFO,
+    SupportedChamberType,
+    SupportedStateCode,
+    write_json_atomic,
+)
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 
@@ -53,6 +59,7 @@ class ManifestBuildError(Exception):
 class ManifestBuildResult:
 
     output_path: Path
+    version: str
     git_sha: str | None
     built_at: str
     url_prefix: str | None
@@ -79,6 +86,7 @@ def build_manifest(
 
     warnings: list[str] = []
 
+    version: str = _resolve_version()
     git_sha: str | None = _resolve_git_sha(warnings)
     built_at: str = _now_utc_iso8601()
     url_prefix: str | None = _compute_url_prefix(git_sha)
@@ -103,6 +111,7 @@ def build_manifest(
     manifest: dict[str, Any] = {
         "schema_version": _OUTPUT_SCHEMA_VERSION,
         "build": {
+            "version": version,
             "git_sha": git_sha,
             "built_at": built_at,
             "url_prefix": url_prefix,
@@ -110,6 +119,7 @@ def build_manifest(
         "scope": {
             "congress_start": scope.congress_start,
             "congress_end": scope.congress_end,
+            "planned": list(scope.planned),
         },
         "artifacts": global_artifacts,
         "states": states_section,
@@ -119,6 +129,7 @@ def build_manifest(
 
     return ManifestBuildResult(
         output_path=output_path,
+        version=version,
         git_sha=git_sha,
         built_at=built_at,
         url_prefix=url_prefix,
@@ -165,6 +176,11 @@ def _resolve_git_sha(warnings: list[str]) -> str | None:
 
     sha: str = result.stdout.strip()
     return sha if sha else None
+
+
+def _resolve_version() -> str:
+    """Resolve the project release version from package metadata."""
+    return _pkg_version("pipeline")
 
 
 def _compute_url_prefix(git_sha: str | None) -> str | None:
@@ -227,7 +243,7 @@ def _artifact_ref(
 
 
 def _assemble_state_section(
-    state: StateCode, project_config: ProjectConfig
+    state: SupportedStateCode, project_config: ProjectConfig
 ) -> tuple[dict[str, Any], int, int]:
     """Build one `states.{STATE}` section.
 
@@ -239,7 +255,7 @@ def _assemble_state_section(
     scope = project_config.scope
     state_info = STATE_INFO[state]
 
-    chambers: list[ChamberType] = scope.chambers[state]
+    chambers: list[SupportedChamberType] = scope.chambers[state]
     chambers_section: dict[str, dict[str, Any]] = {}
     artifacts_count: int = 0
 

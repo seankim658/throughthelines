@@ -10,7 +10,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import ValidationError
 
-from pipeline.core import StateCode, write_text_atomic
+from pipeline.core import SupportedStateCode, write_text_atomic
 from pipeline.plans.models import Plan
 
 ScaffoldStatus = Literal["wrote", "force", "skip", "fail"]
@@ -41,7 +41,7 @@ class ScaffoldResult:
 def scaffold_all(
     lewis_dir: Path,
     plans_dir: Path,
-    state: StateCode,
+    state: SupportedStateCode,
     lewis_commit_sha: str,
     patterns: list[str] | None = None,
     force: bool = False,
@@ -67,7 +67,7 @@ def scaffold_all(
 def scaffold_one(
     lewis_path: Path,
     plans_dir: Path,
-    state: StateCode,
+    state: SupportedStateCode,
     lewis_commit_sha: str,
     force: bool,
 ) -> ScaffoldResult:
@@ -184,14 +184,14 @@ def _coerce_congress_number(value: Any, field_name: str) -> int:
 # --- Plan-dict Construction ---
 
 
-def _build_plan_id(state: StateCode, congress_start: int) -> str:
+def _build_plan_id(state: SupportedStateCode, congress_start: int) -> str:
     year: int = 1787 + 2 * congress_start
     return f"{state}_{congress_start:03d}_{year:04d}"
 
 
 def _build_plan(
     plan_id: str,
-    state: StateCode,
+    state: SupportedStateCode,
     congress_start: int,
     congress_end: int,
     lewis_filename: str,

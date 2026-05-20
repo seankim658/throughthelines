@@ -4,7 +4,7 @@ import sys
 
 from pipeline.cli._common import CliArgError, resolve_target_states
 from pipeline.config import ProjectConfig, load_fetch_config
-from pipeline.core import StateCode
+from pipeline.core import SupportedStateCode
 from pipeline.plans import (
     PlanLoadError,
     PlanSetLoadError,
@@ -17,7 +17,7 @@ from pipeline.plans import (
 
 
 def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
-    states_arg: list[StateCode] | None = args.state
+    states_arg: list[SupportedStateCode] | None = args.state
 
     try:
         sources = load_fetch_config(project_config.sources_config_path)
@@ -26,7 +26,7 @@ def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
         return 2
 
     try:
-        target_states: list[StateCode] = resolve_target_states(
+        target_states: list[SupportedStateCode] = resolve_target_states(
             states_arg, sources.lewis.states
         )
     except CliArgError as e:
@@ -65,9 +65,8 @@ def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
             failed = True
             continue
 
-        print(
-            f"\t{result.plans_processed} plans, "
-            f"{result.features_written} features → {result.output_path}"
-        )
+        print(f"\t{result.plans_processed} plans:")
+        print(f"\t  {result.polygon_features_written} polygons → {result.polygons_path}")
+        print(f"\t  {result.label_features_written} labels → {result.labels_path}")
 
     return 1 if failed else 0

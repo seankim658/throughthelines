@@ -16,6 +16,7 @@ export interface ArtifactRef {
 
 /** Build identity. Populated by the pipeline at manifest-build time. */
 export interface BuildInfo {
+	version: string;
 	git_sha: string | null;
 	built_at: string;
 	url_prefix: string | null;
@@ -25,12 +26,23 @@ export interface BuildInfo {
 export interface ScopeInfo {
 	congress_start: number;
 	congress_end: number;
+	planned: string[];
 }
 
 /** How the block-to-district assignment was sourced for a Congress. */
 export type BlockSource =
-	| { type: 'bef'; bef_url: string; block_vintage: 'v2000' | 'v2010' | 'v2020' }
-	| { type: 'lewis_spatial_join'; lewis_path: string; block_vintage: 'v2000' | 'v2010' | 'v2020' }
+	| {
+			type: 'bef';
+			bef_url: string;
+			bef_landing_url: string;
+			block_vintage: 'v2000' | 'v2010' | 'v2020';
+	  }
+	| {
+			type: 'lewis_spatial_join';
+			lewis_path: string;
+			lewis_landing_url: string;
+			block_vintage: 'v2000' | 'v2010' | 'v2020';
+	  }
 	| { type: 'unsourced' };
 
 /** One Congress's provenance entry, lifted from the block-lookup file into the manifest. */

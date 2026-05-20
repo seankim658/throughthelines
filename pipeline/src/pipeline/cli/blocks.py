@@ -5,7 +5,7 @@ import sys
 from pipeline.cli._common import CliArgError, resolve_target_states
 from pipeline.blocks import BlocksBuildError, BlocksBuildResult, build_blocks
 from pipeline.config import ProjectConfig, load_fetch_config
-from pipeline.core import StateCode
+from pipeline.core import SupportedStateCode
 from pipeline.plans import (
     PlanLoadError,
     PlanSetLoadError,
@@ -16,7 +16,7 @@ from pipeline.plans import (
 
 
 def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
-    states_arg: list[StateCode] | None = args.state
+    states_arg: list[SupportedStateCode] | None = args.state
     allow_missing: bool = bool(args.allow_missing)
     lewis_fallback: bool = bool(args.lewis_fallback)
 
@@ -27,7 +27,7 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
         return 2
 
     try:
-        target_states: list[StateCode] = resolve_target_states(
+        target_states: list[SupportedStateCode] = resolve_target_states(
             states_arg, sources.lewis.states
         )
     except CliArgError as e:
@@ -68,6 +68,7 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
                     scope=project_config.scope,
                     project_paths=paths,
                     census_source=sources.census,
+                    lewis_landing_url=sources.lewis.landing_url,
                     output_path=output_path,
                     allow_missing=allow_missing,
                     lewis_fallback=lewis_fallback,

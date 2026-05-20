@@ -17,7 +17,12 @@ from pipeline.config import (
     ProjectPaths,
     ScopeSettings,
 )
-from pipeline.core import STATE_INFO, ChamberType, StateCode, write_json_atomic
+from pipeline.core import (
+    STATE_INFO,
+    SupportedChamberType,
+    SupportedStateCode,
+    write_json_atomic,
+)
 from pipeline.plans import Plan
 from pipeline.blocks.readers import (
     TABBLOCK_COLUMNS,
@@ -51,6 +56,7 @@ class _BefSource:
     congress: int
     plan_id: str
     bef_url: str
+    bef_landing_url: str
     bef_zip_path: Path
     inner_filename: str
     block_vintage: BlockVintage
@@ -63,6 +69,7 @@ class _LewisSource:
     congress: int
     plan_id: str
     source_file: str  # Relative to data/raw/, matches Plans.source_file
+    lewis_landing_url: str
     geojson_path: Path
     district_property: str = "district"
 
@@ -87,7 +94,7 @@ _CongressSource = _BefSource | _LewisSource | _UnsourcedSource
 @dataclass(frozen=True)
 class _BuildPlan:
 
-    state: StateCode
+    state: SupportedStateCode
     scope: ScopeSettings
     state_fips: str
     tabblock_paths: dict[BlockVintage, Path]
@@ -120,7 +127,7 @@ _FIRST_BEF_CONGRESS: int = 113
 @dataclass(frozen=True)
 class BlocksBuildResult:
 
-    state: StateCode
+    state: SupportedStateCode
     output_path: Path
     blocks_count: int
     histories_count: int
@@ -133,12 +140,13 @@ class BlocksBuildResult:
 
 def _validate_inputs(
     plans: list[Plan],
-    state: StateCode,
+    state: SupportedStateCode,
     scope: ScopeSettings,
     project_paths: ProjectPaths,
     census_source: CensusSource,
     allow_missing: bool,
     lewis_fallback: bool,
+    lewis_landing_url: str,
 ) -> _BuildPlan:
     """Run the upfront checks. Return a frozen build-plan or raise.
 
@@ -166,6 +174,7 @@ def _validate_inputs(
         state=state,
         allow_missing=allow_missing,
         lewis_fallback=lewis_fallback,
+        lewis_landing_url=lewis_landing_url,
     )
     tabblock_paths: dict[BlockVintage, Path] = _resolve_tabblock_paths(
         needed_vintages=needed_vintages,
@@ -184,7 +193,7 @@ def _validate_inputs(
 
 
 def _resolve_plan_coverage(
-    plans: list[Plan], state: StateCode, scope: ScopeSettings
+    plans: list[Plan], state: SupportedStateCode, scope: ScopeSettings
 ) -> dict[int, Plan]:
     """Map each in-scope Congress to the plan that claims it.
 
@@ -223,9 +232,10 @@ def _resolve_congress_sources(
     scope: ScopeSettings,
     bef_by_congress: dict[int, CensusBefEntry],
     project_paths: ProjectPaths,
-    state: StateCode,
+    state: SupportedStateCode,
     allow_missing: bool,
     lewis_fallback: bool,
+    lewis_landing_url: str,
 ) -> tuple[dict[int, _CongressSource], set[BlockVintage]]:
     """Decide BEF / Lewis spatial-join / unsourced for each in-scope Congress.
 
@@ -249,7 +259,7 @@ def _resolve_congress_sources(
             # so compute district-per-block by spatial join against the
             # Lewis plan polygons.
             sources[congress] = _make_lewis_source(
-                plan, congress, project_paths.raw_dir
+                plan, congress, project_paths.raw_dir, lewis_landing_url
             )
             needed_vintages.add(_PRE_BEF_VINTAGE)
         elif lewis_fallback:
@@ -258,7 +268,7 @@ def _resolve_congress_sources(
             # Lewis source file doesn't exist fall through to allow_missing.
             try:
                 sources[congress] = _make_lewis_source(
-                    plan, congress, project_paths.raw_dir
+                    plan, congress, project_paths.raw_dir, lewis_landing_url
                 )
                 needed_vintages.add(_PRE_BEF_VINTAGE)
             except BlocksBuildError:
@@ -297,6 +307,7 @@ def _make_bef_source(
         congress=congress,
         plan_id=plan.plan_id,
         bef_url=bef_entry.url,
+        bef_landing_url=bef_entry.landing_url,
         bef_zip_path=bef_zip_path,
         inner_filename=bef_entry.national_filename,
         block_vintage=bef_entry.vintage,
@@ -304,7 +315,9 @@ def _make_bef_source(
     )
 
 
-def _make_lewis_source(plan: Plan, congress: int, raw_dir: Path) -> _LewisSource:
+def _make_lewis_source(
+    plan: Plan, congress: int, raw_dir: Path, lewis_landing_url: str
+) -> _LewisSource:
     """Resolve and validate a Lewis spatial-join source for one Congress."""
     geojson_path: Path = raw_dir / plan.source_file
     if not geojson_path.exists():
@@ -317,13 +330,14 @@ def _make_lewis_source(plan: Plan, congress: int, raw_dir: Path) -> _LewisSource
         congress=congress,
         plan_id=plan.plan_id,
         source_file=plan.source_file,
+        lewis_landing_url=lewis_landing_url,
         geojson_path=geojson_path,
     )
 
 
 def _resolve_tabblock_paths(
     needed_vintages: set[BlockVintage],
-    state: StateCode,
+    state: SupportedStateCode,
     project_paths: ProjectPaths,
     census_source: CensusSource,
 ) -> dict[BlockVintage, Path]:
@@ -393,11 +407,12 @@ def _summarize_linkage(linkage: _BlockLinkage) -> str:
 
 def build_blocks(
     plans: list[Plan],
-    state: StateCode,
-    chamber: ChamberType,
+    state: SupportedStateCode,
+    chamber: SupportedChamberType,
     scope: ScopeSettings,
     project_paths: ProjectPaths,
     census_source: CensusSource,
+    lewis_landing_url: str,
     output_path: Path,
     allow_missing: bool = False,
     lewis_fallback: bool = False,
@@ -411,6 +426,7 @@ def build_blocks(
         census_source=census_source,
         allow_missing=allow_missing,
         lewis_fallback=lewis_fallback,
+        lewis_landing_url=lewis_landing_url,
     )
 
     needs_2010_linkage, needs_2000_linkage = _classify_linkage_needs(build_plan)
@@ -586,12 +602,14 @@ def _serialize_congresses(build_plan: _BuildPlan) -> list[dict[str, Any]]:
             block_source = {
                 "type": "bef",
                 "bef_url": source.bef_url,
+                "bef_landing_url": source.bef_landing_url,
                 "block_vintage": source.block_vintage,
             }
         elif isinstance(source, _LewisSource):
             block_source = {
                 "type": "lewis_spatial_join",
                 "lewis_path": source.source_file,
+                "lewis_landing_url": source.lewis_landing_url,
                 "block_vintage": _PRE_BEF_VINTAGE,
             }
         else:
