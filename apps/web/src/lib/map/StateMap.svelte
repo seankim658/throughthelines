@@ -14,7 +14,7 @@
 	const HIGHLIGHT_LINE_LAYER_ID = 'districts-highlight-line';
 	const LABEL_LAYER_ID = 'districts-label';
 
-	const GLYPHS_URL = 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf';
+	const GLYPHS_URL = '/fonts/{fontstack}/{range}.pbf';
 
 	let {
 		tilesUrl,
