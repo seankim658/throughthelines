@@ -82,12 +82,22 @@ class CensusSource:
 
 
 @dataclass(frozen=True)
+class ProtomapsBasemapSource:
+
+    build_url: str
+    landing_url: str
+    max_zoom: int
+    bbox: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
 class FetchConfig:
 
     schema_version: int
     lewis: LewisSource
     voteview: VoteviewSource
     census: CensusSource
+    protomaps_basemap: ProtomapsBasemapSource
 
 
 # --- Loader ---
@@ -125,8 +135,40 @@ def load_fetch_config(path: Path) -> FetchConfig:
     census_raw: dict[str, Any] = require_section(raw, "census", path, FetchConfigError)
     census = _load_census(census_raw, path)
 
+    protomaps_basemap_raw: dict[str, Any] = require_section(
+        raw, "protomaps_basemap", path, FetchConfigError
+    )
+    protomaps_basemap = ProtomapsBasemapSource(
+        build_url=require_string(
+            protomaps_basemap_raw,
+            "build_url",
+            "protomaps_basemap",
+            path,
+            FetchConfigError,
+        ),
+        landing_url=require_string(
+            protomaps_basemap_raw,
+            "landing_url",
+            "protomaps_basemap",
+            path,
+            FetchConfigError,
+        ),
+        max_zoom=require_int(
+            protomaps_basemap_raw,
+            "max_zoom",
+            "protomaps_basemap",
+            path,
+            FetchConfigError,
+        ),
+        bbox=_load_basemap_bbox(protomaps_basemap_raw, path),
+    )
+
     return FetchConfig(
-        schema_version=schema_version, lewis=lewis, voteview=voteview, census=census
+        schema_version=schema_version,
+        lewis=lewis,
+        voteview=voteview,
+        census=census,
+        protomaps_basemap=protomaps_basemap,
     )
 
 
@@ -273,3 +315,36 @@ def _load_census_tabblock_templates(
         )
 
     return templates
+
+
+def _load_basemap_bbox(
+    section: dict[str, Any], path: Path
+) -> tuple[float, float, float, float]:
+    """Validate the [protomaps_basemap].bbox value as a 4-tuple of floats.
+
+    Order is [west, south, east, north] in WGS84 degrees.
+    """
+    if "bbox" not in section:
+        raise FetchConfigError(f"missing protomaps_basemap.bbox in {path}")
+    raw = section["bbox"]
+    if not isinstance(raw, list) or len(raw) != 4:
+        raise FetchConfigError(
+            f"protomaps_basemap.bbox must be a 4-element list "
+            f"[west, south, east, north] in {path}"
+        )
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in raw):
+        raise FetchConfigError(
+            f"protomaps_basemap.bbox elements must all be numbers in {path}"
+        )
+    west, south, east, north = (float(v) for v in raw)
+    if west >= east:
+        raise FetchConfigError(
+            f"protomaps_basemap.bbox: west ({west}) must be less than east "
+            f"({east}) in {path}"
+        )
+    if south >= north:
+        raise FetchConfigError(
+            f"protomaps_basemap.bbox: south ({south}) must be less than north "
+            f"({north}) in {path}"
+        )
+    return (west, south, east, north)

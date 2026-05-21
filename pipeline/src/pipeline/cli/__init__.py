@@ -59,6 +59,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_tiles(project_config, args)
 
+    if args.command == "basemap":
+        from pipeline.cli.basemap import run_basemap
+
+        return run_basemap(project_config, args)
+
     if args.command == "plan-index":
         from pipeline.cli.plan_index import run_plan_index
 
@@ -79,17 +84,18 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Build pipeline",
         epilog=(
             "Recommended run order:\n"
-            "  1. fetch           Download upstream sources to \n"
+            "  1. fetch           Download upstream sources (except the basemap)\n"
             "  2. scaffold-plans  Generate placeholder plan-metadata YAMLs\n"
             "  3. stitch          Stitch plan metadata onto Lewis polygons\n"
             "  4. members         Slice Voteview into per-state members.json\n"
             "  5. blocks          Build per-state block-lookup JSON\n"
             "                     (use --lewis-fallback for the 117th)\n"
             "  6. tiles           Build PMTiles archives via tippecanoe\n"
-            "  7. plan-index      Build plan_index.json for the frontend\n"
-            "  8. manifest        Build manifest.json (run last)\n"
+            "  7. basemap         Extract CONUS basemap via pmtiles CLI\n"
+            "  8. plan-index      Build plan_index.json for the frontend\n"
+            "  9. manifest        Build manifest.json (run last)\n"
             "\n"
-            "Steps 4-7 are independent and can run in any order after step 3."
+            "Steps 4-8 are independent and can run in any order after step 3."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -195,6 +201,20 @@ def _build_parser() -> argparse.ArgumentParser:
             "Two-letter state code to file (repeatable). "
             "If omitted, tiles every state configured in sources.toml."
         ),
+    )
+
+    # Basemap
+    basemap_parser = subparsers.add_parser(
+        "basemap",
+        help=(
+            "Extract a CONUS basemap PMTiles archive from the pinned "
+            "Protomaps daily build via the `pmtiles` CLI."
+        ),
+    )
+    basemap_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Bypass the cache check and re-extract.",
     )
 
     # Plan index

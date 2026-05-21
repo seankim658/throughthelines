@@ -30,6 +30,7 @@ stitched_dir = "{repo_root}/data/derived/stitched"
 members_file = "{repo_root}/data/derived/members.json"
 block_lookup_dir = "{repo_root}/data/derived/block_lookup/"
 tiles_dir = "{repo_root}/data/derived/tiles/"
+basemap_file = "{repo_root}/data/derived/basemaps/basemap.pmtiles"
 plan_index_file = "{repo_root}/data/derived/plan_index.json"
 manifest_file = "{repo_root}/data/derived/manifest.json"
 

@@ -134,3 +134,13 @@ url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2010/tl_201
 # Note: tl_2010_ prefix is the release vintage; _tabblock00 suffix is the
 # block geometry vintage. Confusing but correct.
 url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2000/tl_2010_{fips}_tabblock00.zip"
+
+# --- Protomaps basemap ---
+
+[protomaps_basemap]
+# Browse builds: https://maps.protomaps.com/builds
+build_url = "https://build.protomaps.com/20260518.pmtiles" # Don't visit this directly
+landing_url = "https://maps.protomaps.com/builds"
+max_zoom = 12
+# Buffer applied around each state's bounding box.
+bbox = [-125.0, 24.3, -66.9, 49.4]
