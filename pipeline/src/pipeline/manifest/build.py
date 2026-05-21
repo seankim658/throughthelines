@@ -94,6 +94,7 @@ def build_manifest(
     global_artifacts: dict[str, dict[str, Any]] = {
         "plan_index": _artifact_ref(paths.plan_index_file, derived_dir, "plan-index"),
         "members": _artifact_ref(paths.members_file, derived_dir, "members"),
+        "basemap": _artifact_ref(paths.basemap_file, derived_dir, "basemap"),
     }
 
     states_section: dict[str, dict[str, Any]] = {}
