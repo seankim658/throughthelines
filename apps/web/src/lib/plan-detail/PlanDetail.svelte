@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Plan } from '$lib/plan-index/types';
 	import type { MemberRecord } from '$lib/members/types';
-	import type { BlockSource } from '$lib/manifest/types';
+	import type { BlockSource, SourcesSection } from '$lib/manifest/types';
 	import { formatCongressYears } from '$lib/congress/congress-years';
 	import {
 		formatCurationStatus,
@@ -34,13 +34,15 @@
 		congress,
 		district,
 		members,
-		blockSource
+		blockSource,
+		sources
 	}: {
 		plan: Plan | null;
 		congress: number;
 		district: number | null;
 		members: MemberRecord[];
 		blockSource: BlockSource;
+		sources: SourcesSection;
 	} = $props();
 
 	const toneClasses: Record<BadgeTone, string> = {
@@ -245,6 +247,29 @@
 		{/if}
 
 		<footer class="text-ink-muted mt-6 space-y-1 text-xs">
+			<h2>Data</h2>
+			<p>
+				District boundaries:
+				<a
+					href={sources.lewis.homepage_url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-accent underline"
+				>
+					Jeffrey B. Lewis
+				</a>
+			</p>
+			<p>
+				Member data:
+				<a
+					href={sources.voteview.landing_url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-accent underline"
+				>
+					Voteview
+				</a>
+			</p>
 			<p>
 				{#if blockSource.type === 'bef'}
 					Address lookup source data:

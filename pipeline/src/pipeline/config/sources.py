@@ -42,6 +42,7 @@ class LewisSource:
     repo: str
     commit_sha: str
     landing_url: str
+    homepage: str
     states: dict[SupportedStateCode, list[str]]
 
     def raw_url(self, file_path: str) -> str:
@@ -56,6 +57,7 @@ class LewisSource:
 class VoteviewSource:
 
     url: str
+    landing_url: str
 
 
 @dataclass(frozen=True)
@@ -122,6 +124,7 @@ def load_fetch_config(path: Path) -> FetchConfig:
         landing_url=require_string(
             lewis_raw, "landing_url", "lewis", path, FetchConfigError
         ),
+        homepage=require_string(lewis_raw, "homepage", "lewis", path, FetchConfigError),
         states=_load_lewis_states(lewis_raw, path),
     )
 
@@ -130,6 +133,9 @@ def load_fetch_config(path: Path) -> FetchConfig:
     )
     voteview = VoteviewSource(
         url=require_string(voteview_raw, "url", "voteview", path, FetchConfigError),
+        landing_url=require_string(
+            voteview_raw, "landing_url", "voteview", path, FetchConfigError
+        ),
     )
 
     census_raw: dict[str, Any] = require_section(raw, "census", path, FetchConfigError)

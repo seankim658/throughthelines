@@ -150,7 +150,12 @@
 
 		<div class="grid grid-cols-[1fr_240px] gap-4">
 			{#if tilesUrl && activeCongressEntry}
-				<StateMap {tilesUrl} {basemapUrl} activePlanId={activeCongressEntry.plan_id} {activeDistrict} />
+				<StateMap
+					{tilesUrl}
+					{basemapUrl}
+					activePlanId={activeCongressEntry.plan_id}
+					{activeDistrict}
+				/>
 			{:else}
 				<div class="bg-surface-sunken h-[520px] w-full rounded"></div>
 			{/if}
@@ -166,6 +171,7 @@
 					district={activeDistrict}
 					members={activeMembers}
 					blockSource={activeBlockSource}
+					sources={data.manifest.sources}
 				/>
 			</div>
 		</div>

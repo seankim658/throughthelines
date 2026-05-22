@@ -20,6 +20,7 @@ schema_version = 1
 repo = "JeffreyBLewis/congressional-district-boundaries"
 commit_sha = "f107b1b6c149c1b759cbb9b5bb14111a2355d6a1"
 landing_url = "https://github.com/JeffreyBLewis/congressional-district-boundaries"
+homepage = "https://cdmaps.polisci.ucla.edu/"
 
 [lewis.states.NC]
 files = [
@@ -37,6 +38,7 @@ files = [
 [voteview]
 # Voteview's member-level data (HSall = all House members across all Congresses).
 url = "https://voteview.com/static/data/out/members/HSall_members.csv"
+landing_url = "https://voteview.com/data"
 
 [census]
 # Census Bureau resources for the block-lookup pipeline

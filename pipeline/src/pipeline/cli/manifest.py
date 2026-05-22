@@ -1,7 +1,7 @@
 from __future__ import annotations
 import sys
 
-from pipeline.config import ProjectConfig
+from pipeline.config import ProjectConfig, load_fetch_config
 from pipeline.manifest import ManifestBuildError, ManifestBuildResult, build_manifest
 
 
@@ -9,8 +9,16 @@ def run_manifest(project_config: ProjectConfig) -> int:
     paths = project_config.project_paths
 
     try:
+        sources = load_fetch_config(project_config.sources_config_path)
+    except (OSError, ValueError) as e:
+        print(f"error loading config: {e}", file=sys.stderr)
+        return 2
+
+    try:
         result: ManifestBuildResult = build_manifest(
-            project_config=project_config, output_path=paths.manifest_file
+            project_config=project_config,
+            sources=sources,
+            output_path=paths.manifest_file,
         )
     except ManifestBuildError as e:
         print(f"manifest build failed: {e}", file=sys.stderr)

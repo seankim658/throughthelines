@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import ProjectConfig
+from pipeline.config import ProjectConfig, FetchConfig
 from pipeline.core import (
     STATE_INFO,
     SupportedChamberType,
@@ -73,7 +73,7 @@ class ManifestBuildResult:
 
 
 def build_manifest(
-    project_config: ProjectConfig, output_path: Path
+    project_config: ProjectConfig, sources: FetchConfig, output_path: Path
 ) -> ManifestBuildResult:
     """Assemble manifest.json from the existing derived artifacts.
 
@@ -123,6 +123,7 @@ def build_manifest(
             "planned": list(scope.planned),
         },
         "artifacts": global_artifacts,
+        "sources": _build_sources_section(sources),
         "states": states_section,
     }
 
@@ -341,3 +342,19 @@ def _load_block_lookup_congresses(
         )
 
     return congresses
+
+
+# --- Source Provenance ---
+
+
+def _build_sources_section(sources: FetchConfig) -> dict[str, Any]:
+    lewis = sources.lewis
+    commit_url: str = f"{lewis.landing_url.rstrip('/')}/tree/{lewis.commit_sha}"
+    return {
+        "lewis": {
+            "commit_sha": lewis.commit_sha,
+            "commit_url": commit_url,
+            "homepage_url": lewis.homepage,
+        },
+        "voteview": {"landing_url": sources.voteview.landing_url},
+    }

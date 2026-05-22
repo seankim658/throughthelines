@@ -69,6 +69,23 @@ export interface StateSection {
 	chambers: Record<string, ChamberSection>;
 }
 
+/** Display-only provenance for the Lewis polygon source. */
+export interface LewisSource {
+	commit_sha: string;
+	commit_url: string;
+	homepage_url: string;
+}
+
+/** Display-only provenance for the Voteview member source. */
+export interface VoteviewSource {
+	landing_url: string;
+}
+
+export interface SourcesSection {
+	lewis: LewisSource;
+	voteview: VoteviewSource;
+}
+
 /** Top-level manifest. */
 export interface Manifest {
 	schema_version: 1;
@@ -77,7 +94,8 @@ export interface Manifest {
 	artifacts: {
 		plan_index: ArtifactRef;
 		members: ArtifactRef;
-    basemap: ArtifactRef;
+		basemap: ArtifactRef;
 	};
+	sources: SourcesSection;
 	states: Record<string, StateSection>;
 }
