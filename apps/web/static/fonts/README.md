@@ -9,14 +9,14 @@ with the site so we don't depend on a third-party CDN at runtime.
 | File                                | Purpose                                       |
 | ----------------------------------- | --------------------------------------------- |
 | `Noto Sans Regular/0-255.pbf`       | Basic Latin range. Covers our district labels |
+| `Noto Sans Medium/0-255.pbf`        | Basic Latin range. Used by basemap labels     |
+| `Noto Sans Italic/0-255.pbf`        | Basic Latin range. Used by basemap labels     |
 | `OFL.txt`                           | SIL Open Font License (required attribution)  |
 
-Currently only the `0-255` range is bundled because the only on-map
-text today is district numbers. When the Protomaps
-basemap is wired up, additional ranges and/or fontstacks (e.g.
-`Noto Sans Medium`, `Noto Sans Italic`) will likely need to be added
-here. Add files by re-running the download commands in the project
-notes with additional `{fontstack}/{range}.pbf` paths.
+Currently only the `0-255` (Basic Latin) range is bundled for each fontstack used. 
+Additional ranges or fontstacks may need to be added if browsing surfaces glyph
+warnings in the console. Add files by re-running the download command with the
+missing `{fontstack}/{range}.pbf` paths.
 
 ## Source
 

@@ -42,6 +42,11 @@
 				)
 			: null
 	);
+	const basemapUrl = $derived.by(() => {
+		const ref = data.manifest.artifacts.basemap;
+		if (!ref) return null;
+		return resolveArtifactUrl(data.manifest, ref);
+	});
 
 	const activePlan = $derived.by(() => {
 		if (data.coverage !== 'covered') return null;
@@ -145,7 +150,7 @@
 
 		<div class="grid grid-cols-[1fr_240px] gap-4">
 			{#if tilesUrl && activeCongressEntry}
-				<StateMap {tilesUrl} activePlanId={activeCongressEntry.plan_id} {activeDistrict} />
+				<StateMap {tilesUrl} {basemapUrl} activePlanId={activeCongressEntry.plan_id} {activeDistrict} />
 			{:else}
 				<div class="bg-surface-sunken h-[520px] w-full rounded"></div>
 			{/if}
