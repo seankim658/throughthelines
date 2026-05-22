@@ -70,6 +70,7 @@ class ProjectPaths:
     members_file: Path
     block_lookup_dir: Path
     tiles_dir: Path
+    basemap_file: Path
     plan_index_file: Path
     manifest_file: Path
 
@@ -161,6 +162,7 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
         members_file=_require_path(paths_raw, "members_file", path, repo_root),
         block_lookup_dir=_require_path(paths_raw, "block_lookup_dir", path, repo_root),
         tiles_dir=_require_path(paths_raw, "tiles_dir", path, repo_root),
+        basemap_file=_require_path(paths_raw, "basemap_file", path, repo_root),
         plan_index_file=_require_path(paths_raw, "plan_index_file", path, repo_root),
         manifest_file=_require_path(paths_raw, "manifest_file", path, repo_root),
     )
@@ -199,7 +201,7 @@ def _load_scope_section(raw: dict[str, Any], path: Path) -> ScopeSettings:
     chambers: dict[SupportedStateCode, list[SupportedChamberType]] = (
         _load_scope_chambers(scope_raw, path)
     )
-    planned: list[SupportedStateCode] = _load_scope_planned(scope_raw, chambers, path)
+    planned: list[str] = _load_scope_planned(scope_raw, chambers, path)
 
     return ScopeSettings(
         congress_start=congress_start,

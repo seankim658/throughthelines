@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import { PMTiles, Protocol } from 'pmtiles';
+	import { layers as protomapsLayers, namedFlavor } from '@protomaps/basemaps';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 
 	// Matches the tippecanoe `-l` flag in pipeline/src/pipeline/tiles/build.py
@@ -14,13 +15,21 @@
 	const HIGHLIGHT_LINE_LAYER_ID = 'districts-highlight-line';
 	const LABEL_LAYER_ID = 'districts-label';
 
-	const GLYPHS_URL = 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf';
+	const GLYPHS_URL = '/fonts/{fontstack}/{range}.pbf';
+	const SPRITE_URL = '/sprites/v4/light';
+	const BASEMAP_SOURCE_ID = 'basemap';
 
 	let {
 		tilesUrl,
+		basemapUrl,
 		activePlanId,
 		activeDistrict
-	}: { tilesUrl: string; activePlanId: string; activeDistrict: number | null } = $props();
+	}: {
+		tilesUrl: string;
+		basemapUrl?: string | null;
+		activePlanId: string;
+		activeDistrict: number | null;
+	} = $props();
 
 	let container: HTMLDivElement;
 	let map = $state<maplibregl.Map | null>(null);
@@ -46,6 +55,11 @@
 		const pmtiles = new PMTiles(tilesUrl);
 		protocol.add(pmtiles);
 
+		if (basemapUrl) {
+			const basemapPmtiles = new PMTiles(basemapUrl);
+			protocol.add(basemapPmtiles);
+		}
+
 		let created: maplibregl.Map | null = null;
 		let cancelled = false;
 
@@ -60,18 +74,43 @@
 				const inkPrimary = styles.getPropertyValue('--ink-primary').trim() || '#1c1a17';
 				const surfacePage = styles.getPropertyValue('--surface-page').trim() || '#faf8f5';
 
+				const basemapSources: maplibregl.StyleSpecification['sources'] = basemapUrl
+					? {
+							[BASEMAP_SOURCE_ID]: {
+								type: 'vector',
+								url: `pmtiles://${basemapUrl}`,
+								attribution:
+									'<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
+							}
+						}
+					: {};
+
+				const basemapLayers: maplibregl.LayerSpecification[] = basemapUrl
+					? (protomapsLayers(BASEMAP_SOURCE_ID, namedFlavor('light'), {
+							lang: 'en'
+						}) as maplibregl.LayerSpecification[])
+					: [];
+
+				const spriteUrl = basemapUrl
+					? new URL(SPRITE_URL, window.location.origin).toString()
+					: undefined;
+
 				const newMap = new maplibregl.Map({
 					container,
+					attributionControl: false,
 					style: {
 						version: 8,
 						glyphs: GLYPHS_URL,
+						sprite: spriteUrl,
 						sources: {
+							...basemapSources,
 							[SOURCE_ID]: {
 								type: 'vector',
 								url: `pmtiles://${tilesUrl}`
 							}
 						},
 						layers: [
+							...basemapLayers,
 							{
 								id: FILL_LAYER_ID,
 								source: SOURCE_ID,
@@ -142,6 +181,8 @@
 					fitBoundsOptions: { padding: 20 }
 				});
 				created = newMap;
+
+				newMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
 				newMap.on('load', () => {
 					if (cancelled) return;

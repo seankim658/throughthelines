@@ -1,9 +1,33 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, get_args
 
 SupportedStateCode = Literal["NC"]
 SupportedChamberType = Literal["congressional"]
 SUPPORTED_CHAMBERS: tuple[SupportedChamberType, ...] = ("congressional",)
+
+
+@dataclass(frozen=True)
+class BBox:
+    """WGS84 bounding box."""
+
+    west: float
+    south: float
+    east: float
+    north: float
+
+    def as_pmtiles_arg(self) -> str:
+        return f"{self.west},{self.south},{self.east},{self.north}"
+
+    def buffered(self, degrees: float) -> BBox:
+        if degrees < 0:
+            raise ValueError(f"buffer must be non-negative, got {degrees}")
+        return BBox(
+            west=self.west - degrees,
+            south=self.south - degrees,
+            east=self.east + degrees,
+            north=self.north + degrees,
+        )
 
 
 @dataclass(frozen=True)

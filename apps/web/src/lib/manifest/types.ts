@@ -77,6 +77,7 @@ export interface Manifest {
 	artifacts: {
 		plan_index: ArtifactRef;
 		members: ArtifactRef;
+    basemap: ArtifactRef;
 	};
 	states: Record<string, StateSection>;
 }
