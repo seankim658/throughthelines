@@ -1,0 +1,3 @@
+# Glossary
+
+Redistricting and technical terms used throughout the documentation.

@@ -71,8 +71,10 @@
 				const styles = getComputedStyle(document.documentElement);
 				const accent = styles.getPropertyValue('--accent').trim() || '#b8541f';
 				const lineColor = styles.getPropertyValue('--ink-secondary').trim() || '#4a453e';
-				const inkPrimary = styles.getPropertyValue('--ink-primary').trim() || '#1c1a17';
-				const surfacePage = styles.getPropertyValue('--surface-page').trim() || '#faf8f5';
+				// const inkPrimary = styles.getPropertyValue('--ink-primary').trim() || '#1c1a17';
+				// const surfacePage = styles.getPropertyValue('--surface-page').trim() || '#faf8f5';
+				const LABEL_INK = '#1c1a17'; // --ink-primary (light)
+				const LABEL_HALO = '#faf8f5'; // --surface-page (light)
 
 				const basemapSources: maplibregl.StyleSpecification['sources'] = basemapUrl
 					? {
@@ -167,8 +169,8 @@
 									'text-size': 14
 								},
 								paint: {
-									'text-color': inkPrimary,
-									'text-halo-color': surfacePage,
+									'text-color': LABEL_INK,
+									'text-halo-color': LABEL_HALO,
 									'text-halo-width': 1.5
 								}
 							}

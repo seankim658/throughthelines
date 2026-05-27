@@ -104,6 +104,14 @@
 	--feedback-success: #5fa67a;
 }
 
+html {
+	scrollbar-gutter: stable;
+}
+
+body {
+	background: var(--surface-page);
+}
+
 /* Body-level defaults */
 body {
 	background: var(--surface-page);

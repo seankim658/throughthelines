@@ -1,0 +1,3 @@
+# Data Model and Schema
+
+The plan-metadata schema, the missingness model, and the build artifacts.

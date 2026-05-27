@@ -1,0 +1,103 @@
+<script>
+	import CrossDecadeChain from '$lib/docs/diagrams/CrossDecadeChain.svelte';
+</script>
+
+# Methodology
+
+[How it works](/docs/how-it-works) describes the runtime: an address becomes a 2020 Census block, and that block is read from the 
+build artifacts produced by the data pipeline. This page covers how one of those artifacts, the **block lookup**, is produced.
+
+For each state, the block lookup maps every 2020 Census block to the district that block fell in under each Congress in range. The data
+pipeline produces other artifacts as well (the plan metadata, the representatives for each district, the map tiles, and a manifest that 
+ties them together), those are covered in [Architecture](/docs/architecture). This page is only about the block lookup and where its 
+district assignments come from.
+
+At runtime the block-to-district assignment is a finished fact. Producing it is the more interesting problem for two reasons. First, the
+district a block belongs to is not recorded the same way for every Congress. Second, the lookup is keyed on 2020 Census blocks, but the
+plans for most Congresses in range (every one before the 118th) were drawn on older block geometry. The rest of this page follows those
+two problems:
+
+1. **Sourcing**: for a given Congress, where does the block-to-district assignment come from?
+2. **Cross-decade linkage**: how does a 2020 block reach a district drawn on 2010- or 2000-era block geometry?
+
+## Assigning a district
+
+Every block-to-district assignment carries a record of where it came from. There are three possibilities:
+
+- **A Census Block Equivalency File (BEF).** The Census Bureau publishes official block-to-district mappings beginning with the 113th
+Congress. Where a BEF exists, the pipeline uses it directly. It is the authoritative source.
+- **A spatial join against the plan's polygons.** Where no BEF is available, the pipeline computes the assignment by locating each block
+inside the polygons of the plan that governed that Congress. For the Congresses before the BEF program these polygons come from
+[Jeffrey Lewis' archive](https://cdmaps.polisci.ucla.edu/); the 117th is sourced from the body that
+enacted its map (see [Per-Congress sourcing](#per-congress-sourcing) below).
+- **Unsourced.** If neither is available, the Congress is recorded as `unsourced` and every block gets `null` for that slot.
+
+The provenance is propagated through the pipeline into the manifest, and is shown on the per-Congress detail panel so readers can see how
+each assignment was produced. This data is represented as a small tagged union:
+
+```ts
+export type BlockSource =
+	| {
+			type: 'bef';
+			bef_url: string;
+			bef_landing_url: string;
+			block_vintage: 'v2000' | 'v2010' | 'v2020';
+	  }
+	| {
+			type: 'lewis_spatial_join';
+			lewis_path: string;
+			lewis_landing_url: string;
+			block_vintage: 'v2000' | 'v2010' | 'v2020';
+	  }
+	| { type: 'unsourced' };
+```
+
+The two sourced types record a **block vintage**, the decade of Census block geometry the assignment is expressed in (`v2000`, `v2010`,
+or `v2020`). That field is the hinge for the next problem: the lookup is keyed on 2020 blocks, so any assignment expressed in an older
+vintage has to be linked forward.
+
+## Per-Congress sourcing
+
+| Congresses  | Source       | Block vintage |
+|-------------|--------------|---------------|
+| 107th-112th | Spatial join | 2000          |
+| 113th-116th | Census BEF   | 2010          |
+| 117th       | Census BEF*  | 2010          |
+| 118th-119th | Census BEF   | 2020          |
+
+The 113th through 116th and the 118th through 119th Congresses each have an official BEF, so the pipeline reads their district assignments directly from the Census files. The block vintage of a BEF matches the redistricting cycle it belongs to: the 113th-116th BEFs use 2010 blocks, the 118th-119th use 2020 blocks. For the 118th and 119th this means the assignments are already expressed in 2020 blocks, the same blocks the lookup is keyed on, so they need no further work.
+
+The 107th through 112th Congresses predate the BEF program. With no official mapping to ingest, each block's district is computed by
+locating it inside that Congress's plan polygon, using the boundaries from [Jeffrey Lewis' archive](https://cdmaps.polisci.ucla.edu/),
+joined against 2000-block geometry.
+
+*[The Census Bureau does not collect congressional district boundaries for the cycle whose election aligns with the decennial census](https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.117th_Congress.html),
+so there is no 117th BEF. For most states this changes nothing, because their 117th districts are identical to their 116th and the 116th
+BEFs carry forward. North Carolina is the exception. It was the only state whose congressional districts changed between the 116th and
+117th Congresses, so its 117th map is taken directly from the [North Carolina General Assembly](https://www.ncleg.gov/redistricting).
+That map belongs to the 2010 redistricting cycle, so the join is run against 2010-block geometry, the same vintage as the 113th-116th.
+
+## Cross-decade linkage
+
+The block lookup is keyed on 2020 Census blocks, because the geocoder resolves an address to a 2020 block. Only the 118th and 119th are sourced in 2020 blocks, though. Every earlier Congress is sourced in 2010 or 2000 blocks, so its district assignments are attached to block identifiers the lookup is not keyed on. Before those assignments can be stored, each 2020 block has to be matched to the older block it corresponds to.
+
+This matching happens once, when the lookup is built, and it operates on blocks, not addresses. An arbitrary address is outside of the scope of the block-lookup pipeline, at runtime the geocoder has already reduced the address to a 2020 block, and the rest is a dictionary read. This part of the data pipeline's job is to give every 2020 block a complete district history ahead of time, so the question here is purely how one 2020 block maps to an older one.
+
+Census blocks are redrawn every decade, so there is no shared identifier across vintages and no exact correspondence between them. A 2020 block may sit inside a single 2000 block or straddle two of them. The pipeline approximates the match with a single point. Every Census block ships with a precomputed interior point, a coordinate guaranteed to lie inside the block, and the pipeline treats that point as a stand-in for the whole block. It takes a 2020 block's interior point, finds the 2010 block whose polygon contains it, then takes that 2010 block's interior point and finds the 2000 block containing it. Chaining the containments links each 2020 block to one block in each earlier vintage.
+
+<CrossDecadeChain />
+
+The chain runs only as deep as the sourcing requires. A 2010-sourced Congress needs only the 2020-to-2010 step; a 2000-sourced Congress needs the 
+full 2020-to-2010-to-2000 chain. Once a 2020 block is linked to its counterpart in the right vintage, the district assignment for that Congress is 
+read or computed against the older block and stored under the 2020 key. From the runtime's point of view the result is uniform: every Congress, 
+regardless of how it was sourced, ends up as a district number under a 2020 block GEOID.
+
+A few blocks fall out of the chain. An interior point that lands on a boundary or in a sliver with no containing polygon has no match in the 
+older vintage, and a block with no match is assigned `null` for the Congresses that depend on that link. These are rare, but they are why a 
+lookup can occasionally show no district for an otherwise covered Congress.
+
+## Caveats
+
+A BEF assignment is authoritative. The Census Bureau states which district each block belongs to, and the pipeline records that statement unchanged. A spatial-join assignment is computed, and it relies on the interior-point approximation twice: once to link a 2020 block to an older block, and again to place that older block inside a plan's polygons. Where a block sits across a block boundary or a district boundary, it is assigned to one district as a whole rather than split. Near those boundaries a computed assignment can disagree with the official line. The 107th through 112th are computed this way; the 113th-116th and 118th-119th are read from BEFs and are not.
+
+The 108th through 112th plans belong to the 2000 redistricting cycle, the same cycle as the 2000 blocks they are joined against, so their boundaries line up with block edges closely and the approximation is minor. The 107th is the exception. North Carolina ran the 107th Congress on the map from the previous (1990s) redistricting cycle, drawn before the 2000 blocks existed. The pipeline joins it against 2000 blocks anyway, the same as the other pre-BEF Congresses, so the plan's boundaries cut across more blocks than usual. The result is a thin band of blocks along those old boundaries that may be assigned to a neighboring district, in the 107th's slot only. Every other Congress in range is unaffected.
