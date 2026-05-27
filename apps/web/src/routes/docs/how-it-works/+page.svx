@@ -1,0 +1,91 @@
+<script>
+  import LookupChain from '$lib/docs/diagrams/LookupChain.svelte';
+</script>
+
+# How it Works
+
+Through the Lines was built to answer a few questions: 
+
+- Which congressional districts has this address belonged to?
+- How has this state's congressional districts changed over time? 
+- Who drew each map?
+
+<LookupChain />
+
+There are three steps that happen when you put an address into Through the Lines:
+
+1. Turn the address into a location
+2. Turn that location into a district for every Congress in range
+3. Attach the metadata to each district (the people and plans)
+
+## Step 1 - Address to Census Block
+
+The site sends your address to the [U.S. Census Geocoder](https://geocoding.geo.census.gov/geocoder/) which returns a **2020 Census block**.
+Thea census block is the smallest unit the Census publishes and is identified by a 15-digit code called a `GEOID`. Everything downstream is
+keyed off the `GEOID`.
+
+Importantly, this call happens **directly from your browser to the Census Bureau.** Nothing is ever sent back to, logged by, or stored on any 
+Through the Lines server. Everything in Through the Lines runs client side in your browser. The only thing that comes back to the page is the 
+`GEOID` and a normalized version of the address for display. The request uses a script-tag technique (JSONP) specifically so the browser can 
+talk to the Census API directly without routing through us.
+
+The [Census Geocoding API](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html) does not support CORS requests, only `jsonp` callbacks:
+
+> The format parameter should be set to jsonp when using callback to request a JSONP response. At this time the geocoder does not support CORS requests so the callback and format parameters should be used in the client to make calls to the geocoder.
+
+If the Census can't confidently match what you typed, you'll see one of a few potential outcomes, see [result states](#result-states) below.
+
+## Step 2 - The block becomes a district history
+
+We don't compute your congressional district at runtime. At build time we precompute, for **every 2020 Census block in a sate**, the district that
+block fell in under each Congress in range. This allows us to avoid any runtime geometry, and subsequently keep the site small and performant enough 
+to run completely client side. This data is shipped as a lookup file with the site at runtime. Finding your history is then just a
+hash-table read using the block `GEOID` as the key.
+
+How a 2020 block maps back to districts in, say, 2008, is the interesting part. This is covered in the [Methodology](/docs/methodology) documentation.
+For using the site, what matters is that the answer is already computed by the time you press enter.
+
+### How the history is stored
+
+A district history is just an array, one slot per Congress oldest to newest, holding the district number for each (or `null` if the block had no district
+for that Congress). Two blocks a mile apart usually have an identical history, so storing one array per block would be repetitive and much too large to
+ship to the browser.
+
+Instead, the lokup file stores each **unique** history once and points blocks at it by index:
+
+```ts
+// block_lookup_{STATE}.json (shape)
+interface BlockLookup {
+  congresses: CongressEntry[];    // the Congresses, in order
+  histories: (number | null)[][]; // each distinct history, stored once
+  blocks: Record<string, number>; // GEOID -> index into histories
+}
+```
+
+So a lookup is: 
+
+- `blocks[geoid]` gives an index
+- `histories[index]` gives the array
+- Slot `i` of that array is your district under `congresses[i]`
+
+This shape allows us to collapse thousands of blocks into a few hundred district histories, which keeps the file small enough to load up front on demand.
+
+## Step 3 - District plans and people
+
+With each district per Congress, Through the Lines attaches two more prebuilt files containing additional metadata:
+
+- The **plan** that drew each map (its origin, whether a court struck it down, the citations)
+- The **incumbents** who represented that district for that Congress
+
+For more information on how the metadata is filled and where it comes from, see the [Methodology](/docs/methodology) and [Data](/data) documentation.
+
+## Result states
+
+The lookup is as honest as possible about uncertainty. Depending on what the geocoder returns, you'll see one of:
+
+| What you see        | What it means                                                      |
+|---------------------|--------------------------------------------------------------------|
+| A district timeline | Your address matched and falls in a covered state.                 |
+| No match            | The Census couldn't resolve the address. Try adding a city or ZIP. |
+| Out of state        | The address matched, but it is outside the target state.           |
+| A geocoder error    | The Census service timed out or was unreachable, try again.        |

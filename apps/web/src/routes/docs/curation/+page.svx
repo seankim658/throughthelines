@@ -1,0 +1,3 @@
+# Curation Guide
+
+How to take a plan from pending to curated, and how to contribute to one.

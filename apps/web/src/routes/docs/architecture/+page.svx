@@ -1,0 +1,3 @@
+# Architecture
+
+The build pipeline, the manifest contract, and the frontend runtime flow.

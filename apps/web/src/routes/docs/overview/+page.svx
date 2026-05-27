@@ -1,0 +1,38 @@
+# Overview
+
+Through the Lines is an open dataset and lookup tool. Given a street address, it returns 
+every U.S. congressional district that address has belonged to across redistricting cycles, 
+annotated with various metadata.
+
+## Background
+
+Congressional district boundaries are redrawn at least once per decade, and they determine which
+candidates a voter chooses among and how their communities are represented. Who draws those lines,
+and how, is the subject of continuous litation. Revisions between censuses are becoming increasingly
+common.
+
+The 2025–2026 cycle has been an unusually active one. Beginning with
+[Texas in mid-2025](https://www.cfr.org/articles/gerrymandering-the-supreme-court-and-the-2026-midterm-elections),
+several states redrew their congressional maps mid-decade, a practice that is
+legal but, until recently, was relatively rare. 
+
+Against that backdrop, a basic question is harder to answer than it should be:
+how has the district covering a particular address changed over time, and who was
+responsible for each change? The raw data exists (historical district
+boundaries, member records, and narrative accounts of how each plan was drawn and
+litigated) but they live in separate places and separate formats, and none of
+them alone answers the question at the level of one address across multiple
+cycles. Through the Lines joins them into a single address-first, longitudinal
+record with a structured, machine-readable layer describing each plan's origin
+and legal history. 
+
+## What it provides
+
+For a given address, Through the Lines shows the district for each Congress in
+range, the incumbent who served it, the plan that drew it, the body responsible, 
+and the court rulings that enabled or invalidated it. The underlying plan metadata 
+is published as a citable dataset.
+
+For how the lookup works, see [How it works](/docs/how-it-works). For current
+coverage and what is planned, see [Roadmap](/docs/roadmap). For data sources and
+licensing, see the [Data](/data) page.
