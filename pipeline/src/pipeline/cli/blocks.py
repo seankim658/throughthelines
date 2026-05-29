@@ -18,7 +18,7 @@ from pipeline.plans import (
 def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
     states_arg: list[SupportedStateCode] | None = args.state
     allow_missing: bool = bool(args.allow_missing)
-    lewis_fallback: bool = bool(args.lewis_fallback)
+    spatial_join_fallback: bool = bool(args.spatial_join_fallback)
 
     try:
         sources = load_fetch_config(project_config.sources_config_path)
@@ -68,10 +68,11 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
                     scope=project_config.scope,
                     project_paths=paths,
                     census_source=sources.census,
+                    block_assignments=sources.block_assignments,
                     lewis_landing_url=sources.lewis.landing_url,
                     output_path=output_path,
                     allow_missing=allow_missing,
-                    lewis_fallback=lewis_fallback,
+                    spatial_join_fallback=spatial_join_fallback,
                 )
             except BlocksBuildError as e:
                 print(f"\t[{chamber}] blocks build failed: {e}", file=sys.stderr)

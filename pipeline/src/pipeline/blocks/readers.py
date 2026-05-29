@@ -128,24 +128,63 @@ def load_lewis_polygons(
     return gdf, district_property
 
 
-def load_bef(
-    bef_zip_path: Path, inner_filename: str, state_fips: str, district_column: str
+def load_delimited_assignment(
+    zip_path: Path,
+    inner_filename: str,
+    state_fips: str,
+    district_column: str,
+    geoid_column: str | None = None,
+    delimiter: str = ",",
 ) -> dict[str, int]:
-    """Reads a Census BEF zip and return {block_geoid: district} for one state."""
+    """Reads a delimited-assignment file from inside a zip.
+
+    Covers both Census Block Equivalency (BEFs) and state-published block
+    assignment files.
+
+    Parameters
+    ----------
+    zip_path: Path
+        Filesystem path to the upstream zip archive.
+    inner_filename: str
+        Name of the delimited file inside the zip
+    state_fips
+        Two-digit state FIPS code. Rows whose GEOID does not begin with this
+        prefix are filtered out. National-scope files are reduced to the
+        requested state.
+    district_column: str
+        Header name of the column that holds the district number, matched
+        case-insensitively after trim.
+    geoid_column
+        Optional explicit GEOID column header (case-insensitive). When None
+        (default), the GEOID column is auto-detected from the Census BEF
+        alias set {"BLOCKID", "GEOID"}.
+    delimiter: str
+        Field separator.
+
+    Returns
+    -------
+    A {block_geoid: district} dict containing only rows for the requested state.
+    """
     import csv
     import zipfile
 
-    geoid_aliases: frozenset[str] = frozenset({"BLOCKID", "GEOID"})
+    geoid_aliases: frozenset[str] = (
+        frozenset({geoid_column.strip().upper()})
+        if geoid_column is not None
+        else frozenset({"BLOCKID", "GEOID"})
+    )
+    district_column_upper: str = district_column.strip().upper()
     assignments: dict[str, int] = {}
 
-    with zipfile.ZipFile(bef_zip_path, "r") as zf:
+    with zipfile.ZipFile(zip_path, "r") as zf:
         with zf.open(inner_filename) as raw:
-            reader = csv.reader((line.decode("utf-8") for line in raw), delimiter=",")
+            reader = csv.reader(
+                (line.decode("utf-8-sig") for line in raw), delimiter=delimiter
+            )
             header: list[str] = next(reader)
 
             geoid_idx: int | None = None
             district_idx: int | None = None
-            district_column_upper: str = district_column.strip().upper()
             for i, col in enumerate(header):
                 col_stripped: str = col.strip().upper()
                 if col_stripped in geoid_aliases:
@@ -157,13 +196,13 @@ def load_bef(
                 raise BlocksReadError(
                     f"could not identify block-GEOID column "
                     f"(expected one of {sorted(geoid_aliases)}) in "
-                    f"{inner_filename} within {bef_zip_path}; "
+                    f"{inner_filename} within {zip_path}; "
                     f"header: {header}"
                 )
             if district_idx is None:
                 raise BlocksReadError(
                     f"could not find district column {district_column!r} in "
-                    f"{inner_filename} within {bef_zip_path}; "
+                    f"{inner_filename} within {zip_path}; "
                     f"header: {header}"
                 )
 

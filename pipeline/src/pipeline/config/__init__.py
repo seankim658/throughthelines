@@ -19,10 +19,11 @@ from pipeline.config.sources import (
     FetchConfigError,
     LewisSource,
     VoteviewSource,
-    CensusBefEntry,
+    BlockAssignmentEntry,
     BlockVintage,
     CensusSource,
     load_fetch_config,
+    NATIONAL_SCOPE,
 )
 
 __all__ = [
@@ -40,8 +41,9 @@ __all__ = [
     "RequestSettings",
     "VoteviewSource",
     "load_fetch_config",
-    "CensusBefEntry",
+    "BlockAssignmentEntry",
     "BlockVintage",
     "CensusSource",
+    "NATIONAL_SCOPE",
     "load_request_config",
 ]

@@ -8,6 +8,7 @@ The fetch is split into two scopes:
     fetch_state:
         - Lewis plan polygon GeoJSONs for one state
         - Census tabblock shapefiles (one per vintage, for one state)
+        - Block-assignment files with state = <this state>
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from typing import Any, Literal
 import yaml
 
 from pipeline.config import FetchConfig, RequestSettings, ProjectPaths
-from pipeline.core.state_codes import StateCode
+from pipeline.core.state_codes import SupportedStateCode
 
 DEFAULT_USER_AGENT: str = "through-the-lines-pipeline/0.1"
 NATIONAL_FETCH_STATE_FILENAME: str = "_national.yaml"
@@ -58,7 +59,7 @@ class FetchResult:
 
     files: list[FetchedFile]
     state_path: Path
-    state: StateCode | None  # None means national scope
+    state: SupportedStateCode | None  # None means national scope
 
 
 @dataclass(frozen=True)
@@ -101,10 +102,12 @@ def fetch_national(
         )
     )
 
-    # Census BEFs (one per published Congress)
+    # National block-assignment files
     bef_dir: Path = project_paths.bef_dir
     bef_dir.mkdir(parents=True, exist_ok=True)
-    for entry in sources.census.befs:
+    for entry in sources.block_assignments:
+        if entry.state != "*":
+            continue
         bef_local: Path = bef_dir / Path(entry.url).name
         fetched.append(
             _fetch_one(
@@ -117,7 +120,7 @@ def fetch_national(
 
 
 def fetch_state(
-    state: StateCode,
+    state: SupportedStateCode,
     sources: FetchConfig,
     request_settings: RequestSettings,
     user_agent: str | None,
@@ -162,6 +165,19 @@ def fetch_state(
         fetched.append(
             _fetch_one(
                 tab_url, tab_local, request_settings, user_agent, prior.get(tab_url)
+            )
+        )
+
+    # State-specific block-assignment files 
+    bef_dir: Path = project_paths.bef_dir
+    bef_dir.mkdir(parents=True, exist_ok=True)
+    for entry in sources.block_assignments:
+        if entry.state != state:
+            continue
+        bef_local: Path = bef_dir / Path(entry.url).name
+        fetched.append(
+            _fetch_one(
+                entry.url, bef_local, request_settings, user_agent, prior.get(entry.url)
             )
         )
 

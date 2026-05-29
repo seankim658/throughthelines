@@ -28,6 +28,17 @@
 	function formatVintage(vintage: 'v2000' | 'v2010' | 'v2020'): string {
 		return vintage.slice(1);
 	}
+	// TODO : Probably extract this to the pipeline
+	function formatDelimitedProvider(provider: string): string {
+		switch (provider) {
+			case 'census':
+				return 'Census Block Equivalency File';
+			case 'ncga':
+				return 'NC General Assembly block assignment file';
+			default:
+				return 'block assignment file';
+		}
+	}
 
 	let {
 		plan,
@@ -271,25 +282,26 @@
 				</a>
 			</p>
 			<p>
-				{#if blockSource.type === 'bef'}
+				{#if blockSource.type === 'delimited_assignment'}
 					Address lookup source data:
 					<a
-						href={blockSource.bef_landing_url}
+						href={blockSource.upstream_landing_url}
 						target="_blank"
 						rel="noopener noreferrer"
 						class="text-accent underline"
 					>
-						Census Block Equivalency File
+            {formatDelimitedProvider(blockSource.provider)}
 					</a>
 					· {formatVintage(blockSource.block_vintage)} blocks
-				{:else if blockSource.type === 'lewis_spatial_join'}
+				{:else if blockSource.type === 'polygon_join'}
 					Address lookup source data: spatial join against
 					<a
-						href={blockSource.lewis_landing_url}
+						href={blockSource.upstream_landing_url}
 						target="_blank"
 						rel="noopener noreferrer"
 						class="text-accent underline"
 					>
+            <!-- NOTE : Will have to remove this hardcode later -->
 						Lewis plan polygons
 					</a>
 					· {formatVintage(blockSource.block_vintage)} blocks

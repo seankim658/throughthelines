@@ -41,85 +41,7 @@ url = "https://voteview.com/static/data/out/members/HSall_members.csv"
 landing_url = "https://voteview.com/data"
 
 [census]
-# Census Bureau resources for the block-lookup pipeline
-# 
-# Two source types live under this block:
-#   - bef     : Block Equivalency Files, one per Congress. Maps every Census
-#               tabulation block to its congressional district under that
-#               Congress's plan. Authoritative when published by Census.
-#   - tabblock: Per-decade Census tabulation block shapefiles. Polygons +
-#               precomputed internal-point centroids (INTPTLAT/INTPTLON).
-#               Used for cross-decade block linkage and for spatial joins
-#               against Lewis plan polygons (107th-112th Congresses, no BEF).
-#
-# BEF inner-file naming: each zip contains a national-level file named
-# National_CD{NNN}.txt and per-state files {ST}_CD{NNN}.txt for states that
-# reported changes in that cycle.
-#
-# BEF coverage gaps: Census's RDO program does not collect boundaries for
-# the Congress that aligns with the decennial census, so there is no 117th
-# BEF. For NC, the 117th plan came from the NC General Assembly (boundaries
-# enacted 2019 post-Harper v. Hall, available at ncleg.gov/redistricting);
-# for the other 49 states, the 116th BEF data is identical to the 117th and
-# carries forward unchanged. 
-# Source: https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.117th_Congress.html
-#
-# BEF URL pattern note: the 119th release uses the directory name
-# "119-congressional-district-befs" (plural), while older releases (113-118)
-# use "...-bef" (singular).
-
-# --- Block Equivalency Files ---
-
-[[census.bef]]
-congress = 113
-vintage = "v2010"
-landing_url = "https://www.census.gov/geographies/mapping-files/2013/dec/rdo/113-congressional-district-bef.html"
-url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2013/113-congressional-district-bef/cd113.zip"
-national_filename = "National_CD113.txt"
-district_column = "CD113"
-
-[[census.bef]]
-congress = 114
-vintage = "v2010"
-landing_url = "https://www.census.gov/geographies/mapping-files/2015/dec/rdo/114-congressional-district-bef.html"
-url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2015/114-congressional-district-bef/cd114.zip"
-national_filename = "National_CD114.txt"
-district_column = "CD114"
-
-[[census.bef]]
-congress = 115
-vintage = "v2010"
-landing_url = "https://www.census.gov/geographies/mapping-files/2017/dec/rdo/115-congressional-district-bef.html"
-url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2017/115-congressional-district-bef/cd115.zip"
-national_filename = "National_CD115.txt"
-district_column = "CD115"
-
-[[census.bef]]
-congress = 116
-vintage = "v2010"
-landing_url = "https://www.census.gov/geographies/mapping-files/2019/dec/rdo/116-congressional-district-bef.html"
-url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2019/116-congressional-district-bef/cd116.zip"
-national_filename = "National_CD116.txt"
-district_column = "CD116"
-
-# There is no 117th Census BEF (RDO does not collect for sessions whose elections coincide with the decennial year). 
-# https://www.census.gov/newsroom/press-releases/2023/dhc-file-118th-congress.html
-
-[[census.bef]]
-congress = 118
-vintage = "v2020"
-landing_url = "https://www.census.gov/geographies/mapping-files/2023/dec/rdo/118-congressional-district-bef.html"
-url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip"
-national_filename = "National_CD118.txt"
-district_column = "CDFP"
-
-[[census.bef]]
-congress = 119
-vintage = "v2020"
-landing_url = "https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119-congressional-district-bef.html"
-url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
-national_filename = "NationalCD119.txt"
-district_column = "CDFP"
+# Census Bureau resources for the block-lookup pipeline.
 
 # --- Tabulation block shapefiles, per decade ---
 
@@ -136,6 +58,99 @@ url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2010/tl_201
 # Note: tl_2010_ prefix is the release vintage; _tabblock00 suffix is the
 # block geometry vintage. Confusing but correct.
 url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2000/tl_2010_{fips}_tabblock00.zip"
+
+# --- Block Equivalency Files ---
+# 
+# Each entry maps Census tabulation blocks of `vintage` to district numbers under one Congress's plan.
+# 
+# Resolution: for (state, congress), the builder prefers a state-specific entry (state = "NC") over a 
+# national one (state = "*"). This lets a state authority's file override an absent or missing Census 
+# BEF without flag wrangling.
+# 
+# Provider naming convention: lowercase short label for the publishing authority. Examples: "census", 
+# "ncga". For future state authorities prefer the abbreviation contributors will recognize (e.g. "pa_lrc" 
+# for the PA Legislative Reapportionment Commission).
+# 
+# Census BEF URL pattern note: the 119th release uses directory "119-congressional-district-befs" (plural), 
+# older releases use the singular "...-bef".
+#
+# Census BEF coverage gap: the Census Redistricting Data Program does not collect boundaries for the Congress 
+# whose elections align with the decennial census, so there is no 117th Census BEF. For NC, the 117th entry below 
+# points at the NC General Assembly's block assignment file for the 2019-enacted congressional plan (HB 1029, SL 2019-249), 
+# which was used for the 2020 election. For the other 49 states, the 116th BEF data is identical to the 117th and is carried 
+# forward by build-time logic; no per-state 117th entry is required.
+# Source: https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.117th_Congress.html
+
+[[block_assignment]]
+provider = "census"
+state = "*"
+congress = 113
+vintage = "v2010"
+landing_url = "https://www.census.gov/geographies/mapping-files/2013/dec/rdo/113-congressional-district-bef.html"
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2013/113-congressional-district-bef/cd113.zip"
+inner_filename = "National_CD113.txt"
+district_column = "CD113"
+
+[[block_assignment]]
+provider = "census"
+state = "*"
+congress = 114
+vintage = "v2010"
+landing_url = "https://www.census.gov/geographies/mapping-files/2015/dec/rdo/114-congressional-district-bef.html"
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2015/114-congressional-district-bef/cd114.zip"
+inner_filename = "National_CD114.txt"
+district_column = "CD114"
+
+[[block_assignment]]
+provider = "census"
+state = "*"
+congress = 115
+vintage = "v2010"
+landing_url = "https://www.census.gov/geographies/mapping-files/2017/dec/rdo/115-congressional-district-bef.html"
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2017/115-congressional-district-bef/cd115.zip"
+inner_filename = "National_CD115.txt"
+district_column = "CD115"
+
+[[block_assignment]]
+provider = "census"
+state = "*"
+congress = 116
+vintage = "v2010"
+landing_url = "https://www.census.gov/geographies/mapping-files/2019/dec/rdo/116-congressional-district-bef.html"
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2019/116-congressional-district-bef/cd116.zip"
+inner_filename = "National_CD116.txt"
+district_column = "CD116"
+
+[[block_assignment]]
+provider = "ncga"
+state = "NC"
+congress = 117
+vintage = "v2010"
+landing_url = "https://www.ncleg.gov/Redistricting"
+url = "https://www.ncleg.gov/Files/GIS/Plans_Main/Congress_2019/HB1029%203rd%20Edition%20-%20Blockfile.zip"
+inner_filename = "C-Goodwin-A-1-TC.csv"
+district_column = "District"
+geoid_column = "Block"
+
+[[block_assignment]]
+provider = "census"
+state = "*"
+congress = 118
+vintage = "v2020"
+landing_url = "https://www.census.gov/geographies/mapping-files/2023/dec/rdo/118-congressional-district-bef.html"
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip"
+inner_filename = "National_CD118.txt"
+district_column = "CDFP"
+
+[[block_assignment]]
+provider = "census"
+state = "*"
+congress = 119
+vintage = "v2020"
+landing_url = "https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119-congressional-district-befs/"
+url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
+inner_filename = "NationalCD119.txt"
+district_column = "CDFP"
 
 # --- Protomaps basemap ---
 

@@ -32,16 +32,19 @@ export interface ScopeInfo {
 /** How the block-to-district assignment was sourced for a Congress. */
 export type BlockSource =
 	| {
-			type: 'bef';
-			bef_url: string;
-			bef_landing_url: string;
+			type: 'delimited_assignment';
 			block_vintage: 'v2000' | 'v2010' | 'v2020';
+			provider: string;
+			inner_filename: string;
+			upstream_url: string;
+			upstream_landing_url: string;
 	  }
 	| {
-			type: 'lewis_spatial_join';
-			lewis_path: string;
-			lewis_landing_url: string;
+			type: 'polygon_join';
 			block_vintage: 'v2000' | 'v2010' | 'v2020';
+			provider: string;
+			source_file: string;
+			upstream_landing_url: string;
 	  }
 	| { type: 'unsourced' };
 
