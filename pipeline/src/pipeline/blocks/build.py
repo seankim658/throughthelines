@@ -11,9 +11,10 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import (
+    BlockAssignmentEntry,
     BlockVintage,
     CensusSource,
-    CensusBefEntry,
+    NATIONAL_SCOPE,
     ProjectPaths,
     ScopeSettings,
 )
@@ -27,18 +28,28 @@ from pipeline.plans import Plan
 from pipeline.blocks.readers import (
     TABBLOCK_COLUMNS,
     Centroid,
-    load_bef,
     load_block_polygons,
     load_centroids,
-    load_lewis_polygons,
+)
+from pipeline.blocks.sources import (
+    BlockAssignmentSource,
+    BlockGeometry,
+    DelimitedAssignmentSource,
+    PolygonJoinSource,
+    UnsourcedSource,
 )
 from pipeline.blocks.spatial_joins import (
     CrossDecadeResult,
     cross_decade_join,
-    lewis_spatial_join,
 )
 
 _OUTPUT_SCHEMA_VERSION: int = 1
+
+# Block-vintage assignment for pre-BEF Congress (pre 113th and post 90s)
+_PRE_BEF_VINTAGE: BlockVintage = "v2000"
+
+# First Congress for which a Census BEF is expected
+_FIRST_BEF_CONGRESS: int = 113
 
 # --- Errors ---
 
@@ -51,54 +62,15 @@ class BlocksBuildError(Exception):
 
 
 @dataclass(frozen=True)
-class _BefSource:
-
-    congress: int
-    plan_id: str
-    bef_url: str
-    bef_landing_url: str
-    bef_zip_path: Path
-    inner_filename: str
-    block_vintage: BlockVintage
-    district_column: str
-
-
-@dataclass(frozen=True)
-class _LewisSource:
-
-    congress: int
-    plan_id: str
-    source_file: str  # Relative to data/raw/, matches Plans.source_file
-    lewis_landing_url: str
-    geojson_path: Path
-    district_property: str = "district"
-
-
-@dataclass(frozen=True)
-class _UnsourcedSource:
-    """A congress in scope with no available block-to-district source.
-
-    Produced when --allow-missing is set and the corresponding BEF is not
-    on disk. The block-lookup output records `None` for every block in this
-    congress's slot, and the manifest emits a per-Congress entry with
-    block_source.type == "unsourced".
-    """
-
-    congress: int
-    plan_id: str
-
-
-_CongressSource = _BefSource | _LewisSource | _UnsourcedSource
-
-
-@dataclass(frozen=True)
 class _BuildPlan:
 
     state: SupportedStateCode
     scope: ScopeSettings
     state_fips: str
     tabblock_paths: dict[BlockVintage, Path]
-    sources: dict[int, _CongressSource]
+    sources: dict[int, BlockAssignmentSource]
+    plan_by_congress: dict[int, Plan]
+    resolution_warnings: list[str]
 
 
 @dataclass(frozen=True)
@@ -106,19 +78,11 @@ class _BlockLinkage:
     """Cross-decade linkage of 2020 blocks to their 2010 and 2000 equivalents."""
 
     centroids_2020: dict[str, Centroid]
+    centroids_2010: dict[str, Centroid] | None
     centroids_2000: dict[str, Centroid] | None
     linkage_2020_to_2010: dict[str, str] | None
     linkage_2020_to_2000: dict[str, str] | None
     warnings: list[str]
-
-
-# Block-vintage assignment for pre-BEF Congress (pre 112th)
-#
-# The build-time decision is to spatially join their plans against 2000-decade tabulation blocks.
-_PRE_BEF_VINTAGE: BlockVintage = "v2000"
-
-# First Congress for which a Congress BEF is expected
-_FIRST_BEF_CONGRESS: int = 113
 
 
 # --- Models ---
@@ -144,8 +108,9 @@ def _validate_inputs(
     scope: ScopeSettings,
     project_paths: ProjectPaths,
     census_source: CensusSource,
+    block_assignments: list[BlockAssignmentEntry],
     allow_missing: bool,
-    lewis_fallback: bool,
+    spatial_join_fallback: bool,
     lewis_landing_url: str,
 ) -> _BuildPlan:
     """Run the upfront checks. Return a frozen build-plan or raise.
@@ -155,25 +120,26 @@ def _validate_inputs(
            by the sourcing matrix.
         2. The in-scope plan set covers [congress_start, congress_end] with with
            no duplicates.
-        3. Every Congress in scope maps to a BEF entry (with its zip on disk) or
-           to an in-scope plan (with its Lewis GeoJSON on disk). Plans that span
-           multiple Congresses but lack a BEF drive spatial joins for every Congress
-           in their range.
+        3. Every Congress in scope resolves to a source: a `[[block_assignment]]` entry (state-specific
+           or national, with its zip on disk), the pre-BEF polygon fallback, the `--spatial-join-fallback`
+           opt-in, or an unsourced placeholder under `--allow-missing`.
+
     """
     state_info = STATE_INFO[state]
-    bef_by_congress: dict[int, CensusBefEntry] = {
-        e.congress: e for e in census_source.befs
+
+    assignments_by_key: dict[tuple[str, int], BlockAssignmentEntry] = {
+        (entry.state, entry.congress): entry for entry in block_assignments
     }
 
     plan_by_congress: dict[int, Plan] = _resolve_plan_coverage(plans, state, scope)
-    sources, needed_vintages = _resolve_congress_sources(
+    sources, needed_vintages, resolution_warnings = _resolve_congress_sources(
         plan_by_congress=plan_by_congress,
         scope=scope,
-        bef_by_congress=bef_by_congress,
+        assignments_by_key=assignments_by_key,
         project_paths=project_paths,
         state=state,
         allow_missing=allow_missing,
-        lewis_fallback=lewis_fallback,
+        spatial_join_fallback=spatial_join_fallback,
         lewis_landing_url=lewis_landing_url,
     )
     tabblock_paths: dict[BlockVintage, Path] = _resolve_tabblock_paths(
@@ -189,6 +155,8 @@ def _validate_inputs(
         state_fips=state_info.fips,
         tabblock_paths=tabblock_paths,
         sources=sources,
+        plan_by_congress=plan_by_congress,
+        resolution_warnings=resolution_warnings,
     )
 
 
@@ -230,109 +198,146 @@ def _resolve_plan_coverage(
 def _resolve_congress_sources(
     plan_by_congress: dict[int, Plan],
     scope: ScopeSettings,
-    bef_by_congress: dict[int, CensusBefEntry],
+    assignments_by_key: dict[tuple[str, int], BlockAssignmentEntry],
     project_paths: ProjectPaths,
     state: SupportedStateCode,
     allow_missing: bool,
-    lewis_fallback: bool,
+    spatial_join_fallback: bool,
     lewis_landing_url: str,
-) -> tuple[dict[int, _CongressSource], set[BlockVintage]]:
-    """Decide BEF / Lewis spatial-join / unsourced for each in-scope Congress.
+) -> tuple[dict[int, BlockAssignmentSource], set[BlockVintage], list[str]]:
+    """Decide a `BlockAssignmentSource` for each in-scope Congress.
 
-    Returns the resolved sources, any unsourced Congresses, and the set of block
-    vintages needed downstream.
+    Resolution order, per Congress:
+        1. State-specific [[block_assignment]] entry
+        2. National [[block_assignment]] entry (state = "*")
+        3. Pre-BEF polygon fallback (unconditional below _FIRST_BEF_CONGRESS)
+        4. BEF-era polygon fallback under --spatial-join-fallback
+        5. Unsourced under --allow-missing
+        6. Rasises BlocksBuildError
     """
-    sources: dict[int, _CongressSource] = {}
+    sources: dict[int, BlockAssignmentSource] = {}
     needed_vintages: set[BlockVintage] = set()
+    polygon_fallback_congresses: list[int] = []
+    state_fips: str = STATE_INFO[state].fips
 
     for congress in range(scope.congress_start, scope.congress_end + 1):
         plan: Plan = plan_by_congress[congress]
-        bef_entry: CensusBefEntry | None = bef_by_congress.get(congress)
 
-        if bef_entry is not None:
-            sources[congress] = _make_bef_source(
-                plan, congress, bef_entry, project_paths.bef_dir
+        # Step 1: state-specific delimited entry wins
+        entry: BlockAssignmentEntry | None = assignments_by_key.get((state, congress))
+
+        # Step 2: national delimited entry
+        if entry is None:
+            entry = assignments_by_key.get((NATIONAL_SCOPE, congress))
+
+        if entry is not None:
+            sources[congress] = _make_delimited_source(
+                entry=entry,
+                congress=congress,
+                state_fips=state_fips,
+                bef_dir=project_paths.bef_dir,
             )
-            needed_vintages.add(bef_entry.vintage)
-        elif congress < _FIRST_BEF_CONGRESS:
-            # Pre-BEF era: Census never published BEFs for these Congresses,
-            # so compute district-per-block by spatial join against the
-            # Lewis plan polygons.
-            sources[congress] = _make_lewis_source(
-                plan, congress, project_paths.raw_dir, lewis_landing_url
+            needed_vintages.add(entry.vintage)
+            continue
+
+        # Step 3: pre-BEF polygon fallback (unconditional)
+        if congress < _FIRST_BEF_CONGRESS:
+            sources[congress] = _make_polygon_source(
+                plan=plan,
+                congress=congress,
+                raw_dir=project_paths.raw_dir,
+                lewis_landing_url=lewis_landing_url,
             )
             needed_vintages.add(_PRE_BEF_VINTAGE)
-        elif lewis_fallback:
-            # BEF era (113+) but not BEF is configured for this Congress
-            # (e.g., 117th). Caller opted into Lewis fallback. If the
-            # Lewis source file doesn't exist fall through to allow_missing.
+            polygon_fallback_congresses.append(congress)
+            continue
+
+        # Step 4: BEF-era polygon fallback under --spatial-join-fallback
+        if spatial_join_fallback:
             try:
-                sources[congress] = _make_lewis_source(
-                    plan, congress, project_paths.raw_dir, lewis_landing_url
+                sources[congress] = _make_polygon_source(
+                    plan=plan,
+                    congress=congress,
+                    raw_dir=project_paths.raw_dir,
+                    lewis_landing_url=lewis_landing_url,
                 )
                 needed_vintages.add(_PRE_BEF_VINTAGE)
+                polygon_fallback_congresses.append(congress)
+                continue
             except BlocksBuildError:
                 if allow_missing:
-                    sources[congress] = _UnsourcedSource(
-                        congress=congress, plan_id=plan.plan_id
-                    )
-                else:
-                    raise
-        elif allow_missing:
-            # BEF era (113+) but the BEF isn't on disk
-            sources[congress] = _UnsourcedSource(
-                congress=congress, plan_id=plan.plan_id
-            )
-        else:
-            raise BlocksBuildError(
-                f"no BEF configured for Congress {congress} (state {state}); "
-                f"expected in BEF era ({_FIRST_BEF_CONGRESS}th+). "
-                f"Use --allow-missing to skip."
-            )
+                    sources[congress] = UnsourcedSource()
+                    continue
+                raise
 
-    return sources, needed_vintages
+        # Step 5: unsourced under --allow-missing
+        if allow_missing:
+            sources[congress] = UnsourcedSource()
+            continue
 
-
-def _make_bef_source(
-    plan: Plan, congress: int, bef_entry: CensusBefEntry, bef_dir: Path
-) -> _BefSource:
-    """Resolve and validate a BEF source for one Congress."""
-    bef_zip_path: Path = bef_dir / Path(bef_entry.url).name
-    if not bef_zip_path.exists():
+        # Step 6: error
         raise BlocksBuildError(
-            f"BEF zip for Congress {congress} not found at {bef_zip_path} "
-            f"(did you run `pipeline fetch`?)"
+            f"no block-assignment entry configured for Congress {congress} "
+            f"(state {state}); expected in BEF era ({_FIRST_BEF_CONGRESS}th+). "
+            f"Use --allow-missing or --spatial-join-fallback to proceed."
         )
-    return _BefSource(
-        congress=congress,
-        plan_id=plan.plan_id,
-        bef_url=bef_entry.url,
-        bef_landing_url=bef_entry.landing_url,
-        bef_zip_path=bef_zip_path,
-        inner_filename=bef_entry.national_filename,
-        block_vintage=bef_entry.vintage,
-        district_column=bef_entry.district_column,
-    )
+
+    resolution_warnings: list[str] = []
+    if polygon_fallback_congresses:
+        resolution_warnings.append(
+            f"Polygon-fallback vintage: Congresses "
+            f"{sorted(polygon_fallback_congresses)} sourced via "
+            f"PolygonJoinSource declared block_vintage={_PRE_BEF_VINTAGE}."
+        )
+
+    return sources, needed_vintages, resolution_warnings
 
 
-def _make_lewis_source(
-    plan: Plan, congress: int, raw_dir: Path, lewis_landing_url: str
-) -> _LewisSource:
-    """Resolve and validate a Lewis spatial-join source for one Congress."""
-    geojson_path: Path = raw_dir / plan.source_file
-    if not geojson_path.exists():
+def _make_delimited_source(
+    entry: BlockAssignmentEntry, congress: int, state_fips: str, bef_dir: Path
+) -> DelimitedAssignmentSource:
+    """Resolve and validate a delimited-assignment for one Congress."""
+    zip_path: Path = bef_dir / Path(entry.url).name
+    try:
+        return DelimitedAssignmentSource(
+            zip_path=zip_path,
+            inner_filename=entry.inner_filename,
+            state_fips=state_fips,
+            district_column=entry.district_column,
+            _block_vintage=entry.vintage,
+            provider=entry.provider,
+            upstream_url=entry.url,
+            upstream_landing_url=entry.landing_url,
+            geoid_column=entry.geoid_column,
+            delimiter=entry.delimiter,
+        )
+    except FileNotFoundError as e:
         raise BlocksBuildError(
-            f"Lewis GeoJSON for plan {plan.plan_id!r} (Congress {congress}) "
+            f"block-assignment zip for Congress {congress} "
+            f"(provider={entry.provider!r}) not found at {zip_path} "
+            f"(did you run `pipeline fetch`?)"
+        ) from e
+
+
+def _make_polygon_source(
+    plan: Plan, congress: int, raw_dir: Path, lewis_landing_url: str
+) -> PolygonJoinSource:
+    """Resolve and validate a polygon-join source for one Congress."""
+    geojson_path: Path = raw_dir / plan.source_file
+    try:
+        return PolygonJoinSource(
+            geojson_path=geojson_path,
+            source_file=plan.source_file,
+            _block_vintage=_PRE_BEF_VINTAGE,
+            provider="lewis",
+            upstream_landing_url=lewis_landing_url,
+        )
+    except FileNotFoundError as e:
+        raise BlocksBuildError(
+            f"polygon file for plan {plan.plan_id!r} (Congress {congress}) "
             f"not found at {geojson_path} "
             f"(did you run `pipeline fetch`?)"
-        )
-    return _LewisSource(
-        congress=congress,
-        plan_id=plan.plan_id,
-        source_file=plan.source_file,
-        lewis_landing_url=lewis_landing_url,
-        geojson_path=geojson_path,
-    )
+        ) from e
 
 
 def _resolve_tabblock_paths(
@@ -374,16 +379,11 @@ def _resolve_tabblock_paths(
 
 def _classify_linkage_needs(build_plan: _BuildPlan) -> tuple[bool, bool]:
     """Determine which cross-decade linkages the sourcing matrix requires."""
-    needs_2010: bool = False
-    needs_2000: bool = False
-    for source in build_plan.sources.values():
-        if isinstance(source, _LewisSource):
-            needs_2000 = True
-        elif isinstance(source, _BefSource):
-            if source.block_vintage == "v2010":
-                needs_2010 = True
-            elif source.block_vintage == "v2000":
-                needs_2000 = True
+    vintages: set[BlockVintage] = {
+        v for s in build_plan.sources.values() if (v := s.block_vintage) is not None
+    }
+    needs_2010: bool = "v2010" in vintages
+    needs_2000: bool = "v2000" in vintages
     return needs_2010, needs_2000
 
 
@@ -402,6 +402,18 @@ def _summarize_linkage(linkage: _BlockLinkage) -> str:
     return f"{total} 2020 blocks loaded; no cross-decade linkage required"
 
 
+def _build_block_geometry(linkage: _BlockLinkage) -> BlockGeometry:
+    """Bundle the centroid dicts the linkage stage loaded into a BlockGeometry."""
+    centroids_by_vintage: dict[BlockVintage, dict[str, Centroid]] = {
+        "v2020": linkage.centroids_2020
+    }
+    if linkage.centroids_2010 is not None:
+        centroids_by_vintage["v2010"] = linkage.centroids_2010
+    if linkage.centroids_2000 is not None:
+        centroids_by_vintage["v2000"] = linkage.centroids_2000
+    return BlockGeometry(centroids_by_vintage=centroids_by_vintage)
+
+
 # --- API ---
 
 
@@ -412,10 +424,11 @@ def build_blocks(
     scope: ScopeSettings,
     project_paths: ProjectPaths,
     census_source: CensusSource,
+    block_assignments: list[BlockAssignmentEntry],
     lewis_landing_url: str,
     output_path: Path,
     allow_missing: bool = False,
-    lewis_fallback: bool = False,
+    spatial_join_fallback: bool = False,
 ) -> BlocksBuildResult:
     """Build the per-state block-lookup JSON for one state."""
     build_plan: _BuildPlan = _validate_inputs(
@@ -424,8 +437,9 @@ def build_blocks(
         scope=scope,
         project_paths=project_paths,
         census_source=census_source,
+        block_assignments=block_assignments,
         allow_missing=allow_missing,
-        lewis_fallback=lewis_fallback,
+        spatial_join_fallback=spatial_join_fallback,
         lewis_landing_url=lewis_landing_url,
     )
 
@@ -435,16 +449,11 @@ def build_blocks(
         needs_2010_linkage=needs_2010_linkage,
         needs_2000_linkage=needs_2000_linkage,
     )
-    bef_assignments: dict[int, dict[str, int]] = _load_bef_assignments(build_plan)
-    lewis_assignments: dict[str, dict[str, int]] = _build_lewis_assignments(
-        build_plan, linkage.centroids_2000
-    )
+    geometry: BlockGeometry = _build_block_geometry(linkage)
+    assignments: dict[int, dict[str, int]] = _load_assignments(build_plan, geometry)
 
     histories_by_block: dict[str, list[int | None]] = _build_block_histories(
-        build_plan=build_plan,
-        linkage=linkage,
-        bef_assignments=bef_assignments,
-        lewis_assignments=lewis_assignments,
+        build_plan=build_plan, linkage=linkage, assignments=assignments
     )
     blocks_map, unique_histories = _deduplicate_histories(histories_by_block)
 
@@ -465,7 +474,7 @@ def build_blocks(
     unsourced_congresses: list[int] = sorted(
         congress
         for congress, source in build_plan.sources.items()
-        if isinstance(source, _UnsourcedSource)
+        if isinstance(source, UnsourcedSource)
     )
 
     return BlocksBuildResult(
@@ -474,7 +483,11 @@ def build_blocks(
         blocks_count=len(blocks_map),
         histories_count=len(unique_histories),
         unsourced_congresses=unsourced_congresses,
-        warnings=linkage.warnings + [_summarize_linkage(linkage)],
+        warnings=(
+            linkage.warnings
+            + build_plan.resolution_warnings
+            + [_summarize_linkage(linkage)]
+        ),
     )
 
 
@@ -500,6 +513,7 @@ def _build_block_linkage(
     if not needs_2010_linkage and not needs_2000_linkage:
         return _BlockLinkage(
             centroids_2020=centroids_2020,
+            centroids_2010=None,
             centroids_2000=None,
             linkage_2020_to_2010=None,
             linkage_2020_to_2000=None,
@@ -529,6 +543,7 @@ def _build_block_linkage(
     if not needs_2000_linkage:
         return _BlockLinkage(
             centroids_2020=centroids_2020,
+            centroids_2010=centroids_2010,
             centroids_2000=None,
             linkage_2020_to_2010=join_2020_to_2010.linkage,
             linkage_2020_to_2000=None,
@@ -559,6 +574,7 @@ def _build_block_linkage(
 
     return _BlockLinkage(
         centroids_2020=centroids_2020,
+        centroids_2010=centroids_2010,
         centroids_2000=centroids_2000,
         linkage_2020_to_2010=(
             join_2020_to_2010.linkage if needs_2010_linkage else None
@@ -587,106 +603,58 @@ def _compose_chain(
 def _serialize_congresses(build_plan: _BuildPlan) -> list[dict[str, Any]]:
     """Serialize per-Congress provenance for the block_lookup output.
 
-    Walks the sources map in scope order. Each entry records the plan_id
-    governing that Congress and a discriminated `block_source` describing
-    how the block-to-district was sourced. The same payload is propagated
-    up into the manifest file, so any change here is a frontend contract
+    Each entry records the plan_id governing that Congress and the discriminated
+    `block_source` payload from the source's provenance() method. The same payload
+    if propagated up into the manifest file, so any change here is a frontent contract
     change.
     """
     entries: list[dict[str, Any]] = []
     scope: ScopeSettings = build_plan.scope
     for congress in range(scope.congress_start, scope.congress_end + 1):
-        source: _CongressSource = build_plan.sources[congress]
-        block_source: dict[str, Any]
-        if isinstance(source, _BefSource):
-            block_source = {
-                "type": "bef",
-                "bef_url": source.bef_url,
-                "bef_landing_url": source.bef_landing_url,
-                "block_vintage": source.block_vintage,
-            }
-        elif isinstance(source, _LewisSource):
-            block_source = {
-                "type": "lewis_spatial_join",
-                "lewis_path": source.source_file,
-                "lewis_landing_url": source.lewis_landing_url,
-                "block_vintage": _PRE_BEF_VINTAGE,
-            }
-        else:
-            block_source = {"type": "unsourced"}
-
+        source: BlockAssignmentSource = build_plan.sources[congress]
+        plan: Plan = build_plan.plan_by_congress[congress]
         entries.append(
             {
                 "congress": congress,
-                "plan_id": source.plan_id,
-                "block_source": block_source,
+                "plan_id": plan.plan_id,
+                "block_source": source.provenance(),
             }
         )
 
     return entries
 
 
-def _load_bef_assignments(build_plan: _BuildPlan) -> dict[int, dict[str, int]]:
-    """Load BEF block-to-district mappings, one per BEF-sourced Congress."""
-    assignments: dict[int, dict[str, int]] = {}
-    for congress, source in build_plan.sources.items():
-        if not isinstance(source, _BefSource):
-            continue
-        assignments[congress] = load_bef(
-            bef_zip_path=source.bef_zip_path,
-            inner_filename=source.inner_filename,
-            state_fips=build_plan.state_fips,
-            district_column=source.district_column,
-        )
-    return assignments
+def _load_assignments(
+    build_plan: _BuildPlan, geometry: BlockGeometry
+) -> dict[int, dict[str, int]]:
+    """Load block-to-district assignemnts for every Congress in scope.
 
-
-def _build_lewis_assignments(
-    build_plan: _BuildPlan,
-    centroids_2000: dict[str, Centroid] | None,
-) -> dict[str, dict[str, int]]:
-    """Spatial-join 2000 block centroids against each Lewis plan's polygons.
-
-    Deduplicated by plan_id: a single Lewis plan that spans multiple Congresses
-    is joined exactly once and the result is reused for every Congress it covers.
+    Polygon-join results are cached by geojson_path so a multi-Congress
+    Lewis plan is spatial-joined exactly once and reused across every
+    Congress it covers.
     """
-    has_lewis: bool = any(
-        isinstance(s, _LewisSource) for s in build_plan.sources.values()
-    )
-    if not has_lewis:
-        return {}
-    if centroids_2000 is None:
-        # Invariant: Lewis sources require the 2020 → 2000 chain, which
-        # populates centroids_2000. If we got here with None, the linkage
-        # classifier disagreed with the linkage builder.
-        raise BlocksBuildError(
-            "internal error: Lewis sources present but 2000-vintage centroids "
-            "were not loaded; the linkage builder skipped a required chain depth"
-        )
+    assignments: dict[int, dict[str, int]] = {}
+    polygon_cache: dict[Path, dict[str, int]] = {}
 
-    assignments: dict[str, dict[str, int]] = {}
-    for source in build_plan.sources.values():
-        if not isinstance(source, _LewisSource):
-            continue
-        if source.plan_id in assignments:
-            continue
-        plan_polys, district_col = load_lewis_polygons(
-            geojson_path=source.geojson_path, district_property=source.district_property
-        )
-        assignments[source.plan_id] = lewis_spatial_join(
-            centroids=centroids_2000,
-            plan_polygons=plan_polys,
-            district_col=district_col,
-        )
-        del plan_polys
+    for congress, source in build_plan.sources.items():
+        if isinstance(source, PolygonJoinSource):
+            cached: dict[str, int] | None = polygon_cache.get(source.geojson_path)
+            if cached is not None:
+                assignments[congress] = cached
+                continue
+            result: dict[str, int] = source.load(geometry)
+            polygon_cache[source.geojson_path] = result
+            assignments[congress] = result
+        else:
+            assignments[congress] = source.load(geometry)
+
     return assignments
 
 
 def _build_block_histories(
     build_plan: _BuildPlan,
     linkage: _BlockLinkage,
-    bef_assignments: dict[int, dict[str, int]],
-    lewis_assignments: dict[str, dict[str, int]],
+    assignments: dict[int, dict[str, int]],
 ) -> dict[str, list[int | None]]:
     """Build the per-block district-history array, one slot per Congress in scope."""
     scope: ScopeSettings = build_plan.scope
@@ -708,8 +676,7 @@ def _build_block_histories(
                 geoid_2020=geoid_2020,
                 geoid_2010=geoid_2010,
                 geoid_2000=geoid_2000,
-                bef_assignments=bef_assignments,
-                lewis_assignments=lewis_assignments,
+                assignments=assignments,
             )
         histories[geoid_2020] = history
 
@@ -722,29 +689,26 @@ def _district_for_congress(
     geoid_2020: str,
     geoid_2010: str | None,
     geoid_2000: str | None,
-    bef_assignments: dict[int, dict[str, int]],
-    lewis_assignments: dict[str, dict[str, int]],
+    assignments: dict[int, dict[str, int]],
 ) -> int | None:
     """Resolve a single (block, congress) -> district lookup."""
-    source: _CongressSource = build_plan.sources[congress]
+    source: BlockAssignmentSource = build_plan.sources[congress]
+    vintage: BlockVintage | None = source.block_vintage
 
-    if isinstance(source, _UnsourcedSource):
+    if vintage is None:
         return None
 
-    if isinstance(source, _BefSource):
-        bef_dict: dict[str, int] = bef_assignments[congress]
-        if source.block_vintage == "v2020":
-            return bef_dict.get(geoid_2020)
-        if source.block_vintage == "v2010":
-            return bef_dict.get(geoid_2010) if geoid_2010 else None
-        if source.block_vintage == "v2000":
-            return bef_dict.get(geoid_2000) if geoid_2000 else None
-        return None
+    geoid: str | None
+    if vintage == "v2020":
+        geoid = geoid_2020
+    elif vintage == "v2010":
+        geoid = geoid_2010
+    elif vintage == "v2000":
+        geoid = geoid_2000
 
-    # _LewisSource
-    if geoid_2000 is None:
+    if geoid is None:
         return None
-    return lewis_assignments[source.plan_id].get(geoid_2000)
+    return assignments[congress].get(geoid)
 
 
 def _deduplicate_histories(

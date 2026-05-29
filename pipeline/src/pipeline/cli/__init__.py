@@ -89,7 +89,6 @@ def _build_parser() -> argparse.ArgumentParser:
             "  3. stitch          Stitch plan metadata onto Lewis polygons\n"
             "  4. members         Slice Voteview into per-state members.json\n"
             "  5. blocks          Build per-state block-lookup JSON\n"
-            "                     (use --lewis-fallback for the 117th)\n"
             "  6. tiles           Build PMTiles archives via tippecanoe\n"
             "  7. basemap         Extract CONUS basemap via pmtiles CLI\n"
             "  8. plan-index      Build plan_index.json for the frontend\n"
@@ -179,11 +178,12 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     blocks_parser.add_argument(
-        "--lewis-fallback",
+        "--spatial-join-fallback",
         action="store_true",
         help=(
-            "When a Congress in the BEF era (113+) has no BEF, fall back to "
-            "a spatial join against its Lewis plan polygon if available."
+            "When a Congress in the BEF era (113+) has no [[block_assignment]] "
+            "entry, fall back to a spatial join against its plan polygon if "
+            "available. Off by default."
         ),
     )
 

@@ -25,6 +25,9 @@ SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
 BlockVintage = Literal["v2000", "v2010", "v2020"]
 SUPPORTED_VINTAGES: tuple[BlockVintage, ...] = get_args(BlockVintage)
 
+# Wildcard for a block-assignment entry that applies to all states
+NATIONAL_SCOPE: Literal["*"] = "*"
+
 
 # --- Errors ---
 
@@ -61,20 +64,23 @@ class VoteviewSource:
 
 
 @dataclass(frozen=True)
-class CensusBefEntry:
+class BlockAssignmentEntry:
 
+    provider: str
+    state: SupportedStateCode | Literal["*"]
     congress: int
     vintage: BlockVintage
     url: str
     landing_url: str
-    national_filename: str
+    inner_filename: str
     district_column: str
+    geoid_column: str | None = None  # None -> auto-detect {"BLOCKID", "GEOID"}
+    delimiter: str = ","
 
 
 @dataclass(frozen=True)
 class CensusSource:
 
-    befs: list[CensusBefEntry]
     tabblock_templates: dict[BlockVintage, str]
 
     def tabblock_url(self, vintage: BlockVintage, state: SupportedStateCode) -> str:
@@ -99,6 +105,7 @@ class FetchConfig:
     lewis: LewisSource
     voteview: VoteviewSource
     census: CensusSource
+    block_assignments: list[BlockAssignmentEntry]
     protomaps_basemap: ProtomapsBasemapSource
 
 
@@ -141,6 +148,8 @@ def load_fetch_config(path: Path) -> FetchConfig:
     census_raw: dict[str, Any] = require_section(raw, "census", path, FetchConfigError)
     census = _load_census(census_raw, path)
 
+    block_assignments: list[BlockAssignmentEntry] = _load_block_assignments(raw, path)
+
     protomaps_basemap_raw: dict[str, Any] = require_section(
         raw, "protomaps_basemap", path, FetchConfigError
     )
@@ -174,6 +183,7 @@ def load_fetch_config(path: Path) -> FetchConfig:
         lewis=lewis,
         voteview=voteview,
         census=census,
+        block_assignments=block_assignments,
         protomaps_basemap=protomaps_basemap,
     )
 
@@ -212,47 +222,74 @@ def _load_lewis_states(
 
 
 def _load_census(census_raw: dict[str, Any], path: Path) -> CensusSource:
-    befs: list[CensusBefEntry] = _load_census_befs(census_raw, path)
     tabblock_templates: dict[BlockVintage, str] = _load_census_tabblock_templates(
         census_raw, path
     )
-    return CensusSource(befs=befs, tabblock_templates=tabblock_templates)
+    return CensusSource(tabblock_templates=tabblock_templates)
 
 
-def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefEntry]:
-    if "bef" not in census_raw:
-        raise FetchConfigError(f"missing [[census.bef]] entries in {path}")
-    bef_raw = census_raw["bef"]
-    if not isinstance(bef_raw, list) or not bef_raw:
+def _load_block_assignments(
+    raw: dict[str, Any], path: Path
+) -> list[BlockAssignmentEntry]:
+    if "block_assignment" not in raw:
         raise FetchConfigError(
-            f"[[census.bef]] in {path} must be a non-empty array of tables"
+            f"missing [[block_assignment]] entries in {path}; expected at "
+            f"least one entry"
+        )
+    entries_raw = raw["block_assignment"]
+    if not isinstance(entries_raw, list) or not entries_raw:
+        raise FetchConfigError(
+            f"[[block_assignment]] in {path} must be a non-empty array of tables"
         )
 
-    seen_congresses: set[int] = set()
-    befs: list[CensusBefEntry] = []
-    for idx, entry_raw in enumerate(bef_raw):
+    seen: set[tuple[str, str, int]] = set()
+    entries: list[BlockAssignmentEntry] = []
+    for idx, entry_raw in enumerate(entries_raw):
         if not isinstance(entry_raw, dict):
             raise FetchConfigError(
-                f"[[census.bef]] entry at index {idx} in {path} is not a table"
+                f"[[block_assignment]] entry at index {idx} in {path} is not a table"
             )
-        section_label: str = f"census.bef[{idx}]"
+        section_label: str = f"block_assignment[{idx}]"
+
+        provider: str = require_string(
+            entry_raw, "provider", section_label, path, FetchConfigError
+        )
+
+        state_raw: str = require_string(
+            entry_raw, "state", section_label, path, FetchConfigError
+        )
+
+        if state_raw != NATIONAL_SCOPE and state_raw not in SUPPORTED_STATES:
+            supported_list: str = ", ".join(SUPPORTED_STATES)
+            raise FetchConfigError(
+                f"unknown state {state_raw!r} in [[{section_label}]] in {path} "
+                f"(expected '*' or one of: {supported_list})"
+            )
+        state: SupportedStateCode | Literal["*"] = cast(
+            "SupportedStateCode | Literal['*']", state_raw
+        )
+
         congress: int = require_int(
             entry_raw, "congress", section_label, path, FetchConfigError
         )
-        if congress in seen_congresses:
+
+        dedup_key: tuple[str, str, int] = (provider, state_raw, congress)
+        if dedup_key in seen:
             raise FetchConfigError(
-                f"duplicate [[census.bef]] entry for congress {congress} in {path}"
+                f"duplicate [[block_assignment]] entry for "
+                f"provider={provider!r}, state={state_raw!r}, congress={congress} "
+                f"in {path}"
             )
-        seen_congresses.add(congress)
+        seen.add(dedup_key)
 
         vintage_raw: str = require_string(
             entry_raw, "vintage", section_label, path, FetchConfigError
         )
         if vintage_raw not in SUPPORTED_VINTAGES:
-            supported_list: str = ", ".join(SUPPORTED_VINTAGES)
+            supported_vintages: str = ", ".join(SUPPORTED_VINTAGES)
             raise FetchConfigError(
                 f"unknown vintage {vintage_raw!r} in [[{section_label}]] in "
-                f"{path} (supported: {supported_list})"
+                f"{path} (supported: {supported_vintages})"
             )
 
         url: str = require_string(
@@ -261,25 +298,44 @@ def _load_census_befs(census_raw: dict[str, Any], path: Path) -> list[CensusBefE
         landing_url: str = require_string(
             entry_raw, "landing_url", section_label, path, FetchConfigError
         )
-        national_filename: str = require_string(
-            entry_raw, "national_filename", section_label, path, FetchConfigError
+        inner_filename: str = require_string(
+            entry_raw, "inner_filename", section_label, path, FetchConfigError
         )
         district_column: str = require_string(
             entry_raw, "district_column", section_label, path, FetchConfigError
         )
-        befs.append(
-            CensusBefEntry(
+
+        geoid_column_raw: Any = entry_raw.get("geoid_column")
+        if geoid_column_raw is not None and not isinstance(geoid_column_raw, str):
+            raise FetchConfigError(
+                f"geoid_column in [[{section_label}]] in {path} must be a string"
+            )
+        geoid_column: str | None = geoid_column_raw
+
+        delimiter_raw: Any = entry_raw.get("delimiter", ",")
+        if not isinstance(delimiter_raw, str):
+            raise FetchConfigError(
+                f"delimiter in [[{section_label}]] in {path} must be a string"
+            )
+        delimiter: str = delimiter_raw
+
+        entries.append(
+            BlockAssignmentEntry(
+                provider=provider,
+                state=state,
                 congress=congress,
                 vintage=cast(BlockVintage, vintage_raw),
                 url=url,
                 landing_url=landing_url,
-                national_filename=national_filename,
+                inner_filename=inner_filename,
                 district_column=district_column,
+                geoid_column=geoid_column,
+                delimiter=delimiter,
             )
         )
 
-    befs.sort(key=lambda entry: entry.congress)
-    return befs
+    entries.sort(key=lambda e: (e.congress, e.state, e.provider))
+    return entries
 
 
 def _load_census_tabblock_templates(
