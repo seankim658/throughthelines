@@ -14,6 +14,7 @@
 	let { data }: { data: PageData } = $props();
 
 	let lookup = $state<LookupState>({ status: 'idle' });
+	let showBasemap = $state(true);
 	// Component is remounted on stateCode change by {#key} in [state]/+layout.svelte.
 	// svelte-ignore state_referenced_locally
 	let activeCongress = $state(data.coverage === 'covered' ? data.blockLookup.congress_end : 0);
@@ -151,13 +152,22 @@
 
 		<div class="grid grid-cols-[1fr_240px] gap-4">
 			{#if tilesUrl && activeCongressEntry}
-				<StateMap
-					{tilesUrl}
-					{basemapUrl}
-					activePlanId={activeCongressEntry.plan_id}
-					{activeDistrict}
-					marker={lookup.status === 'ready' ? lookup.coordinates : null}
-				/>
+				<div class="space-y-2">
+					{#if basemapUrl}
+						<label class="text-ink-secondary flex cursor-pointer items-center gap-2 text-sm">
+							<input type="checkbox" bind:checked={showBasemap} class="cursor-pointer" />
+							Show map background
+						</label>
+					{/if}
+					<StateMap
+						{tilesUrl}
+						{basemapUrl}
+						activePlanId={activeCongressEntry.plan_id}
+						{activeDistrict}
+						marker={lookup.status === 'ready' ? lookup.coordinates : null}
+						{showBasemap}
+					/>
+				</div>
 			{:else}
 				<div class="bg-surface-sunken h-[520px] w-full rounded"></div>
 			{/if}

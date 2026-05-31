@@ -24,13 +24,15 @@
 		basemapUrl,
 		activePlanId,
 		activeDistrict,
-		marker
+		marker,
+		showBasemap = true
 	}: {
 		tilesUrl: string;
 		basemapUrl?: string | null;
 		activePlanId: string;
 		activeDistrict: number | null;
 		marker?: { lat: number; lng: number } | null;
+		showBasemap?: boolean;
 	} = $props();
 
 	let container: HTMLDivElement;
@@ -238,6 +240,17 @@
 			addressMarker = new maplibregl.Marker({ color: '#e02424' });
 		}
 		addressMarker.setLngLat([marker.lng, marker.lat]).addTo(map);
+	});
+
+	$effect(() => {
+		if (map === null) return;
+
+		const visibility = showBasemap ? 'visible' : 'none';
+		for (const layer of map.getStyle().layers) {
+			if ('source' in layer && layer.source === BASEMAP_SOURCE_ID) {
+				map.setLayoutProperty(layer.id, 'visibility', visibility);
+			}
+		}
 	});
 </script>
 
