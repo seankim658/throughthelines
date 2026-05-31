@@ -25,7 +25,7 @@
 		<SiteHeader />
 	{/if}
 
-	<main class="flex-1">
+	<main class="flex-1 {isHome ? '' : 'pt-11'}">
 		{@render children()}
 	</main>
 
