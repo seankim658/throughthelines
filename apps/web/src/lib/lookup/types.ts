@@ -11,4 +11,10 @@ export type LookupState =
 	| { status: 'no_match' }
 	| { status: 'out_of_state'; state: string; matchedAddress: string }
 	| { status: 'not_in_block_lookup'; geoid: string; matchedAddress: string }
-	| { status: 'ready'; matchedAddress: string; geoid: string; rows: TimelineRow[] };
+	| {
+			status: 'ready';
+			matchedAddress: string;
+			geoid: string;
+			rows: TimelineRow[];
+			coordinates: { lat: number; lng: number };
+	  };
