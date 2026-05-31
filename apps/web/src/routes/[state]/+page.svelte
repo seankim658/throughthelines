@@ -105,7 +105,8 @@
 			status: 'ready',
 			matchedAddress: geo.matchedAddress,
 			geoid: geo.geoid,
-			rows: timeline.rows
+			rows: timeline.rows,
+			coordinates: geo.coordinates
 		};
 	}
 </script>
@@ -155,6 +156,7 @@
 					{basemapUrl}
 					activePlanId={activeCongressEntry.plan_id}
 					{activeDistrict}
+					marker={lookup.status === 'ready' ? lookup.coordinates : null}
 				/>
 			{:else}
 				<div class="bg-surface-sunken h-[520px] w-full rounded"></div>

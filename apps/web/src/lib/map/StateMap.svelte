@@ -23,16 +23,20 @@
 		tilesUrl,
 		basemapUrl,
 		activePlanId,
-		activeDistrict
+		activeDistrict,
+		marker
 	}: {
 		tilesUrl: string;
 		basemapUrl?: string | null;
 		activePlanId: string;
 		activeDistrict: number | null;
+		marker?: { lat: number; lng: number } | null;
 	} = $props();
 
 	let container: HTMLDivElement;
 	let map = $state<maplibregl.Map | null>(null);
+	let addressMarker: maplibregl.Marker | null = null;
+	let initialBounds: [[number, number], [number, number]] | null = null;
 
 	function planFilter(planId: string): maplibregl.FilterSpecification {
 		return ['==', ['get', 'plan_id'], planId];
@@ -46,6 +50,11 @@
 			return ['==', ['get', 'district'], -1];
 		}
 		return ['all', ['==', ['get', 'plan_id'], planId], ['==', ['get', 'district'], district]];
+	}
+
+	function recenter(): void {
+		if (map === null || initialBounds === null) return;
+		map.fitBounds(initialBounds, { padding: 20, duration: 600 });
 	}
 
 	onMount(() => {
@@ -96,6 +105,11 @@
 				const spriteUrl = basemapUrl
 					? new URL(SPRITE_URL, window.location.origin).toString()
 					: undefined;
+
+				initialBounds = [
+					[header.minLon, header.minLat],
+					[header.maxLon, header.maxLat]
+				];
 
 				const newMap = new maplibregl.Map({
 					container,
@@ -176,10 +190,7 @@
 							}
 						]
 					},
-					bounds: [
-						[header.minLon, header.minLat],
-						[header.maxLon, header.maxLat]
-					],
+					bounds: initialBounds,
 					fitBoundsOptions: { padding: 20 }
 				});
 				created = newMap;
@@ -213,6 +224,33 @@
 		map.setFilter(HIGHLIGHT_LINE_LAYER_ID, highlightF);
 		map.setFilter(LABEL_LAYER_ID, ['==', ['get', 'plan_id'], activePlanId]);
 	});
+
+	$effect(() => {
+		if (map === null) return;
+
+		if (marker === null || marker === undefined) {
+			addressMarker?.remove();
+			addressMarker = null;
+			return;
+		}
+
+		if (addressMarker === null) {
+			addressMarker = new maplibregl.Marker({ color: '#e02424' });
+		}
+		addressMarker.setLngLat([marker.lng, marker.lat]).addTo(map);
+	});
 </script>
 
-<div bind:this={container} class="bg-surface-sunken h-[520px] w-full rounded"></div>
+<div class="relative h-[520px] w-full">
+	<div bind:this={container} class="bg-surface-sunken h-full w-full rounded"></div>
+
+	{#if map}
+		<button
+			type="button"
+			onclick={recenter}
+			class="border-line-default bg-surface-raised text-ink-secondary hover:bg-surface-sunken absolute top-3 right-3 cursor-pointer rounded border px-3 py-1.5 text-sm shadow-sm transition-colors"
+		>
+			Recenter
+		</button>
+	{/if}
+</div>
