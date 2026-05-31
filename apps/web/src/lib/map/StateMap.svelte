@@ -25,7 +25,7 @@
 		activePlanId,
 		activeDistrict,
 		marker,
-		showBasemap = true
+		showBasemap = $bindable(true)
 	}: {
 		tilesUrl: string;
 		basemapUrl?: string | null;
@@ -258,12 +258,43 @@
 	<div bind:this={container} class="bg-surface-sunken h-full w-full rounded"></div>
 
 	{#if map}
-		<button
-			type="button"
-			onclick={recenter}
-			class="border-line-default bg-surface-raised text-ink-secondary hover:bg-surface-sunken absolute top-3 right-3 cursor-pointer rounded border px-3 py-1.5 text-sm shadow-sm transition-colors"
-		>
-			Recenter
-		</button>
+		<div class="absolute top-3 right-3 flex items-center gap-2">
+			{#if basemapUrl}
+				<button
+					type="button"
+					onclick={() => (showBasemap = !showBasemap)}
+					aria-pressed={showBasemap}
+					aria-label="Toggle map background"
+					title={showBasemap ? 'Hide map background' : 'Show map background'}
+					class="border-line-default bg-surface-raised hover:bg-surface-sunken flex cursor-pointer items-center justify-center rounded border p-2 shadow-sm transition-colors {showBasemap
+						? 'text-accent'
+						: 'text-ink-secondary'}"
+				>
+					<!-- Map icon (lucide "map") -->
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-4 w-4"
+						aria-hidden="true"
+					>
+						<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+						<line x1="9" x2="9" y1="3" y2="18" />
+						<line x1="15" x2="15" y1="6" y2="21" />
+					</svg>
+				</button>
+			{/if}
+			<button
+				type="button"
+				onclick={recenter}
+				class="border-line-default bg-surface-raised text-ink-secondary hover:bg-surface-sunken cursor-pointer rounded border px-3 py-1.5 text-sm shadow-sm transition-colors"
+			>
+				Recenter
+			</button>
+		</div>
 	{/if}
 </div>
