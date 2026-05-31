@@ -81,7 +81,7 @@
 
 				const styles = getComputedStyle(document.documentElement);
 				const accent = styles.getPropertyValue('--accent').trim() || '#b8541f';
-				const lineColor = styles.getPropertyValue('--ink-secondary').trim() || '#4a453e';
+				const lineColor = '#4a453e';
 				// const inkPrimary = styles.getPropertyValue('--ink-primary').trim() || '#1c1a17';
 				// const surfacePage = styles.getPropertyValue('--surface-page').trim() || '#faf8f5';
 				const LABEL_INK = '#1c1a17'; // --ink-primary (light)
