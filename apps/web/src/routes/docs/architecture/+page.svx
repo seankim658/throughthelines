@@ -1,3 +1,65 @@
+<script>
+  import BuildPipeline from '$lib/docs/diagrams/BuildPipeline.svelte';
+</script>
+
 # Architecture
 
-The build pipeline, the manifest contract, and the frontend runtime flow.
+Through the Lines has two halves that never run at the same time. At **build time**, a Python pipeline turns upstream data into a fixed set of files. At **run time**, a static site in the browser reads those files and answers lookups. Nothing in between is dynamic. There is no application server, no database, and no per-request computation. Every question a user can ask has already been answered and written to a file before the site is deployed.
+
+The seam between the two halves is a single file, the **manifest**, which the build produces last and the browser reads first. Most of this page is about what the pipeline produces, what the manifest guarantees about it, and how the browser consumes it.
+
+## Stack
+
+The pipeline is Python with Pydantic for schema validation, GeoPandas for spatial work, and the [Felt fork of tippecanoe](https://github.com/felt/tippecanoe) for vector-tile generation. The site is SvelteKit compiled to static files, with MapLibre GL drawing PMTiles vector tiles over a Protomaps basemap. Build outputs are served as plain files from object storage behind a CDN. None of these choices require a running backend, which is what keeps the site cheap to host and simple to reason about.
+
+## The build pipeline
+
+The pipeline is a sequence of independent steps, each reading pinned upstream sources or the outputs of an earlier step, and each writing one kind of artifact. Sources are pinned by commit or version so that a given build is reproducible.
+
+<BuildPipeline />
+
+Each step in brief:
+
+- **validate / plan-index:** Reads every plan-metadata YAML, validates it against the schema and the cross-reference rules, and writes the in-scope records to `plan_index.json`. This is the dataset described in [Data model & schema](/docs/data-model).
+- **stitch / tiles:** Attaches a slim subset of each plan's metadata (its ID, origin, strikedown flag, and curation status) onto the plan's district polygons, then hands the result to tippecanoe, which emits one PMTiles archive per state and chamber. The slim subset is what lets the map style a district by who drew it without a second fetch; the full record still lives in `plan_index.json`, keyed by plan ID.
+- **blocks:** Builds the address-lookup table, `block_lookup_{STATE}_{CHAMBER}.json`, mapping every 2020 Census block to its district under each Congress in range. How each Congress is sourced and linked across decades is the subject of the [Methodology](/docs/methodology).
+- **members.** Slices the Voteview member records down to the states and Congresses in scope and writes `members.json`, keyed for lookup by state, Congress, and district.
+- **basemap.** Produces the background map tiles once, shared across all states.
+- **manifest.** Runs last and ties everything together.
+
+The artifacts divide into two kinds. **Global** artifacts: `plan_index.json`, `members.json`, and the `basemap.pmtiles` are produced once and shared across states. **Per-state, per-chamber** artifacts: the block lookup and the map tiles, are produced for each covered state and chamber.
+
+## The manifest contract
+
+The manifest is the frontend's discovery document. The browser fetches it first, and every other artifact is reached through it. It carries three things.
+
+**Build identity.** A version, the git commit the build ran from, a UTC timestamp, and a URL prefix. The prefix is the versioning mechanism: each build publishes its artifacts under `v/{commit}/…`, and the manifest at the storage root points at the current build's prefix. A deploy is therefore just a new manifest pointing at a new prefix, old builds remain resolvable at their own prefixes, which is what makes a published dataset snapshot reproducible after later builds ship.
+
+**Integrity.** For every artifact the manifest records a path, a byte size, and a SHA-256 hash. Producing the manifest is also a gate, the build refuses to emit a manifest that names an artifact not present on disk, so a broken build fails loudly at build time instead of producing 404s in the browser.
+
+**Binding.** The manifest is where the otherwise-independent artifacts are joined into a navigable structure. Global artifacts at the top, then per-state sections each holding its chambers, each chamber naming its block-lookup and tiles files alongside a per-Congress provenance list. That provenance (which plan governed each Congress and how its block assignment was sourced) is lifted out of each block-lookup file and into the manifest, so the per-Congress side panel can show it without loading the full lookup table. The manifest also records the upstream sources (the pinned polygon commit, the Voteview landing page) for display and citation.
+
+The TypeScript types the frontend uses mirror this structure exactly and are versioned against the pipeline's manifest schema, so a manifest from an incompatible build is rejected on load rather than misread.
+
+## The runtime flow
+
+When someone opens the site, the static app loads and the root layout fetches `manifest.json` once. Everything after that is driven by the manifest.
+
+Navigating to a state route (for example `/nc`) validates the state code and checks the manifest to see whether the state is covered. An unknown code is a 404; a known but uncovered state renders an explanatory page. For a covered state, the layout loads that state's block lookup, the plan index, and the members file in parallel, resolving each URL through the manifest's prefix. The map tiles and basemap are not fetched up front, MapLibre streams them on demand directly from storage using HTTP range requests, which is the property of PMTiles that lets a single static file act like a tile server.
+
+Entering an address runs the lookup entirely in the browser:
+
+1. The address is geocoded to a 2020 Census block, client-side, as described in [How it works](/docs/how-it-works). The geocoder is the only network call to anything other than our own static files.
+2. If the matched address is outside the state the page covers, the lookup stops there and says so.
+3. Otherwise the block's GEOID is used to assemble a timeline. Its district history comes from the block lookup, the plan that drew each district from the plan index, and the incumbents from the members file. The three are joined in memory.
+4. Selecting a Congress fills the side panel from the same data. The plan's origin and legal history (rendered through the schema's three-valued model), the incumbents for that district and Congress, and the sourcing provenance for that Congress's assignment.
+
+Because the join happens in the browser over files that are identical for every visitor, the address never leaves the page and the same deployment serves one visitor or a hundred thousand at the same cost.
+
+## Why it is shaped this way
+
+Two design choices drive everything above.
+
+**Precompute, then serve.** Every spatial computation happens at build time, so the runtime reduces to fetching static files and reading from a dictionary. That is what allows the whole site to run client-side on object storage and a CDN, with no server to operate or scale.
+
+**Decouple code from data.** The pipeline ingests any plan record that passes validation, and the frontend renders whatever the plan index contains. Curating a plan, filling in its origin, citations, or prose, is a data change that flows through on the next build with no code changes. This is what makes the staged build-first, curate-later approach possible. The block-lookup pipeline is decoupled along the same line, adding a new decade of Census geometry is a new source entry, not a rewrite of the join logic. What is in scope today and what that additive path unlocks is described on the [Roadmap](/docs/roadmap).

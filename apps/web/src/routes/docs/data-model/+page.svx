@@ -1,3 +1,139 @@
-# Data Model and Schema
+# Data model & schema
 
-The plan-metadata schema, the missingness model, and the build artifacts.
+Through the Lines joins three things for every address: the district, the people who represented it, and the **plan** that drew it. The first two come from public datasets, the third has to be manually curated. 
+
+Each redistricting plan in a state's history is one record, stored as a single YAML file and validated against a fixed schema before it can enter a build. A record is ideally meant to be readable and editable by someone without a technical background.
+
+## The missingness model
+
+The dataset ships before it is complete. The pipeline is built first and the metadata is filled in afterward plan by plan, so at any moment records can be partly or wholly uncurated. The schema treats that as a normal state rather than an error, and it does so by distinguishing four kinds of "no value":
+
+- **Real value:** The field has been researched and has an answer (`origin: court`).
+- **`unknown`:** The field has been researched and has no determinable answer. The question was asked and the record is that it cannot be settled.
+- **`pending`:** The field has not been researched yet. No claim is made either way.
+- **`null` / empty list:** The field does not apply. A plan still in force has no successor; a plan never challenged has no citations.
+
+The distinction between `unknown` and `pending` is the important one. Both mean "no answer here," but only `unknown` is a finding. Collapsing them would erase the difference between a question that was investigated and one that was never opened, which is exactly the difference a downstream researcher needs in order to trust the dataset.
+
+These states are not just stored, they are surfaced in the frontend. A pending origin renders as "Origin pending," an unknown one as "Origin not determined," and a real one as its label. A reader always knows whether they are looking at an answer, a dead end, or an open question.
+
+## A record, uncurated
+
+Every plan begins as a scaffold generated from the source polygons, with the factual fields filled in and everything curation-sensitive set to `pending`. This is what a record looks like before any research has been done:
+
+```yaml
+plan_id: NC_118_2023
+state: NC
+chamber: congressional
+congress_start: 118
+congress_end: 118
+source_file: lewis/NC/North Carolina_118_to_118.geojson
+source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
+schema_version: 1
+enacted_date: pending
+effective_date: pending
+origin: pending
+origin_details: pending
+struck_down: pending
+struck_down_details: pending
+struck_down_districts: []
+superseded_by: pending
+predecessor: pending
+court_citations: []
+sources: []
+notes: pending
+curation_status: pending
+curation_last_reviewed: null
+extensions: {}
+```
+
+The record validates and enters the build in exactly this state. It is useful immediately, the address lookup and the map do not depend on any curated field, and the qualitative metadata catches up over time.
+
+## Fields
+
+The schema has two tiers. **Factual fields** describe the plan's identity and where its geometry came from. Factual fields must always hold real values, and a build fails if any is missing or malformed. **Curation-sensitive fields** carry the research and accept the three-valued model above.
+
+### Identity and provenance (factual)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `plan_id` | string | `STATE_CONGRESS_YEAR`, e.g. `NC_118_2023`. The state and congress segments are checked against the fields below; the year is conventionally the first year of `congress_start`. |
+| `state` | state code | Two-letter code. Must match the `plan_id` prefix. |
+| `chamber` | `congressional` | The only chamber in scope. State legislative is a later expansion. |
+| `congress_start` | integer | First Congress this plan governed. Must match the `plan_id` congress segment. |
+| `congress_end` | integer or `null` | Last Congress governed, or `null` if still in force. Must not precede `congress_start`. |
+| `source_file` | string | Path to the polygon file the geometry came from. |
+| `source_commit` | string | Pinned commit of the upstream polygon archive. |
+| `schema_version` | `1` | Record schema version. |
+
+A plan whose `congress_end` is `null` is treated as in force and extends forward to the end of the build's range.
+
+### Curation-sensitive
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `origin` | `legislature` · `court` · `commission` · `remedial` · `unchanged` · `unknown` · `pending` | Who drew the plan. `unchanged` means a prior plan was carried over. |
+| `origin_details` | prose · `unknown` · `pending` | Narrative on how the plan came to be. |
+| `struck_down` | boolean · `unknown` · `pending` | Whether the plan was invalidated, in whole or in part. |
+| `struck_down_details` | prose · `unknown` · `pending` | Narrative on the invalidation. |
+| `struck_down_districts` | list of integers | Districts invalidated individually. Empty is valid; a plan-level `struck_down: true` can coexist with specific districts here. |
+| `predecessor` | `plan_id` · `null` · `pending` | The plan this one replaced. |
+| `superseded_by` | `plan_id` · `null` · `pending` | The plan that replaced this one. |
+| `court_citations` | list (see below) | Cases in the plan's legal history. Empty is valid. |
+| `sources` | list (see below) | Where the curated values came from. Empty is valid. |
+| `notes` | prose · `unknown` · `pending` | Anything not captured above. |
+
+A `court_citations` entry records a single case:
+
+```yaml
+- case: Harper v. Hall            # short case name
+  citation: "<reporter citation>" # formal citation string
+  role: invalidating              # enabling | invalidating | remedial | affirming | context
+  url: https://...                # live link to the opinion (required)
+  archived_url: https://web.archive.org/...   # snapshot (optional)
+```
+
+A `sources` entry records something consulted during curation:
+
+```yaml
+- url: https://...
+  accessed: 2026-05-01            # date consulted
+  archived: https://web.archive.org/...   # snapshot (optional)
+```
+
+### Completeness and extensions
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `curation_status` | `pending` · `partial` · `curated` | The curator's headline judgment of the record's state. Set by hand, not derived from the other fields. |
+| `curation_last_reviewed` | date or `null` | When a human last reviewed the record. |
+| `extensions` | mapping | Free-form namespace for fields not yet in the core schema. The pipeline passes it through untouched, so new categories can be tried without a schema migration. |
+
+`curation_status` is a separate signal from the per-field sentinels: the sentinels are mechanical, while the status is the curator's overall call. The evidentiary bar for moving a record to `partial` or `curated` lives in the [Curation guide](/docs/curation).
+
+## Validation
+
+Validation runs at two levels, and continuous integration enforces both on every change.
+
+**Per record.** Each file is checked against the schema in isolation: field types, the `plan_id` pattern, agreement between the `plan_id` and the `state`/`congress_start` fields, an ordered Congress range, and the rule that every curation-sensitive field holds either a real value or one of the two sentinels. The schema also rejects any top-level key it does not recognize, the only place arbitrary keys are allowed is `extensions`.
+
+**Across records.** Once every file is individually valid, the set is checked as a whole, each `plan_id` must be unique, every non-pending `predecessor` and `superseded_by` must point at a plan that exists, and those pointers must agree (if one plan says it was superseded by another, that other plan must name it as its predecessor).
+
+Crucially, **`pending` never fails a build.** CI blocks on a malformed field, a broken reference, or an asymmetric link; it does not block on work that simply has not been done. That is what lets the dataset ship and grow at the same time.
+
+## The build artifact
+
+The pipeline reads every in-scope YAML and emits a single `plan_index.json` that the site loads at runtime. It is the validated records, grouped by state and keyed by `plan_id`:
+
+```ts
+interface PlanIndex {
+  schema_version: 1;
+  plans: Record<string, Record<string, Plan>>; // state -> plan_id -> record
+}
+```
+
+Each record is the YAML as written, with two exceptions: `source_file` and `source_commit` are build internals and are dropped. Everything else, including `extensions` and every sentinel, passes through unchanged so the frontend can render the three-valued states faithfully rather than guessing. The same index feeds the timeline, the per-Congress side panel, the per-district landing pages, and the data export. How it is bound to the map tiles and the other artifacts is covered in [Architecture](/docs/architecture).
+
+## Scope
+
+A state's directory can hold plans outside the current build. North Carolina's, for example, includes the 1990s-cycle plans kept for a future extension. Which plans actually enter a build is decided by the build's configured range, not by anything in the files themselves, a plan is included when its span overlaps that range. Records outside the range stay on disk, valid and untouched, and simply do not appear in `plan_index.json`. The range for the current build is given on the [Roadmap](/docs/roadmap).

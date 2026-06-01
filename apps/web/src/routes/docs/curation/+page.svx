@@ -1,3 +1,73 @@
-# Curation Guide
+# Curation guide
 
-How to take a plan from pending to curated, and how to contribute to one.
+Through the Lines ships before its dataset is complete. The pipeline, the map, and the address lookup all work without any of the plan's qualitative metadata filled in, so the work of researching *who drew each plan and what became of it* can happen gradually after launch by whoever has the knowledge to do it. This page describes how to contribute to the site's curation work.
+
+Curation is deliberately a no-code task. A plan is one YAML file, curating it means opening the file, replacing `pending` placeholders with researched values, recording where each value came from, and proposing the change. You do not need to run, read, or understand any of the Python or TypeScript to contribute. If you know redistricting law and history, or are willing to read carefully from the sources below, you can help curate.
+
+The schema every field must satisfy is documented in [Data model & schema](/docs/data-model); this page assumes it and focuses on the process and the evidentiary expectations.
+
+## What you are working from
+
+Curation turns prose into structured data. That prose lives in a small number of authoritative places:
+
+- **[All About Redistricting](https://redistricting.lls.edu/)** — the narrative account of each state's plans and the litigation around them. This is the usual starting point.
+- **Primary court opinions** — for any plan that was challenged, the opinion itself is the citable source for what was decided and which districts were affected.
+- **Enacting documents** — the session law or court order that put a plan into effect, where a date or origin needs confirming.
+
+Every value you enter should be traceable to one of these. Curation is not interpretation, it is transcription (with citations).
+
+## The workflow
+
+1. **Pick a plan.** Choose one plan to work on. Its file is at `data/plans/<STATE>/<PLAN_ID>.yaml` (for example `data/plans/NC/NC_118_2023.yaml`).
+2. **Research it** from the sources above.
+3. **Fill the fields**, replacing `pending` with a real value or with `unknown`.
+4. **Record your sources** in the `sources` list, and any court opinions in `court_citations`.
+5. **Set the status.** Update `curation_status` and `curation_last_reviewed`.
+6. **Check it** (see [Validating](#validating)), or rely on CI to check it for you.
+7. **Propose the change** as a pull request.
+
+Only step 7 touches the repository's tooling, and it is the same single-file edit whether you are a core maintainer or an outside contributor.
+
+## Filling the fields
+
+The fields that need research are the *curation-sensitive* ones. The discipline that governs all of them is the three-value distinction:
+
+- Enter a **real value** when the source settles the question.
+- Enter **`unknown`** when you have looked and the source does not settle it.
+- Leave **`pending`** only when you have not yet looked.
+
+See the [Data Model & Schema](/docs/data-model#the-missingness-model) page for more information.
+
+**`origin`:** Which of the five categories produced the plan: `legislature`, `court`, `commission`, `remedial`, or `unchanged`. Decide it from how the plan came into force, not from what happened to it later. A legislature-drawn plan that a court later replaced will still use `legislature` as the origin. The court's replacement is a separate plan with origin `remedial`. Put the reasoning and specifics in `origin_details`.
+
+**`struck_down`:** `true` if the plan or any of its districts was invalidated, `false` if it survived or was never challenged. When specific districts were struck rather than the whole plan, list them in `struck_down_districts`. The plan-level flag is `true` whenever that list is non-empty. Explain the circumstances in `struck_down_details`.
+
+**`predecessor` and `superseded_by`:** The plan IDs of the maps immediately before and after this one. This is the one place a multi-file edit might be required, the two plans must agree. If you set `superseded_by: NC_119_2025` on one plan, the `NC_119_2025` file must name this plan as its `predecessor`, or validation rejects the pair. Use `null` for a genuine end of the chain (a plan still in force has no successor).
+
+**`court_citations`:** One entry per case in the plan's legal history, each with the case name, a formal citation, a `role` (`enabling`, `invalidating`, `remedial`, `affirming`, or `context`), and a link to the opinion. The link is required and an `archived_url` snapshot is strongly encouraged, because opinion URLs can rot.
+
+**`sources`:** Where your values came from, each with a URL and the date you accessed it. An archived snapshot is again encouraged.
+
+**`notes`:** Anything that does not fit the structured fields.
+
+Do not add fields the schema does not define; the validator rejects unknown keys. Anything genuinely new belongs under `extensions`, described in [Data model & schema](/docs/data-model).
+
+## When is a plan "curated"?
+
+`curation_status` is your judgment of the record's completeness. It is not derived automatically, the curator sets it. The recommended bar:
+
+- **`pending`:** Untouched. No research done.
+- **`partial`:** Some fields researched, but not all, or not yet fully sourced. The record is useful and is honest about which fields remain `pending`.
+- **`curated`:** Every curation-sensitive field holds a real value or a deliberate `unknown` (none left `pending`). Every substantive claim is backed by a `sources` entry and every legal claim by a `court_citations` entry; and `curation_last_reviewed` is set to the date you finished.
+
+Set `curation_last_reviewed` whenever you review a record, even if you leave it `partial`.
+
+## Validating
+
+From a local checkout, `uv run pipeline plan-index` rebuilds the plan index and, in doing so, validates every plan file: field types, the ID format, the agreement between a plan's ID and its `state` and Congress, and that every `predecessor` and `superseded_by` reference resolves and is reciprocated. It does **not** object to `pending` values as an incomplete curation is allowed, a malformed one is not.
+
+If you cannot run it locally, the same checks will run in continuous integration on every pull request, so a broken edit is caught before it merges. Setup for a local checkout is in the repository [README](https://github.com/seankim658/throughthelines).
+
+## Submitting
+
+Open a pull request containing only your YAML change. If you have a correction but cannot open a pull request, open an issue giving the plan, the field, the correct value, and your source, and a maintainer can make the edit.

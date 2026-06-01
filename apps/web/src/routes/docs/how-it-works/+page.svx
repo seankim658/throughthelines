@@ -7,7 +7,7 @@
 Through the Lines was built to answer a few questions: 
 
 - Which congressional districts has this address belonged to?
-- How has this state's congressional districts changed over time? 
+- How have this state's congressional districts changed over time? 
 - Who drew each map?
 
 <LookupChain />
@@ -21,15 +21,13 @@ There are three steps that happen when you put an address into Through the Lines
 ## Step 1 - Address to Census Block
 
 The site sends your address to the [U.S. Census Geocoder](https://geocoding.geo.census.gov/geocoder/) which returns a **2020 Census block**.
-Thea census block is the smallest unit the Census publishes and is identified by a 15-digit code called a `GEOID`. Everything downstream is
+The census block is the smallest unit the Census publishes and is identified by a 15-digit code called a `GEOID`. Everything downstream is
 keyed off the `GEOID`.
 
 Importantly, this call happens **directly from your browser to the Census Bureau.** Nothing is ever sent back to, logged by, or stored on any 
-Through the Lines server. Everything in Through the Lines runs client side in your browser. The only thing that comes back to the page is the 
-`GEOID` and a normalized version of the address for display. The request uses a script-tag technique (JSONP) specifically so the browser can 
-talk to the Census API directly without routing through us.
+Through the Lines server. Everything in Through the Lines runs client side in your browser. Everything the geocoder hands back: the matched address, its block `GEOID`, the state, and the coordinates, stays in your browser. The request uses a script-tag technique (JSONP) specifically so the browser can talk to the Census API directly without routing through us.
 
-The [Census Geocoding API](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html) does not support CORS requests, only `jsonp` callbacks:
+The [Census Geocoding API](https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html) does not support CORS (Cross-Origin Resource Sharing) requests, only `jsonp` callbacks:
 
 > The format parameter should be set to jsonp when using callback to request a JSONP response. At this time the geocoder does not support CORS requests so the callback and format parameters should be used in the client to make calls to the geocoder.
 
@@ -37,7 +35,7 @@ If the Census can't confidently match what you typed, you'll see one of a few po
 
 ## Step 2 - The block becomes a district history
 
-We don't compute your congressional district at runtime. At build time we precompute, for **every 2020 Census block in a sate**, the district that
+We don't compute your congressional district at runtime. At build time we precompute, for **every 2020 Census block in a state**, the district that
 block fell in under each Congress in range. This allows us to avoid any runtime geometry, and subsequently keep the site small and performant enough 
 to run completely client side. This data is shipped as a lookup file with the site at runtime. Finding your history is then just a
 hash-table read using the block `GEOID` as the key.
@@ -51,7 +49,7 @@ A district history is just an array, one slot per Congress oldest to newest, hol
 for that Congress). Two blocks a mile apart usually have an identical history, so storing one array per block would be repetitive and much too large to
 ship to the browser.
 
-Instead, the lokup file stores each **unique** history once and points blocks at it by index:
+Instead, the lookup file stores each **unique** history once and points blocks at it by index:
 
 ```ts
 // block_lookup_{STATE}.json (shape)
@@ -88,4 +86,5 @@ The lookup is as honest as possible about uncertainty. Depending on what the geo
 | A district timeline | Your address matched and falls in a covered state.                 |
 | No match            | The Census couldn't resolve the address. Try adding a city or ZIP. |
 | Out of state        | The address matched, but it is outside the target state.           |
+| Not in our data     | The address matched, but its Census block isn't in the lookup. This is unexpected and worth reporting. |
 | A geocoder error    | The Census service timed out or was unreachable, try again.        |

@@ -1,3 +1,87 @@
 # Glossary
 
-Redistricting and technical terms used throughout the documentation.
+The terms used across these docs, grouped by topic. 
+
+## Redistricting
+
+**Congress** — The two-year term of the U.S. House of Representatives, numbered in sequence. The 119th Congress, for example, covers 2025–26. The project organizes everything by Congress because districts can change from one to the next. [Wikipedia](https://en.wikipedia.org/wiki/United_States_Congress)
+
+**Congressional district** — One of the geographic constituencies that each elect a single member of the U.S. House. A state's number of districts is set by its population after each census. [Wikipedia](https://en.wikipedia.org/wiki/List_of_United_States_congressional_districts)
+
+**Incumbent** — The representative who held a district's seat during a given Congress. Incumbent names and parties come from [Voteview](#data-sources).
+
+**Mid-decade redistricting** — Redrawing district boundaries between censuses, rather than only at the start of a decade. The schema handles this because a plan's lifespan is recorded in Congresses, not decades. [Wikipedia](https://en.wikipedia.org/wiki/Redistricting)
+
+**Plan** — A specific set of district boundaries enacted at one time. It is the unit of the project's dataset. Each plan is one record. See [Data model & schema](/docs/data-model).
+
+**Plan origin** — Who produced a plan. The dataset recognizes five plan origin types: drawn by a legislature, by a court, by an independent commission, through a court-ordered remedial process, or carried over unchanged from a previous plan.
+
+**Remedial plan** — A plan drawn to replace one a court has invalidated, often by the court itself or by an appointed special master.
+
+**Special master** — A neutral expert a court appoints to draw or recommend a remedial plan. [Wikipedia](https://en.wikipedia.org/wiki/Special_master)
+
+**Struck down (invalidated)** — A plan, or specific districts within it, that a court has ruled unlawful. The dataset records this at both the whole-plan and individual-district level.
+
+## Census geography
+
+**Block vintage** — The decennial edition of Census block geometry (2000, 2010, or 2020). Each Congress is matched to the vintage in force when its plan was drawn. See [Methodology](/docs/methodology).
+
+**Census block** — The smallest unit of Census geography. Every address falls in exactly one block, which makes blocks the natural key for an address lookup.
+
+**Census Geocoder** — The [U.S. Census Bureau service](https://geocoding.geo.census.gov/geocoder/) that turns a street address into a location and the Census block containing it. The project calls it directly from the browser, so addresses never reach our servers. See [How it works](/docs/how-it-works).
+
+**FIPS code** — A numeric Census code identifying a state or county. [Wikipedia](https://en.wikipedia.org/wiki/Federal_Information_Processing_Standard_state_code)
+
+**GEOID** — A Census geographic identifier. For a 2020 Census block it is a 15-digit code, and that block GEOID is the key the address lookup runs on. [Wikipedia](https://en.wikipedia.org/wiki/Geocode)
+
+**Interior point** — A point the Census precomputes for every block that is guaranteed to lie inside it — unlike a geometric centroid, which can fall outside an irregularly shaped block. The lookup uses it to place a block within an older decade's geography. See [Methodology](/docs/methodology).
+
+**Spatial join** — Assigning one geographic feature to another by location. Here, deciding which district a block belongs to by testing which district polygon the block's interior point falls inside. [Wikipedia](https://en.wikipedia.org/wiki/Spatial_join)
+
+**TIGER / tabulation block** — TIGER/Line is the Census Bureau's geographic data product; the tabulation-block shapes from it supply each decade's block geometry. [Wikipedia](https://en.wikipedia.org/wiki/Topologically_Integrated_Geographic_Encoding_and_Referencing)
+
+## Data sources
+
+For more information on the project's data sources see the [Data](/data) page.
+
+**All About Redistricting** ([link](https://redistricting.lls.edu/)) — Justin Levitt's narrative reference on each state's redistricting plans and the litigation around them. It is the prose source the plan metadata is curated from.
+
+**Block Equivalency File (BEF)** — A Census file mapping each block to its district for a given Congress. Published from the 113th Congress onward; earlier Congresses are sourced differently. See [Methodology](/docs/methodology).
+
+**ICPSR** ([link](https://www.icpsr.umich.edu/sites/icpsr/home)) — Voteview's canonical numeric identifier for a member of Congress. It is the key the project joins incumbents on.
+
+**Lewis polygons** ([link](https://cdmaps.polisci.ucla.edu/)) — Jeffrey Lewis's *congressional-district-boundaries* archive, the source of every historical district shape the project uses.
+
+**NHGIS** — A source of historical Census geography, including 1990 block shapes, reserved for a planned pre-2001 extension.
+
+**Protomaps** ([link](https://protomaps.com/)) — The open basemap the project draws its background map from.
+
+**Voteview** ([link](https://voteview.com/data)) — A database of historical members of Congress and their voting records; the source of incumbent names and parties.
+
+## How this project is built
+
+**Artifact** — A file the build produces and the site consumes (the plan index, members file, block lookup, map tiles, basemap, and the manifest). See [Architecture](/docs/architecture).
+
+**Block lookup** — The per-state file mapping every 2020 Census block to the district it fell in under each Congress.
+
+**Block source (provenance)** — How a given Congress's block-to-district assignment was obtained. 
+
+**Curation status** — A record's curation state (`pending`, `partial`, or `curated`) set by the curator to signal how complete its research is. See [Data model & schema](/docs/data-model).
+
+**Manifest** — The single file the site loads first. It lists every other artifact with its location and an integrity hash, and is built last so it can vouch for the rest. See [Architecture](/docs/architecture).
+
+**Members file** — The artifact holding the incumbents for each state, Congress, and district, sliced from Voteview.
+
+**Missingness (`pending` / `unknown` / not applicable)** — The three distinct ways a field can lack a value: `pending` (not yet researched), `unknown` (researched but not determinable), and not applicable (a real absence, such as no successor for a plan still in force). See [Data model & schema](/docs/data-model).
+
+**Plan ID** — A record's identifier, formed as `STATE_CONGRESS_YEAR`.
+
+**Plan index** — The artifact holding every plan record, keyed by plan ID. Serves as the site's source for plan origins, citations, and completeness.
+
+**PMTiles** ([link](https://github.com/protomaps/pmtiles)) — A single-file vector-tile format served straight from object storage over HTTP range requests, which lets a static file behave like a map server.
+
+**Scope** — The states, chambers, and Congresses a given build includes. Plans outside scope stay on disk but are not published. The current scope is on the [Roadmap](/docs/roadmap).
+
+**tippecanoe** ([link](https://github.com/felt/tippecanoe)) — The tool that turns district polygons into PMTiles vector tiles.
+
+**Vector tiles** — Map data sent as coordinates the browser draws and styles (via the MapLibre renderer), rather than as pre-rendered images. The district layer and the basemap are both vector tiles.

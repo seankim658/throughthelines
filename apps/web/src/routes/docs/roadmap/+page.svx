@@ -1,0 +1,35 @@
+# Roadmap
+
+Through the Lines is built to start small and grow without redrawing its own foundations. The first release covers one state thoroughly rather than every state shallowly, and the [architecture](/docs/architecture) is shaped so that adding more states is additive work against the existing pipeline rather than a rebuild. This page describes what the project covers today, what is planned, and where the current data has limits.
+
+What a given build includes is set in the project's configuration, not hard-coded, and anything outside that scope simply stays unpublished. The mechanics are described under [scope](/docs/data-model#scope) in the data model.
+
+## What's covered now
+
+The current build covers:
+
+- **North Carolina**, and no other state yet.
+- **Congressional districts** only, no state legislative districts.
+- The **107th through 119th Congresses**, spanning 2001 to 2026.
+
+## Planned
+
+**More states.** Pennsylvania, Texas, and Virginia are the next states slated for coverage. 
+
+**State legislative districts.** Covering state house and senate districts, not only congressional ones, is a deeper change (the current data model describes congressional districts alone) and is reserved for after the congressional coverage broadens.
+
+## Before 2001
+
+Coverage begins with the 107th Congress because that is the earliest era for which the necessary Census block geometry is available as a modern, openly redistributable source. Extending further back, into the 1990s, is a planned but uncommitted future step. It would add another decade of block geometry (from [NHGIS](https://www.nhgis.org/)) alongside the plans of that era — an additive change of the same kind as adding a new state.
+
+That extension would also close the one boundary seam in the present data: North Carolina ran the 107th Congress on its 1990s-era map, which predates the 2000 Census blocks the lookup joins it against, producing a thin inaccuracy along that map's old boundaries. The [Methodology](/docs/methodology) documents the seam in detail. Plan records for the 103rd through 106th Congresses already exist in the repository, outside the current build's scope, ready for this extension.
+
+## Known limitations
+
+The current data is accurate within deliberate, documented limits:
+
+- **Metadata is still being curated.** Many plans' origin and litigation fields are not yet researched, and are marked as such. The district and incumbent information does not depend on this and is complete.
+- **The 107th Congress has a boundary seam.** As described in [Methodology](/docs/methodology), it affects a sliver of addresses near the 1990s map's old boundaries, for that one Congress only.
+- **District assignment is approximate at block edges.** Each block is placed by a single interior point, so an address extremely close to a historical district boundary can occasionally be assigned to the neighboring one. The [Methodology](/docs/methodology) explains why.
+- **Congressional districts only.** State legislative districts are not covered.
+- **Before 2001 is prose, not polygons.** Earlier history is discussed in writing where relevant, but is not yet available as mapped districts.
