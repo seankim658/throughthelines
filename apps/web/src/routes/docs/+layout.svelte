@@ -78,7 +78,7 @@
 	</nav>
 {/snippet}
 
-<div class="mx-auto w-full max-w-5xl px-6 py-10 xl:max-w-7xl">
+<div class="mx-auto w-full max-w-3xl px-6 py-10 lg:max-w-5xl xl:max-w-7xl">
 	<div
 		class="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-12 xl:grid-cols-[15rem_minmax(0,1fr)_13rem]"
 	>
