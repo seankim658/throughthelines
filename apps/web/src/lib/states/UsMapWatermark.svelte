@@ -26,9 +26,9 @@
 			return 'fill-accent [fill-opacity:0.85]';
 		}
 		if (coverage === 'planned') {
-			return 'fill-none stroke-line-strong [stroke-width:0.5]';
+			return 'fill-none stroke-line-strong [stroke-width:1.25]';
 		}
-		return 'fill-none stroke-line-subtle [stroke-width:0.5]';
+		return 'fill-none stroke-line-subtle [stroke-width:1]';
 	}
 </script>
 
