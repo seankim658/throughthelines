@@ -12,7 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"gen:map": "node scripts/generate-map-paths.mjs"
+		"gen:map": "node scripts/generate-map-paths.mjs",
+    "gen:nc12": "node scripts/generate-nc12-path.mjs"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
@@ -34,6 +35,7 @@
 		"svelte-check": "^4.4.6",
 		"tailwindcss": "^4.2.4",
 		"topojson-client": "^3.1.0",
+		"topojson-server": "^3.0.1",
 		"topojson-simplify": "^3.0.3",
 		"typescript": "^6.0.2",
 		"typescript-eslint": "^8.58.1",

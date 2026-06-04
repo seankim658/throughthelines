@@ -50,6 +50,7 @@ data/derived/
 
 # Other
 other/
+tmp/
 
 # Frontend
 node_modules/

@@ -10,3 +10,4 @@ bun.lockb
 
 # Generated
 src/lib/states/map-paths.ts
+src/lib/hero/nc12-path.ts
