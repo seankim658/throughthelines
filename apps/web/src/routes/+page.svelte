@@ -2,7 +2,7 @@
 	import type { PageData } from './$types';
 	import { getCoveredStateCodes, getPlannedStateCodes, joinWithAnd } from '$lib/copy/coverage';
 	import { STATE_NAMES } from '$lib/states/states';
-	import UsMapWatermark from '$lib/states/UsMapWatermark.svelte';
+  import DistrictSpecimen from '$lib/hero/DistrictSpecimen.svelte';
 	import ThemeToggle from '$lib/ui/ThemeToggle.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -30,7 +30,7 @@
 	<div
 		class="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden"
 	>
-		<UsMapWatermark manifest={data.manifest} />
+		<DistrictSpecimen />
 	</div>
 
 	<div class="mx-auto w-full max-w-5xl">
@@ -58,4 +58,3 @@
 		</p>
 	</div>
 </section>
-
