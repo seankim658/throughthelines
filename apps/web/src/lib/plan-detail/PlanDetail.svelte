@@ -197,7 +197,7 @@
 							>
 								{cite.case}
 							</a>
-							— {cite.citation}
+							: {cite.citation}
 							<span class="text-ink-muted">· {cite.role}</span>
 							{#if cite.archived_url}
 								<a

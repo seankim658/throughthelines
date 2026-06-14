@@ -4,15 +4,17 @@ Through the Lines ships before its dataset is complete. The pipeline, the map, a
 
 Curation is deliberately a no-code task. A plan is one YAML file, curating it means opening the file, replacing `pending` placeholders with researched values, recording where each value came from, and proposing the change. You do not need to run, read, or understand any of the Python or TypeScript to contribute. If you know redistricting law and history, or are willing to read carefully from the sources below, you can help curate.
 
-The schema every field must satisfy is documented in [Data model & schema](/docs/data-model); this page assumes it and focuses on the process and the evidentiary expectations.
+The schema every field must satisfy is documented in [Data model & schema](/docs/data-model). This page assumes it and focuses on the process and the evidentiary expectations. 
+
+To see an example of a curated plan, see the [NC 113th plan file](https://github.com/seankim658/throughthelines/blob/main/data/plans/NC/NC_113_2013.yaml).
 
 ## What you are working from
 
 Curation turns prose into structured data. That prose lives in a small number of authoritative places:
 
-- **[All About Redistricting](https://redistricting.lls.edu/)** — the narrative account of each state's plans and the litigation around them. This is the usual starting point.
-- **Primary court opinions** — for any plan that was challenged, the opinion itself is the citable source for what was decided and which districts were affected.
-- **Enacting documents** — the session law or court order that put a plan into effect, where a date or origin needs confirming.
+- **[All About Redistricting](https://redistricting.lls.edu/)**: The narrative account of each state's plans and the litigation around them. This is the usual starting point.
+- **Primary court opinions**: For any plan that was challenged, the opinion itself is the citable source for what was decided and which districts were affected.
+- **Enacting documents**: The session law or court order that put a plan into effect, where a date or origin needs confirming.
 
 Every value you enter should be traceable to one of these. Curation is not interpretation, it is transcription (with citations).
 
@@ -40,17 +42,60 @@ See the [Data Model & Schema](/docs/data-model#the-missingness-model) page for m
 
 **`origin`:** Which of the five categories produced the plan: `legislature`, `court`, `commission`, `remedial`, or `unchanged`. Decide it from how the plan came into force, not from what happened to it later. A legislature-drawn plan that a court later replaced will still use `legislature` as the origin. The court's replacement is a separate plan with origin `remedial`. Put the reasoning and specifics in `origin_details`.
 
-**`struck_down`:** `true` if the plan or any of its districts was invalidated, `false` if it survived or was never challenged. When specific districts were struck rather than the whole plan, list them in `struck_down_districts`. The plan-level flag is `true` whenever that list is non-empty. Explain the circumstances in `struck_down_details`.
+**`struck_down`:** Whether a court stopped the plan, see [Recording a strikedown](#recording-a-strikedown) for the rule, which covers injunctions and rulings that were later undone. When specific districts were struck rather than the whole plan, list them in `struck_down_districts`; the plan-level flag is `true` whenever that list is non-empty. Explain the circumstances in `struck_down_details`.
 
 **`predecessor` and `superseded_by`:** The plan IDs of the maps immediately before and after this one. This is the one place a multi-file edit might be required, the two plans must agree. If you set `superseded_by: NC_119_2025` on one plan, the `NC_119_2025` file must name this plan as its `predecessor`, or validation rejects the pair. Use `null` for a genuine end of the chain (a plan still in force has no successor).
 
-**`court_citations`:** One entry per case in the plan's legal history, each with the case name, a formal citation, a `role` (`enabling`, `invalidating`, `remedial`, `affirming`, or `context`), and a link to the opinion. The link is required and an `archived_url` snapshot is strongly encouraged, because opinion URLs can rot.
+**`court_citations`:** One entry per case in the plan's legal history, each with the case name, a formal citation, a `role` (`enabling`, `invalidating`, `remedial`, `affirming`, or `context`), and a link to the opinion. The link is required and an `archived_url` snapshot is strongly encouraged, because opinion URLs can rot. See [Court citation roles](#court-citation-roles) for more details.
 
 **`sources`:** Where your values came from, each with a URL and the date you accessed it. An archived snapshot is again encouraged.
 
 **`notes`:** Anything that does not fit the structured fields.
 
 Do not add fields the schema does not define; the validator rejects unknown keys. Anything genuinely new belongs under `extensions`, described in [Data model & schema](/docs/data-model).
+
+### Court citation roles
+
+A citation's `role` is always **relative to the plan whose file it sits in**, it describes what the case did to *this* plan, not the case's importance in general.
+
+| Role | Meaning |
+|------|---------|
+| `enabling` | The ruling that caused this plan to be drawn, typically a remedial order against its predecessor. |
+| `invalidating` | A ruling that struck this plan or barred its use, in whole or in part. Covers a final invalidation or an injunction; say which in `struck_down_details`. |
+| `affirming` | An appellate decision affirming a ruling about this plan. Read together with the entry it affirms. |
+| `remedial` | A case in which the court itself drew or imposed this plan. Use only when `origin` is `court` or `remedial`. |
+| `context` | A case in the legal history that did none of the above, a related challenge, an upholding later superseded, or a ruling vacated on appeal. A decision vacated for nonjusticiability belongs here. |
+
+Because role is relative to the file, one opinion can appear with different roles across plans. For example, *Harris v. McCrory* is `invalidating` for [North Carolina](/nc) in the 2011 plan's file (it struck two of that plan's districts) and `enabling` in the 2016 plan's file, because it ordered the remedy that became that plan.
+
+## Recording conventions
+
+A few specifics keep records consistent across plans and curators:
+
+- **Dates:** Record `enacted_date` as the date the plan *became law*, for a legislative plan the date it was ratified and chaptered as a session law. For a court or remedial plan the date the order was entered, not the date of a floor vote or the first election it governed. Record `effective_date` as the date it *took legal effect*, the preclearance date for a plan that needed Section 5 preclearance, otherwise the operative date in the enacting instrument. Full definitions are in [Data model & schema](/docs/data-model#dates).
+- **What a court held:** Take it from the opinion itself. When a decision splits by district or by issue, record the split rather than one whole-case vote. For example, one district affirmed unanimously and another by a divided vote, and note any judge or justice who did not participate.
+- **Primary source over summary:** Where a narrative source and a court opinion both touch a legal fact, cite the opinion for what was *decided* (which districts, the constitutional basis, the vote) and the narrative source for context and dates. All About Redistricting, for instance, may say "two districts were struck" without numbering them; the district numbers belong to the opinion.
+
+### Recording a strikedown
+
+`struck_down` is a coarse signal (did a court stop this plan?) and the precision lives in `struck_down_details` and the citation roles, not in the boolean. Set to `true` if a court invalidated the plan or any of its districts, or barred its use, by a ruling that was **not later undone**, whether through a final judgment or an interim injunction. Set to `false` if the plan was replaced or expired with no adverse, a voluntary replacement, or an adverse ruling that was reversed or vacated while the plan stayed in use. A researcher who needs only final, merits-based invalidations can recover them from the citation roles and `struck_down_details`, so the boolean does not have to carry that distinction itself.
+
+The phrase *not later undone* is what the rule turns on, and the 2016 [North Carolina](/nc) plan (`NC_115_2017`) is a good example that shows why. That plan drew two partisan-gerrymandering challenges. A federal panel held it unconstitutional, but the Supreme Court vacated that ruling as nonjusticiable, so it does not by itself make the plan struck down. A state court then preliminarily enjoined the plan under the state constitution, and that injunction was never reversed; it was overtaken only when the legislature replaced the map, without the case reaching final judgment. An injunction that stood and stopped the plan is a strikedown even though no final judgment was entered, so the record is `struck_down: true`, with both tracks (the vacated federal ruling and the operative state injunction) described in `struck_down_details`.
+
+## Provenance in the plan file
+
+In each plan's YAML files, use YAML comments in order to record the provenance of the data. This helps other curators quickly validate and find the sources for each field. For example:
+
+```yaml
+# [NCGA-453, AAR]
+# SB 453 — final floor votes 2011-07-27 (Senate 28-17; House 68-51);
+# ratified as SL 2011-403 on 2011-07-28.
+enacted_date: 2011-07-28
+```
+
+Define each source tag once near the top of the file, then refer to it. Comments are dropped when the file is loaded (`yaml.safe_load`), so nothing in them reaches the site, they exist solely for the next curator.
+
+To see an example of a curated plan, see the [NC 113th plan file](https://github.com/seankim658/throughthelines/blob/main/data/plans/NC/NC_113_2013.yaml).
 
 ## When is a plan "curated"?
 

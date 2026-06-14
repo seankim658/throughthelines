@@ -68,6 +68,15 @@ The schema has two tiers. **Factual fields** describe the plan's identity and wh
 
 A plan whose `congress_end` is `null` is treated as in force and extends forward to the end of the build's range.
 
+### Dates
+
+Both dates follow the same three-valued model as the curation-sensitive fields: a real date, `unknown`, `pending`, or `null` where the date does not apply.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `enacted_date` | date · `null` · `unknown` · `pending` | The date the plan became law. For a legislative plan, the date it was ratified and chaptered as a session law. For a court-drawn or remedial plan, the date the order was entered. Not the date of a floor vote, and not the date it first governed an election. |
+| `effective_date` | date · `null` · `unknown` · `pending` | The date the plan took legal effect. For a plan that required preclearance under Section 5 of the Voting Rights Act (before *Shelby County v. Holder*, 2013), this is the preclearance date; otherwise it is the operative date set by the enacting instrument. |
+
 ### Curation-sensitive
 
 | Field | Type | Meaning |
