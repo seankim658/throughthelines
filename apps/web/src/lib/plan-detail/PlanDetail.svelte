@@ -200,11 +200,12 @@
 							: {cite.citation}
 							<span class="text-ink-muted">· {cite.role}</span>
 							{#if cite.archived_url}
+                ·
 								<a
 									href={cite.archived_url}
 									target="_blank"
 									rel="noopener noreferrer"
-									class="text-ink-muted ml-2 underline"
+									class="text-ink-muted underline"
 								>
 									archived
 								</a>
@@ -242,11 +243,12 @@
 								· accessed {formatPlanDate(source.accessed)}
 							</span>
 							{#if source.archived}
+                ·
 								<a
 									href={source.archived}
 									target="_blank"
 									rel="noopener noreferrer"
-									class="text-ink-muted ml-2 underline"
+									class="text-ink-muted underline"
 								>
 									archived
 								</a>
