@@ -67,7 +67,6 @@ predecessor: NC_108_2003
 # [COOPER]  SCOTUS affirmance → affirming. (parallel: 137 S. Ct. 1455; 197 L. Ed. 2d 837)
 # Excluded on purpose: Rucho v. Common Cause, 588 U.S. 684 (2019) is about the 2016 SUCCESSOR
 #   (NC_115_2017) on PARTISAN grounds; it belongs in that file (mentioned in notes here only).
-# TODO: add archived_url (Wayback) per citation (encouraged, not required for `curated`).
 court_citations:
   - case: Dickson v. Rucho
     citation: "367 N.C. 542, 766 S.E.2d 238 (2014)"
@@ -81,6 +80,7 @@ court_citations:
     citation: "581 U.S. 285 (2017)"
     role: affirming
     url: https://www.supremecourt.gov/opinions/16pdf/15-1262_db8e.pdf
+    archived_url: https://web.archive.org/web/20260605114656/https://www.supremecourt.gov/opinions/16pdf/15-1262_db8e.pdf
 
 # [COOPER]        caption changed McCrory → Cooper (Gov. Cooper succeeded Gov. McCrory, Jan 2017).
 # [NCGA-689, AAR] curative SB 689 / SL 2011-414 fixed a software coding error; did not alter the map.
@@ -99,12 +99,13 @@ notes: >-
 #   [AAR]      origin narrative, dates, preclearance, "two districts struck", veto exemption, curative note
 #   [NCGA-453] SB 453 → SL 2011-403; name; sponsors; floor 7/27; ratified 7/28
 #   [NCGA-689] curative SB 689 → SL 2011-414; does not alter the map
-# TODO: add `archived` Wayback snapshots (encouraged).
 sources:
   - url: https://redistricting.lls.edu/state/north-carolina/
     accessed: 2026-06-04
+    archived: https://web.archive.org/web/20260617001603/https://redistricting.lls.edu/state/north-carolina/
   - url: https://www.ncleg.gov/BillLookup/2011/S453
     accessed: 2026-06-04
+    archived: https://web.archive.org/web/20260617002543/https://www.ncleg.gov/BillLookup/2011/S453
   - url: https://www.ncleg.gov/BillLookup/2011/S689
     accessed: 2026-06-04
 

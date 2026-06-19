@@ -28,7 +28,6 @@ enacted_date: 2001-12-05
 # corroborated by the American Redistricting Project; primary DOJ letter not located, and the date may
 # be conflated with the 2002-02 Stephenson state-court timeline (the 2001 LEGISLATIVE plans were
 # precleared 2002-02-11 per Stephenson I). Verify against the DOJ Voting Section file / NC Register.
-# TODO: confirm congressional preclearance date from a primary source.
 effective_date: 2002-02-15
 
 # [NCGA-32, AAR]
@@ -59,7 +58,6 @@ struck_down_details: >-
   Whole County Provisions, which do not apply to congressional districts, and did not concern this
   congressional plan.
 struck_down_districts: []
-
 # predecessor NC_107_2001 = 1990s-era plan in force for the 2000 election (107th Congress), a
 #   12-district map predating the 13th seat added here. [NCGA, AAR]
 # superseded_by NC_113_2013 = 2011 plan "Rucho-Lewis Congress 3" (SB 453 / SL 2011-403,
@@ -73,12 +71,12 @@ predecessor: NC_107_2001
 # Excluded on purpose: Easley v. Cromartie, 532 U.S. 234 (2001) resolved the 1990s 12th-district
 #   litigation over the PREDECESSOR plan -> belongs in NC_107_2001's file. Harris v. McCrory /
 #   Cooper v. Harris cite this plan only as a benchmark for the 2011 SUCCESSOR -> NC_113_2013's file.
-# TODO: add archived_url (Wayback) per citation (encouraged, not required for `curated`).
 court_citations:
   - case: Stephenson v. Bartlett
     citation: "355 N.C. 354, 562 S.E.2d 377 (2002)"
     role: context
     url: https://law.justia.com/cases/north-carolina/supreme-court/2002/094-02-1.html
+    archived_url: https://web.archive.org/web/20241106025213/https://law.justia.com/cases/north-carolina/supreme-court/2002/094-02-1.html
 
 notes: >-
   This plan added North Carolina's 13th congressional district following the 2000 census and was
@@ -95,16 +93,19 @@ notes: >-
 #   [SL-479]     session-law text; repeal of SL 2001-471; effective-on-becoming-law clause; 13 districts
 #   [NCGA]       plan list; "used 2002-2010"; predecessor/successor sequence
 #   [STEPHENSON] legislative-plan invalidation (Whole County Provisions); confirms it was not the CD plan
-# TODO: add `archived` Wayback snapshots (encouraged).
 sources:
   - url: https://www.ncleg.gov/BillLookUp/2001/H32
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260601020601/https://www.ncleg.gov/BillLookup/2001/H32
   - url: https://www.ncleg.net/enactedlegislation/sessionlaws/html/2001-2002/sl2001-479.html
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20150911193355/https://www.ncleg.net/EnactedLegislation/SessionLaws/HTML/2001-2002/SL2001-479.html
   - url: https://www.ncleg.gov/redistricting
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260102184443/https://www.ncleg.gov/redistricting
   - url: https://redistricting.lls.edu/state/north-carolina/
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260124205142/https://redistricting.lls.edu/state/north-carolina/
 
 curation_status: curated
 curation_last_reviewed: 2026-06-11

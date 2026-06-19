@@ -78,7 +78,6 @@ predecessor: NC_113_2013
 # [HARPER] Harper v. Lewis → invalidating: state preliminary injunction; unpublished order.
 # Not included: Common Cause v. Lewis (No. 18-CVS-14001, 2019-09-03) struck NC's STATE LEGISLATIVE maps,
 #   not this congressional plan; the congressional analog is Harper v. Lewis.
-# TODO: add archived_url (Wayback) per citation.
 court_citations:
   - case: Harris v. McCrory
     citation: "159 F. Supp. 3d 600 (M.D.N.C. 2016)"
@@ -88,10 +87,12 @@ court_citations:
     citation: "588 U.S. 684 (2019)"
     role: context
     url: https://www.law.cornell.edu/supremecourt/text/18-422
+    archived_url: https://web.archive.org/web/20251128130023/https://www.law.cornell.edu/supremecourt/text/18-422
   - case: Harper v. Lewis
     citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Oct. 28, 2019)"
     role: invalidating
     url: https://clearinghouse.net/case/43843/
+    archived_url: https://web.archive.org/web/20260120161900/https://clearinghouse.net/case/43843/
 
 # [RUCHO] (quoting the M.D.N.C. record, 318 F. Supp. 3d 777, 808–809): Lewis's 10–3 partisan-advantage statement.
 notes: >-
@@ -108,14 +109,16 @@ notes: >-
 #   [AAR-HVL]   state track: 2019-10-28 preliminary injunction
 #   [NCGA-SB2]  SB 2 → SL 2016-1; session; sponsor; enactment dates/votes
 #   [NCGA-PROC] plan name "…– Corrected"; committee adoption sequence
-# TODO: add `archived` Wayback snapshots.
 sources:
   - url: https://redistricting.lls.edu/state/north-carolina/
     accessed: 2026-06-07
+    archived: https://web.archive.org/web/20260617001603/https://redistricting.lls.edu/state/north-carolina/
   - url: https://redistricting.lls.edu/case/common-cause-v-rucho/
     accessed: 2026-06-07
+    archived: https://web.archive.org/web/20260427225103/https://redistricting.lls.edu/case/common-cause-v-rucho/
   - url: https://redistricting.lls.edu/case/harper-v-lewis/
     accessed: 2026-06-07
+    archived: https://web.archive.org/web/20260427230051/https://redistricting.lls.edu/case/harper-v-lewis/
   - url: https://www.ncleg.gov/BillLookUp/2015E1/sb2
     accessed: 2026-06-07
   - url: https://www.ncleg.gov/Redistricting/Process2016

@@ -88,16 +88,17 @@ predecessor: NC_118_2023
 #              this Nov-20 merits order; cite by docket/Doc. number.
 # Excluded on purpose: Moore v. Harper, 600 U.S. 1 (2023) concerns the 2021 plan's litigation, not this
 #   plan; it belongs in the predecessor chain's files.
-# TODO: add archived_url (Wayback) per citation (encouraged, not required for `curated`).
 court_citations:
   - case: Harper v. Hall
     citation: "384 N.C. 292, 886 S.E.2d 393 (2023)"
     role: enabling
     url: https://law.justia.com/cases/north-carolina/supreme-court/2023/413pa21-2.html
+    archived_url: https://web.archive.org/web/20260511212354/https://law.justia.com/cases/north-carolina/supreme-court/2023/413pa21-2.html
   - case: Williams v. Hall
     citation: "No. 1:23-cv-01057, Doc. 209 (M.D.N.C. Nov. 20, 2025)"
     role: context
     url: https://redistricting.lls.edu/wp-content/uploads/NC-williams-20251120-opinion.pdf
+    archived_url: https://web.archive.org/web/20260427221347/https://redistricting.lls.edu/wp-content/uploads/NC-williams-20251120-opinion.pdf
 
 notes: >-
   This plan governed the 119th Congress and produced a 10-4 Republican delegation in the 2024
@@ -119,16 +120,18 @@ notes: >-
 #   [NCGA]       plan list and session-law disambiguation (Senate SL 2023-146; House SL 2023-149)
 #   [NCGA-249]   2025 mid-decade plan SB 249 -> SL 2025-95; ratified 2025-10-22 (supersession context)
 #   [HARPER-III] Harper v. Hall reversal 2023-04-28; citation, holding
-# TODO: add `archived` Wayback snapshots (encouraged).
 sources:
   - url: https://www.ncleg.gov/BillLookUp/2023/S757
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260617001754/https://www.ncleg.gov/BillLookUp/2023/S757
   - url: https://www.ncleg.gov/redistricting
     accessed: 2026-06-11
   - url: https://redistricting.lls.edu/state/north-carolina/
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260124205142/https://redistricting.lls.edu/state/north-carolina/
   - url: https://redistricting.lls.edu/case/williams-v-hall/
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260207041017/https://redistricting.lls.edu/case/williams-v-hall/
 
 curation_status: curated
 curation_last_reviewed: 2026-06-11

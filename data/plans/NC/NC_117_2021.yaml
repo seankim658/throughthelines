@@ -70,40 +70,39 @@ predecessor: NC_115_2017
 #          Unpublished orders, No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty.).
 # Not included: Harper v. Hall (868 S.E.2d 499, N.C. 2022) and Moore v. Harper (600 U.S. 1, 2023) concern
 #   the LATER 2021 plan (SL 2021-174), not this plan; they belong in the successor's file.
-# TODO: add archived_url (Wayback) per citation.
 court_citations:
   - case: Harper v. Lewis
     citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Dec. 2, 2019)"
     role: enabling
     url: https://redistricting.lls.edu/case/harper-v-lewis/
+    archived_url: https://web.archive.org/web/20260427230051/https://redistricting.lls.edu/case/harper-v-lewis/
 
 # [AAR] 2020 election ran 8 R - 5 D, narrowing the prior 10-3 Republican delegation.
 notes: >-
   This plan was North Carolina's only congressional map used for a single election in the
   2010s, governing the 117th Congress alone. It was drawn in an unusually public process, in
   livestreamed committee sessions and under criteria that excluded election and racial data,
-  in response to the Harper v. Lewis injunction against the prior plan. The litigation that
-  followed the 2020 census — Harper v. Hall and Moore v. Harper — concerned the 2021 plan
-  that replaced this one, not this plan itself.
-
+  in response to the Harper v. Lewis injunction against the prior plan.
 # Coverage (which source to re-check for which field):
 #   [AAR]        litigation narrative; public drawing process; veto exemption; 2020 result
 #   [AAR-HVL]    Harper v. Lewis sequence; hosts the 2019-12-02 transcript
 #   [NCGA-H1029] HB 1029 → SL 2019-249; sponsors; enactment date/votes
 #   [NCGA-MAP]   plan title and 2010-census-block basis
 #   [HARPER]     2019-12-02 disposition: declined to enjoin, lifted filing stay, no merits ruling
-# TODO: add `archived` Wayback snapshots.
 sources:
   - url: https://redistricting.lls.edu/state/north-carolina/
     accessed: 2026-06-07
+    archived: https://web.archive.org/web/20260617001603/https://redistricting.lls.edu/state/north-carolina/
   - url: https://redistricting.lls.edu/case/harper-v-lewis/
     accessed: 2026-06-07
+    archived: https://web.archive.org/web/20260427230051/https://redistricting.lls.edu/case/harper-v-lewis/
   - url: https://www.ncleg.gov/BillLookUp/2019/H1029
     accessed: 2026-06-07
   - url: https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2019E
     accessed: 2026-06-07
   - url: https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-transcript.pdf
     accessed: 2026-06-07
+    archived: https://web.archive.org/web/20260427230052/https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-transcript.pdf
 
 curation_status: curated
 curation_last_reviewed: 2026-06-07

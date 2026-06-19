@@ -26,7 +26,6 @@ enacted_date: 1997-03-31
 # NC was a partial Section 5 jurisdiction (40 of 100 counties); the 1997 plan was precleared in
 # 1997, but no primary source gives the exact DOJ preclearance date -> unknown. (The 1997-09-12
 # three-judge-panel approval is a related milestone, not the preclearance date.)
-# TODO: confirm the DOJ Section 5 preclearance date from a primary source.
 effective_date: unknown
 
 # [NCGA-586, AAR]
@@ -56,7 +55,7 @@ struck_down: false
 # [EASLEY]       2001-04-18 (5-4): District 12 upheld as predominantly political, not racial.
 struck_down_details: >-
   This plan was not struck down. Its 12th District was challenged as a racial gerrymander
-  throughout the late 1990s, and a three-judge federal court invalidated it twice — first on
+  throughout the late 1990s, and a three-judge federal court invalidated it twice. The first time on
   summary judgment, reversed by the U.S. Supreme Court in Hunt v. Cromartie (1999), and again after
   trial on March 7, 2000. The Supreme Court stayed the March 2000 order, allowing the plan to be
   used in the November 2000 election, and then reversed it in Easley v. Cromartie (2001), holding
@@ -82,24 +81,27 @@ predecessor: NC_106_1999
 # [EASLEY]       Easley v. Cromartie (2001) -> context: reversed the 2000 invalidation; upheld District 12.
 # Excluded on purpose: Shaw v. Reno, 509 U.S. 630 (1993) established the racial-gerrymander doctrine
 #   but concerned the 1992 plan -> deeper-predecessor context, noted below.
-# TODO: add archived_url (Wayback) per citation (encouraged, not required for `curated`).
 court_citations:
   - case: Shaw v. Hunt
     citation: "517 U.S. 899 (1996)"
     role: enabling
     url: https://supreme.justia.com/cases/federal/us/517/899/
+    archived_url: https://web.archive.org/web/20260202194156/https://supreme.justia.com/cases/federal/us/517/899/
   - case: Hunt v. Cromartie
     citation: "526 U.S. 541 (1999)"
     role: context
     url: https://supreme.justia.com/cases/federal/us/526/541/
+    archived_url: https://web.archive.org/web/20250907102145/https://supreme.justia.com/cases/federal/us/526/541/
   - case: Cromartie v. Hunt
     citation: "133 F. Supp. 2d 407 (E.D.N.C. 2000)"
     role: context
     url: https://law.justia.com/cases/federal/district-courts/FSupp2/133/407/2292720/
+    archived_url: https://web.archive.org/web/20250211181217/https://law.justia.com/cases/federal/district-courts/FSupp2/133/407/2292720/
   - case: Easley v. Cromartie
     citation: "532 U.S. 234 (2001)"
     role: context
     url: https://supreme.justia.com/cases/federal/us/532/234/
+    archived_url: https://web.archive.org/web/20251206150425/https://supreme.justia.com/cases/federal/us/532/234/
 
 notes: >-
   This record models North Carolina's 1997 congressional plan ("97 House/Senate Plan A," House Bill
@@ -121,16 +123,19 @@ notes: >-
 #   [MNSEN]        1990s litigation sequence; reversion; stay allowing the 1997 plan for the 2000 election
 #   [CROMARTIE-00] enactment-date recital; reversion proviso; March 2000 invalidation posture
 #   [SHAW-II]/[HUNT-99]/[EASLEY]  see court_citations
-# TODO: add `archived` Wayback snapshots (encouraged).
 sources:
   - url: https://www.ncleg.gov/redistricting
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260102184443/https://www.ncleg.gov/redistricting
   - url: https://www.ncleg.gov/Sessions/1997/Bills/House/PDF/H586v3.pdf
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20250913143900/https://www.ncleg.gov/Sessions/1997/Bills/House/PDF/H586v3.pdf
   - url: https://redistricting.lls.edu/state/north-carolina/
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20260124205142/https://redistricting.lls.edu/state/north-carolina/
   - url: https://www.senate.mn/departments/scr/REDIST/Redsum/ncsum.htm
     accessed: 2026-06-11
+    archived: https://web.archive.org/web/20241205002618/https://www.senate.mn/departments/scr/REDIST/Redsum/ncsum.htm
 
 curation_status: curated
 curation_last_reviewed: 2026-06-11

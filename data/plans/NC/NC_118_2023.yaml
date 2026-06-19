@@ -72,12 +72,11 @@ predecessor: NC_117_2021
 #                theory; a judicial-authority ruling that did not invalidate or uphold this map (6-3).
 # Harper v. Hall was later reversed on rehearing (384 N.C. 292, 886 S.E.2d 393, 2023-04-28), after the
 #   2022 election; that reversal did not disturb this already-used map and is noted in `notes`.
-# TODO: add archived_url (Wayback) per citation.
 court_citations:
   - case: Harper v. Hall
     citation: "380 N.C. 317, 868 S.E.2d 499 (2022)"
     role: enabling
-    url: https://caselaw.findlaw.com/court/nc-supreme-court/2098995.html
+    url: https://law.justia.com/cases/north-carolina/supreme-court/2022/413pa21.html
   - case: Harper v. Hall (remedial order)
     citation: "No. 21 CVS 015426 (N.C. Super. Ct., Wake Cnty. Feb. 23, 2022)"
     role: remedial
