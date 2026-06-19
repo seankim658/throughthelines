@@ -12,6 +12,7 @@ export interface ArtifactRef {
 	path: string;
 	size_bytes: number;
 	sha256: string;
+	unversioned?: boolean;
 }
 
 /** Build identity. Populated by the pipeline at manifest-build time. */

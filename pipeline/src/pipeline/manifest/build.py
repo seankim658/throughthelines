@@ -94,7 +94,9 @@ def build_manifest(
     global_artifacts: dict[str, dict[str, Any]] = {
         "plan_index": _artifact_ref(paths.plan_index_file, derived_dir, "plan-index"),
         "members": _artifact_ref(paths.members_file, derived_dir, "members"),
-        "basemap": _artifact_ref(paths.basemap_file, derived_dir, "basemap"),
+        "basemap": _content_addressed_artifact_ref(
+            paths.basemap_file, "basemap", "basemap"
+        ),
     }
 
     states_section: dict[str, dict[str, Any]] = {}
@@ -238,6 +240,33 @@ def _artifact_ref(
         "path": relative_path.as_posix(),
         "size_bytes": artifact_path.stat().st_size,
         "sha256": _hash_file(artifact_path),
+    }
+
+
+def _content_addressed_artifact_ref(
+    artifact_path: Path, producing_step: str, url_dir: str
+) -> dict[str, Any]:
+    """ArtifactRef whose published path embeds the content hash.
+
+    For large, rarely-changing artifacts (such as the basemap) that
+    live outside the per-commit prefix so they are not re-uploaded
+    on every build. Flagged as `unversioned` so the frontend resolves
+    it straight off the artifacts base.
+    """
+    if not artifact_path.exists():
+        raise ManifestBuildError(
+            f"required artifact missing at {artifact_path} "
+            f"(did you run `pipeline {producing_step}`?)"
+        )
+    digest: str = _hash_file(artifact_path)
+    published_path: str = (
+        f"{url_dir}/{artifact_path.stem}-{digest}{artifact_path.suffix}"
+    )
+    return {
+        "path": published_path,
+        "size_bytes": artifact_path.stat().st_size,
+        "sha256": digest,
+        "unversioned": True,
     }
 
 

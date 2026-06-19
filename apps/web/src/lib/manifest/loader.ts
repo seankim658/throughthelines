@@ -36,7 +36,7 @@ export async function loadManifest(
 /** Resolve an artifact to the fetch URL. */
 export function resolveArtifactUrl(manifest: Manifest, artifact: ArtifactRef): string {
 	const prefix = manifest.build.url_prefix;
-	if (prefix === null) {
+	if (prefix === null || artifact.unversioned) {
 		return `${PUBLIC_ARTIFACTS_BASE}/${artifact.path}`;
 	}
 	return `${PUBLIC_ARTIFACTS_BASE}/${prefix}/${artifact.path}`;
