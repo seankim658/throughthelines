@@ -74,6 +74,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_manifest(project_config)
 
+    if args.command == "publish":
+        from pipeline.cli.publish import run_publish
+
+        return run_publish(project_config)
+
     parser.print_help()
     return 1
 
@@ -93,8 +98,10 @@ def _build_parser() -> argparse.ArgumentParser:
             "  7. basemap         Extract CONUS basemap via pmtiles CLI\n"
             "  8. plan-index      Build plan_index.json for the frontend\n"
             "  9. manifest        Build manifest.json (run last)\n"
+            " 10. publish         Upload artifacts to R2 (deploy; needs R2_* env)\n"
             "\n"
-            "Steps 4-8 are independent and can run in any order after step 3."
+            "Steps 4-8 are independent and can run in any order after step 3.\n"
+            "Step 10 (publish) requires a built manifest and R2 credentials."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -227,6 +234,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "manifest",
         help=(
             "Build manifest.json, the frontend discovery document. " "Must be run last."
+        ),
+    )
+
+    # Publish
+    subparsers.add_parser(
+        "publish",
+        help=(
+            "Upload derived artifacts to R2, writing manifest.json last. "
+            "Run after manifest; requires R2_* credentials."
         ),
     )
 
