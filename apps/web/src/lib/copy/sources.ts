@@ -65,6 +65,25 @@ export const DATA_SOURCES: readonly DataSource[] = [
 		license: 'Public domain'
 	},
 	{
+		name: 'All About Redistricting',
+		description:
+			'The narrative reference behind our plan-origin curation. Most of the curation metadata is summarized from here.',
+		link: { kind: 'static', url: 'https://redistricting.lls.edu/' },
+		license: '© Justin Levitt (copyrighted reference, summarized with attribution)',
+		citation: [
+			{ type: 'text', value: 'Justin Levitt. ' },
+			{
+				type: 'italic',
+				value:
+					'All About Redistricting: Prof. Justin Levitt’s Guide to Drawing the Electoral Lines.'
+			},
+			{
+				type: 'text',
+				value: ' Loyola Law School. Retrieved from https://redistricting.lls.edu/.'
+			}
+		]
+	},
+	{
 		name: 'Census Block Equivalency Files',
 		description: 'Official block-to-district assignments for the 113th–119th Congresses.',
 		link: {
