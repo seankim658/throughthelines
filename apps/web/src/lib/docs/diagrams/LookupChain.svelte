@@ -89,7 +89,8 @@
 
 		<!-- Footer: the privacy point -->
 		<text x="400" y="146" class="ttl-diagram-caption">
-			Your address goes directly to the U.S. Census Bureau Geocoding API, never to Through the Lines.
+			Your address goes directly to the U.S. Census Bureau Geocoding API, never to Through the
+			Lines.
 		</text>
 	</svg>
 
@@ -97,4 +98,3 @@
 		<figcaption>{caption}</figcaption>
 	{/if}
 </figure>
-

@@ -33,4 +33,3 @@
 		<p class="text-ink-secondary">Matched: {lookup.matchedAddress}</p>
 	{/if}
 </div>
-

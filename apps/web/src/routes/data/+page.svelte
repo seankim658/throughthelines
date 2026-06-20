@@ -93,7 +93,9 @@
 
 	<section class="space-y-6 pb-8">
 		<h2 class="text-2xl">Data sources</h2>
-		<p class="text-ink-secondary">Through the Lines stitches together several open datasets and reference sources:</p>
+		<p class="text-ink-secondary">
+			Through the Lines stitches together several open datasets and reference sources:
+		</p>
 		<ul class="list-none space-y-4 p-0">
 			{#each DATA_SOURCES as source (source.name)}
 				{@render sourceItem(source)}

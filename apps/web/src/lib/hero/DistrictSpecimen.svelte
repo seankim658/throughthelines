@@ -30,4 +30,3 @@
 		vector-effect: non-scaling-stroke;
 	}
 </style>
-
