@@ -10,7 +10,7 @@
 	} = $props();
 </script>
 
-{#each items as it, i}{@render item(it)}{#if i < items.length - 1}{#if items.length === 2}
+{#each items as it, i (i)}{@render item(it)}{#if i < items.length - 1}{#if items.length === 2}
 			and
 		{:else if i === items.length - 2}, and
 		{:else},
