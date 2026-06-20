@@ -10,7 +10,14 @@ async function highlighter(code, lang) {
 	const html = await codeToHtml(code, {
 		lang: lang || 'text',
 		themes: { light: 'vitesse-light', dark: 'vitesse-dark' },
-		defaultColor: false
+		defaultColor: false,
+		transformers: [
+			{
+				pre(node) {
+					delete node.properties.tabindex;
+				}
+			}
+		]
 	});
 	return escapeSvelte(html);
 }
