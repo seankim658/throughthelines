@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, TYPE_CHECKING
 
 import boto3
+from boto3.exceptions import S3UploadFailedError
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -222,7 +223,7 @@ def publish_artifacts(
 
         _upload(client, bucket, manifest_file, _MANIFEST_KEY)
         outcomes.append(("uploaded", _MANIFEST_KEY))
-    except (BotoCoreError, ClientError) as e:
+    except (BotoCoreError, ClientError, S3UploadFailedError) as e:
         raise PublishError(f"upload failed: {e}") from e
 
     return PublishResult(
