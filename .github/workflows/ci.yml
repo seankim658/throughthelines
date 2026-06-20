@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    name: Pipeline, type-check + plan validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Type-check (mypy + pydantic plugin)
+        run: uv run mypy src
+
+      - name: Validate plan YAMLs
+        run: uv run pipeline plan-index
+
+  web:
+    name: Web · svelte-check + lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    # $env/static/public is resolved at check/build time; without these the
+    # gitignored .env is absent in CI and `svelte-kit sync` fails. Dev defaults
+    # are fine here, nothing in CI fetches real artifacts.
+    env:
+      PUBLIC_ARTIFACTS_BASE: /derived
+      PUBLIC_ARTIFACTS_LAYOUT: flat
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check (svelte-check)
+        run: pnpm check
+
+      - name: Lint (prettier + eslint)
+        run: pnpm lint
