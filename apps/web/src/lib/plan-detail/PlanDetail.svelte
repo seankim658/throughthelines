@@ -200,7 +200,7 @@
 							: {cite.citation}
 							<span class="text-ink-muted">· {cite.role}</span>
 							{#if cite.archived_url}
-                ·
+								·
 								<a
 									href={cite.archived_url}
 									target="_blank"
@@ -243,7 +243,7 @@
 								· accessed {formatPlanDate(source.accessed)}
 							</span>
 							{#if source.archived}
-                ·
+								·
 								<a
 									href={source.archived}
 									target="_blank"
@@ -292,7 +292,7 @@
 						rel="noopener noreferrer"
 						class="text-accent underline"
 					>
-            {formatDelimitedProvider(blockSource.provider)}
+						{formatDelimitedProvider(blockSource.provider)}
 					</a>
 					· {formatVintage(blockSource.block_vintage)} blocks
 				{:else if blockSource.type === 'polygon_join'}
@@ -303,7 +303,7 @@
 						rel="noopener noreferrer"
 						class="text-accent underline"
 					>
-            <!-- NOTE : Will have to remove this hardcode later -->
+						<!-- NOTE : Will have to remove this hardcode later -->
 						Lewis plan polygons
 					</a>
 					· {formatVintage(blockSource.block_vintage)} blocks

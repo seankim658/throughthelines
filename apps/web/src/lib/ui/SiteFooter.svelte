@@ -10,7 +10,7 @@
 </script>
 
 <footer class="border-line-subtle border-t">
-	<div class="mx-auto max-w-6xl px-12 pr-16 py-6">
+	<div class="mx-auto max-w-6xl px-12 py-6 pr-16">
 		<div class="flex flex-col items-baseline gap-8 md:flex-row md:justify-between">
 			<!-- Identity -->
 			<div class="md:max-w-sm">

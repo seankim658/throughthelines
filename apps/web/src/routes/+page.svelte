@@ -2,7 +2,7 @@
 	import type { PageData } from './$types';
 	import { getCoveredStateCodes, getPlannedStateCodes, joinWithAnd } from '$lib/copy/coverage';
 	import { STATE_NAMES } from '$lib/states/states';
-  import DistrictSpecimen from '$lib/hero/DistrictSpecimen.svelte';
+	import DistrictSpecimen from '$lib/hero/DistrictSpecimen.svelte';
 	import ThemeToggle from '$lib/ui/ThemeToggle.svelte';
 
 	let { data }: { data: PageData } = $props();

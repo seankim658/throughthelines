@@ -26,4 +26,3 @@
 		</section>
 	{/each}
 </div>
-
