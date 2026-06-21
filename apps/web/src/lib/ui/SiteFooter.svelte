@@ -47,6 +47,9 @@
 								GitHub
 							</a>
 						</li>
+						<li>
+							<a href="/changelog" class="text-ink-secondary hover:text-accent">Changelog</a>
+						</li>
 					</ul>
 				</div>
 				<div>
