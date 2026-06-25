@@ -2,7 +2,12 @@
 	import type { Plan } from '$lib/plan-index/types';
 	import type { MemberRecord } from '$lib/members/types';
 	import type { BlockSource, SourcesSection } from '$lib/manifest/types';
-	import { formatCongressYears } from '$lib/congress/congress-years';
+	import {
+		formatCongressYears,
+		congressTiming,
+		congressElectionYear,
+		congressYears
+	} from '$lib/congress/congress-years';
 	import {
 		formatCurationStatus,
 		formatOrigin,
@@ -28,7 +33,7 @@
 	function formatVintage(vintage: 'v2000' | 'v2010' | 'v2020'): string {
 		return vintage.slice(1);
 	}
-	// TODO : Probably extract this to the pipeline
+	// TODO : Probably extract the next three functions to the pipeline eventually
 	function formatDelimitedProvider(provider: string): string {
 		switch (provider) {
 			case 'census':
@@ -38,6 +43,41 @@
 			default:
 				return 'block assignment file';
 		}
+	}
+
+	function formatBoundaryProvider(provider: string): string {
+		switch (provider) {
+			case 'lewis':
+				return 'Jeffrey B. Lewis';
+			case 'ncga':
+				return 'NC General Assembly';
+			default:
+				return 'district boundary source';
+		}
+	}
+
+	function formatPolygonProvider(provider: string): string {
+		switch (provider) {
+			case 'lewis':
+				return 'Lewis plan polygons';
+			case 'ncga':
+				return 'NC General Assembly plan polygons';
+			default:
+				return 'plan polygons';
+		}
+	}
+
+	function congressTimingNote(congress: number): string | null {
+		const timing = congressTiming(congress);
+		if (timing === 'current') {
+			return 'Currently seated.';
+		}
+		if (timing === 'upcoming') {
+			const electionYear = congressElectionYear(congress);
+			const seatedYear = congressYears(congress).start;
+			return `On the ballot for the ${electionYear} election; members are seated in January ${seatedYear}.`;
+		}
+		return null;
 	}
 
 	let {
@@ -77,6 +117,7 @@
 	{@const origin = formatOrigin(plan.origin)}
 	{@const struckDown = formatStruckDown(plan.struck_down)}
 	{@const curation = formatCurationStatus(plan.curation_status)}
+	{@const timingNote = congressTimingNote(congress)}
 	{@const dateParts = [
 		isRealDate(plan.effective_date) ? `Effective ${formatPlanDate(plan.effective_date)}` : null,
 		isRealDate(plan.enacted_date) ? `Enacted ${formatPlanDate(plan.enacted_date)}` : null
@@ -92,6 +133,9 @@
 				<p class="text-ink-secondary mt-1 text-sm">
 					{congress}th Congress · {formatCongressYears(congress)}
 				</p>
+				{#if timingNote}
+					<p class="text-ink-muted mt-1 text-xs">{timingNote}</p>
+				{/if}
 				{#if dateParts.length > 0}
 					<p class="text-ink-secondary mt-1 text-sm">{dateParts.join(' · ')}</p>
 				{/if}
@@ -264,12 +308,12 @@
 			<p>
 				District boundaries:
 				<a
-					href={sources.lewis.homepage_url}
+					href={plan.boundary_source.landing_url}
 					target="_blank"
 					rel="noopener noreferrer"
 					class="text-accent underline"
 				>
-					Jeffrey B. Lewis
+					{formatBoundaryProvider(plan.boundary_source.provider)}
 				</a>
 			</p>
 			<p>
@@ -303,8 +347,7 @@
 						rel="noopener noreferrer"
 						class="text-accent underline"
 					>
-						<!-- NOTE : Will have to remove this hardcode later -->
-						Lewis plan polygons
+						{formatPolygonProvider(blockSource.provider)}
 					</a>
 					· {formatVintage(blockSource.block_vintage)} blocks
 				{:else}

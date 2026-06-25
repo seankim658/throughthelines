@@ -37,6 +37,7 @@ def run_scaffold(project_config: ProjectConfig, args: argparse.Namespace) -> int
                 plans_dir=project_config.project_paths.plans_dir / state,
                 state=state,
                 lewis_commit_sha=sources.lewis.commit_sha,
+                raw_dir=project_config.project_paths.raw_dir,
                 patterns=patterns or None,
                 force=force,
             )

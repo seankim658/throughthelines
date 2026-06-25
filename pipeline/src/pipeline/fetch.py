@@ -60,6 +60,7 @@ class FetchResult:
     files: list[FetchedFile]
     state_path: Path
     state: SupportedStateCode | None  # None means national scope
+    warnings: list[str]
 
 
 @dataclass(frozen=True)
@@ -116,7 +117,7 @@ def fetch_national(
         )
 
     written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
-    return FetchResult(files=fetched, state_path=written_path, state=None)
+    return FetchResult(files=fetched, state_path=written_path, state=None, warnings=[])
 
 
 def fetch_state(
@@ -168,7 +169,7 @@ def fetch_state(
             )
         )
 
-    # State-specific block-assignment files 
+    # State-specific block-assignment files
     bef_dir: Path = project_paths.bef_dir
     bef_dir.mkdir(parents=True, exist_ok=True)
     for entry in sources.block_assignments:
@@ -181,8 +182,32 @@ def fetch_state(
             )
         )
 
+    geometry_warnings: list[str] = []
+    for geometry in sources.geometry_sources:
+        if geometry.state != state:
+            continue
+        geometry_local: Path = (
+            project_paths.district_geometry_dir
+            / geometry.provider
+            / state
+            / geometry.local_filename
+        )
+        fetched_file: FetchedFile = _fetch_one(
+            geometry.url,
+            geometry_local,
+            request_settings,
+            user_agent,
+            prior.get(geometry.url),
+        )
+        fetched.append(fetched_file)
+        warning: str | None = _verify_checksum(fetched_file, geometry.checksum)
+        if warning is not None:
+            geometry_warnings.append(warning)
+
     written_path: Path = _write_manifest(sources, fetched, project_paths, state_path)
-    return FetchResult(files=fetched, state_path=written_path, state=state)
+    return FetchResult(
+        files=fetched, state_path=written_path, state=state, warnings=geometry_warnings
+    )
 
 
 # --- Fetch ---
@@ -383,3 +408,18 @@ def _vintage_to_year(vintage: str) -> str:
     if not vintage.startswith("v"):
         raise ValueError(f"unexpected vintage format: {vintage!r}")
     return vintage[1:]
+
+
+def _verify_checksum(fetched: FetchedFile, expected: str) -> str | None:
+    algorithm, _, expected_hex = expected.partition(":")
+    if algorithm != "sha256" or not expected_hex:
+        return (
+            f"malformed checksum pin {expected!r} for {fetched.source_url} "
+            f"(expected 'sha256:<hex>'); skipping verification"
+        )
+    if fetched.sha256.lower() != expected_hex.lower():
+        return (
+            f"checksum mismatch for {fetched.source_url}: "
+            f"pinned {expected_hex}, got {fetched.sha256}"
+        )
+    return None

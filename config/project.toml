@@ -4,7 +4,7 @@ schema_version = 1
 name = "Through the Lines"
 domain = "throughthelines.org"
 tagline = "Every congressional district your address has lived under."
-repo_url = "https://github.com/seankim658/through-the-lines"
+repo_url = "https://github.com/seankim658/throughthelines"
 
 [paths]
 # Config files
@@ -14,7 +14,9 @@ sources_filename = "sources.toml"
 
 # Data
 raw_dir = "{repo_root}/data/raw/"
-lewis_dir = "{repo_root}/data/raw/lewis"
+# Provider neutral parent for all district-geometry sources
+district_geometry_dir = "{repo_root}/data/raw/district_geometry"
+lewis_dir = "{repo_root}/data/raw/district_geometry/lewis"
 voteview_dir = "{repo_root}/data/raw/voteview/"
 census_dir = "{repo_root}/data/raw/census"
 tabblock_dir = "{repo_root}/data/raw/census/tabblock/"
@@ -36,7 +38,7 @@ manifest_file = "{repo_root}/data/derived/manifest.json"
 
 [scope]
 congress_start = 107
-congress_end = 119
+congress_end = 120
 planned = ["PA", "TX", "VA"]
 
 [scope.chambers]

@@ -1,6 +1,10 @@
 <script lang="ts">
 	import type { CongressEntry } from '$lib/manifest/types';
-	import { formatCongressYears } from '$lib/congress/congress-years';
+	import {
+		formatCongressYears,
+		congressTiming,
+		congressElectionYear
+	} from '$lib/congress/congress-years';
 
 	let {
 		congresses,
@@ -28,10 +32,18 @@
 		if (d === null || d === undefined) return '—';
 		return `District ${d}`;
 	}
+
+	function timingLabel(congress: number): string | null {
+		const timing = congressTiming(congress);
+		if (timing === 'current') return 'Current';
+		if (timing === 'upcoming') return `${congressElectionYear(congress)} ballot`;
+		return null;
+	}
 </script>
 
 <ul class="flex list-none flex-col p-0">
 	{#each ordered as entry (entry.congress)}
+		{@const timing = timingLabel(entry.congress)}
 		<li>
 			<button
 				type="button"
@@ -41,6 +53,7 @@
 			>
 				<div class="text-ink-muted group-aria-pressed:text-accent-ink text-xs">
 					{entry.congress}th · {formatCongressYears(entry.congress)}
+					{#if timing}<span class="tracking-wide uppercase">({timing})</span>{/if}
 				</div>
 				<div class="text-base font-medium">{districtLabel(entry.congress)}</div>
 			</button>

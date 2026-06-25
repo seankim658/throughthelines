@@ -58,6 +58,7 @@ class ProjectPaths:
     request_filename: str
     sources_filename: str
     raw_dir: Path
+    district_geometry_dir: Path
     lewis_dir: Path
     voteview_dir: Path
     census_dir: Path
@@ -150,6 +151,9 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
             paths_raw, "sources_filename", "paths", path, ProjectConfigError
         ),
         raw_dir=_require_path(paths_raw, "raw_dir", path, repo_root),
+        district_geometry_dir=_require_path(
+            paths_raw, "district_geometry_dir", path, repo_root
+        ),
         lewis_dir=_require_path(paths_raw, "lewis_dir", path, repo_root),
         voteview_dir=_require_path(paths_raw, "voteview_dir", path, repo_root),
         census_dir=_require_path(paths_raw, "census_dir", path, repo_root),

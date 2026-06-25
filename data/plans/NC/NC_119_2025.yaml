@@ -15,7 +15,7 @@ state: NC
 chamber: congressional
 congress_start: 119
 congress_end: 119
-source_file: lewis/NC/North Carolina_119_to_119.geojson
+source_file: district_geometry/lewis/NC/North Carolina_119_to_119.geojson
 source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 
@@ -72,11 +72,10 @@ struck_down_districts: []
 
 # predecessor NC_118_2023 = 2022 court-drawn interim plan (Harper v. Hall, File No. 21 CVS 015426),
 #   used only in the 2022 election.
-# superseded_by: null — replaced mid-decade by the 2025 congressional plan (SB 249 / SL 2025-95,
-#   ratified 2025-10-22, reconfiguring Districts 1 and 3, projected 11-3 R), but that plan governs the
-#   120th Congress, is outside the dataset window (107th-119th), and has no plan file here; recorded as
-#   null rather than pointing to a nonexistent plan_id. [NCGA-249, AAR]
-superseded_by: null
+# superseded_by NC_120_2027 = the 2025 mid-decade plan (SB 249 / SL 2025-95, ratified 2025-10-22),
+#   which reconfigured Districts 1 and 3 (projected 11-3 R) and governs the 120th Congress. 
+#   [NCGA-249, AAR]
+superseded_by: NC_120_2027
 predecessor: NC_118_2023
 
 # [HARPER-III] Harper v. Hall (N.C., 2023-04-28) -> enabling: reversed the state-constitutional bar on
@@ -109,9 +108,7 @@ notes: >-
   November 20, 2025. Before that ruling, the General Assembly had already replaced this plan
   mid-decade with a 2025 congressional plan (Senate Bill 249, Session Law 2025-95, ratified
   October 22, 2025), which reconfigured Districts 1 and 3 to favor Republicans and was projected
-  to yield an 11-3 delegation for the 2026 election. That 2025 plan governs the 120th Congress,
-  falls outside this dataset's 107th-119th window, and has no plan record here, so superseded_by
-  is recorded as null.
+  to yield an 11-3 delegation for the 2026 election. 
 
 # Coverage (which source to re-check for which field):
 #   [AAR]        origin narrative, dates, 2024 result, veto exemption, litigation summary

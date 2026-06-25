@@ -1,0 +1,111 @@
+# =============================================================================
+# NC_120_2027: North Carolina 2025 mid-decade congressional plan ("Realign
+# Congressional Districts 2025" / SB 249 -> SL 2025-95). Governs the 120th
+# Congress; the map on the ballot for the 2026 U.S. House election.
+#
+# Source tags:
+#   [AAR]      All About Redistricting, NC           https://redistricting.lls.edu/state/north-carolina/
+#   [AAR-WVH]  AAR case page, Williams v. Hall       https://redistricting.lls.edu/case/williams-v-hall/
+#   [NCGA-249] NCGA bill page, SB 249 / SL 2025-95   https://www.ncleg.gov/BillLookUp/2025/S249
+#   [NCGA]     NCGA redistricting page               https://www.ncleg.gov/redistricting
+#   [WILLIAMS] see court_citations below
+# =============================================================================
+plan_id: NC_120_2027
+state: NC
+chamber: congressional
+congress_start: 120
+congress_end: 120
+# The NCGA shapefile:
+# (https://webservices.ncleg.gov/ViewBillDocument/2025/7667/0/SL%202025-95%20-%20Shapefile)
+source_file: district_geometry/ncga/NC/SL_2025-95.geojson
+source_commit: "sha256:c21e18d29a0f6dd52636c866ca3b05295a0757c6d6d98ee42ffa0b2eee795897"
+schema_version: 1
+
+# [NCGA-249]
+# SB 249: Senate 2nd reading 2025-10-20 (25-20), 3rd reading 2025-10-21 (26-20);
+# House final passage 2025-10-22 (66-48); chaptered as SL 2025-95 on 2025-10-22.
+enacted_date: 2025-10-22
+# Section 2: "This act is effective when it becomes law"; took effect on House
+# passage 2025-10-22, so effective_date coincides with enacted_date. [NCGA-249]
+effective_date: 2025-10-22
+
+# [NCGA-249, AAR]
+origin: legislature
+# [NCGA-249] SB 249 -> SL 2025-95; "Realign Congressional Districts 2025"; primary
+#            sponsors Alexander, Daniel, Galey; amends G.S. 163-201; 2020-census-block based.
+# [AAR]      voluntary mid-decade partisan redraw; reworked Districts 1 and 3 in eastern NC;
+#            NC congressional plans not subject to gubernatorial veto (N.C. Const. art. II, § 22(5)).
+origin_details: >-
+  Enacted by the Republican-controlled North Carolina General Assembly as Senate Bill 249,
+  which became Session Law 2025-95 under the short title "Realign Congressional Districts 2025."
+  Unlike a post-census plan, this was a voluntary mid-decade redraw: the General Assembly
+  reopened the 2023 map roughly two years into the decade to add an expected Republican seat,
+  reconfiguring Districts 1 and 3 in the eastern part of the state. The Senate passed it on
+  party lines (25-20 on second reading October 20 and 26-20 on third reading October 21, 2025),
+  and the House gave final approval 66-48 on October 22, 2025, at which point it took effect,
+  because North Carolina's congressional plans are not subject to gubernatorial veto. It is drawn
+  on 2020 census tabulation blocks, the same vintage as the 2023 plan it replaced.
+
+# Not struck down; in effect for 2026. PI denied 2025-11-26; remaining 2025-plan challenge
+# voluntarily dismissed with prejudice 2026-01-16; no appeal. [WILLIAMS, AAR-WVH]
+struck_down: false
+# [WILLIAMS] 2025-11-26: three-judge M.D.N.C. panel unanimously denied a preliminary injunction
+#            against the 2025 plan, finding plaintiffs unlikely to succeed and that the direct
+#            evidence showed partisan, not racial, motivation. 2026-01-16: plaintiffs voluntarily
+#            dismissed the remaining 2025-plan claims with prejudice (Doc. 221, FRCP 41(a)(1)).
+struck_down_details: >-
+  This plan was not struck down and is in effect for the 2026 election. It was challenged in the
+  consolidated three-judge case Williams v. Hall in the Middle District of North Carolina by the
+  same plaintiffs who had challenged the 2023 plan, who added claims that the 2025 redraw
+  intentionally diluted Black voting strength. On November 26, 2025, the panel unanimously denied
+  a preliminary injunction, finding the plaintiffs unlikely to succeed on the merits and
+  concluding that the direct evidence pointed to a partisan rather than a racial motivation. The
+  plaintiffs then voluntarily dismissed their remaining challenge to the 2025 plan with prejudice
+  on January 16, 2026, which forecloses refiling, and took no appeal. No challenge to this plan is
+  active.
+struck_down_districts: []
+
+# predecessor NC_119_2025 = 2023 plan (SB 757 / SL 2023-145), which this map replaced mid-decade.
+# superseded_by: null, this is the newest plan in the dataset and the operative map for 2026.
+superseded_by: null
+predecessor: NC_119_2025
+
+# [WILLIAMS] Williams v. Hall (M.D.N.C., No. 1:23-cv-01057) -> context: the consolidated challenge
+#            in which the 2025 plan's preliminary injunction was DENIED 2025-11-26 (2025 WL 3296273),
+#            then voluntarily dismissed with prejudice 2026-01-16 (Doc. 221). NOTE: the Nov-20-2025
+#            merits order (2025 WL 3240456) concerned the 2023 plan and belongs in NC_119_2025, not here.
+#            TODO(curation): replace url with the direct PI-opinion PDF and add an archived_url snapshot.
+court_citations:
+  - case: Williams v. Hall
+    citation: "No. 1:23-cv-01057, 2025 WL 3296273 (M.D.N.C. Nov. 26, 2025)"
+    role: context
+    url: https://redistricting.lls.edu/case/williams-v-hall/
+
+notes: >-
+  This is North Carolina's first mid-decade congressional change of the 2020s cycle and the first
+  plan in this dataset sourced outside the Lewis archive. Because the Census Bureau publishes no
+  block-equivalency file for a map drawn off the decennial cycle, the address-to-district lookup is
+  built from the General Assembly's own block assignment file, exactly as it is for the 2019
+  remedial plan that governs the 117th Congress. The redraw is projected to move the delegation from
+  10-4 to 11-3 Republican by reworking the eastern districts, with District 1 (the state's one
+  competitive U.S. House seat in 2024) becoming substantially more Republican. The plan governs the
+  120th Congress and is the map voters use in 2026, although that Congress is not seated until
+  January 2027; the 119th Congress's members, elected in 2024, hold office until then.
+# Coverage (which source to re-check for which field):
+#   [AAR]        origin narrative, mid-decade context, 2026 projection, veto exemption, litigation summary
+#   [AAR-WVH]    Williams v. Hall: 2025-11-26 PI denial; 2026-01-16 dismissal; hosts the opinion PDFs
+#   [NCGA-249]   SB 249 -> SL 2025-95; name; sponsors; votes; ratified 2025-10-22; 2020-block basis
+#   [NCGA]       plan list and session-law disambiguation
+sources:
+  - url: https://www.ncleg.gov/BillLookUp/2025/S249
+    accessed: 2026-06-23
+  - url: https://www.ncleg.gov/redistricting
+    accessed: 2026-06-23
+  - url: https://redistricting.lls.edu/state/north-carolina/
+    accessed: 2026-06-23
+  - url: https://redistricting.lls.edu/case/williams-v-hall/
+    accessed: 2026-06-23
+
+curation_status: partial
+curation_last_reviewed: 2026-06-23
+extensions: {}

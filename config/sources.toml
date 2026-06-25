@@ -35,6 +35,28 @@ files = [
     "GeoJson/North Carolina_119_to_119.geojson",
 ]
 
+# --- District geometry sources ---
+#
+# Congressional district boundaries published as polygons (shapefile/GeoJSON) by a
+# non-Lewis authority. A geometry source exists for a plan only when the Lewis archive 
+# has no polygon for it yet (Lewis lags the current cycle).
+#
+# Always state-specific: there is no national congressional-shapefile authority, so
+# (unlike [[block_assignment]]) state = "*" is not allowed. Provider naming follows
+# the same convention as [[block_assignment]]: a lowercase short label for the
+# publishing authority (e.g. "ncga").
+
+[[geometry_source]]
+provider = "ncga"
+state = "NC"
+congress = 120
+url = "https://webservices.ncleg.gov/ViewBillDocument/2025/7667/0/SL%202025-95%20-%20Shapefile"
+landing_url = "https://www.ncleg.gov/Redistricting"
+local_filename = "SL_2025-95_shapefile.zip"
+checksum = "sha256:c21e18d29a0f6dd52636c866ca3b05295a0757c6d6d98ee42ffa0b2eee795897"
+source_crs = "EPSG:32119"
+district_field = "DISTRICT"
+
 [voteview]
 # Voteview's member-level data (HSall = all House members across all Congresses).
 url = "https://voteview.com/static/data/out/members/HSall_members.csv"
@@ -151,6 +173,17 @@ landing_url = "https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
 inner_filename = "NationalCD119.txt"
 district_column = "CDFP"
+
+[[block_assignment]]
+provider = "ncga"
+state = "NC"
+congress = 120
+vintage = "v2020"
+landing_url = "https://www.ncleg.gov/Redistricting"
+url = "https://webservices.ncleg.gov/ViewBillDocument/2025/7669/0/SL%202025-95%20-%20Block%20Assignment%20File"
+inner_filename = "SL 2025-95.csv"
+district_column = "District"
+geoid_column = "Block"
 
 # --- Protomaps basemap ---
 

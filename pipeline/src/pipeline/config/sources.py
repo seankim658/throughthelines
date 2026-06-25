@@ -57,6 +57,20 @@ class LewisSource:
 
 
 @dataclass(frozen=True)
+class GeometrySource:
+
+    provider: str
+    state: SupportedStateCode
+    congress: int
+    url: str
+    landing_url: str
+    local_filename: str
+    checksum: str
+    source_crs: str
+    district_field: str
+
+
+@dataclass(frozen=True)
 class VoteviewSource:
 
     url: str
@@ -103,6 +117,7 @@ class FetchConfig:
 
     schema_version: int
     lewis: LewisSource
+    geometry_sources: list[GeometrySource]
     voteview: VoteviewSource
     census: CensusSource
     block_assignments: list[BlockAssignmentEntry]
@@ -134,6 +149,8 @@ def load_fetch_config(path: Path) -> FetchConfig:
         homepage=require_string(lewis_raw, "homepage", "lewis", path, FetchConfigError),
         states=_load_lewis_states(lewis_raw, path),
     )
+
+    geometry_sources: list[GeometrySource] = _load_geometry_sources(raw, path)
 
     voteview_raw: dict[str, Any] = require_section(
         raw, "voteview", path, FetchConfigError
@@ -181,6 +198,7 @@ def load_fetch_config(path: Path) -> FetchConfig:
     return FetchConfig(
         schema_version=schema_version,
         lewis=lewis,
+        geometry_sources=geometry_sources,
         voteview=voteview,
         census=census,
         block_assignments=block_assignments,
@@ -219,6 +237,89 @@ def _load_lewis_states(
         states[cast(SupportedStateCode, state_code)] = files
 
     return states
+
+
+def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySource]:
+    if "geometry_source" not in raw:
+        return []
+    entries_raw = raw["geometry_source"]
+    if not isinstance(entries_raw, list):
+        raise FetchConfigError(
+            f"[[geometry_source]] in {path} must be an array of tables"
+        )
+
+    seen: set[tuple[str, str, int]] = set()
+    entries: list[GeometrySource] = []
+    for idx, entry_raw in enumerate(entries_raw):
+        if not isinstance(entry_raw, dict):
+            raise FetchConfigError(
+                f"[[geometry_source]] entry at index {idx} in {path} is not a table"
+            )
+        section_label: str = f"geometry_source[{idx}]"
+
+        provider: str = require_string(
+            entry_raw, "provider", section_label, path, FetchConfigError
+        )
+
+        state_raw: str = require_string(
+            entry_raw, "state", section_label, path, FetchConfigError
+        )
+        if state_raw not in SUPPORTED_STATES:
+            supported_list: str = ", ".join(SUPPORTED_STATES)
+            raise FetchConfigError(
+                f"unknown state {state_raw!r} in [[{section_label}]] in {path} "
+                f"(expected one of: {supported_list})"
+            )
+        state: SupportedStateCode = cast(SupportedStateCode, state_raw)
+
+        congress: int = require_int(
+            entry_raw, "congress", section_label, path, FetchConfigError
+        )
+
+        dedup_key: tuple[str, str, int] = (provider, state_raw, congress)
+        if dedup_key in seen:
+            raise FetchConfigError(
+                f"duplicate [[geometry_source]] entry for "
+                f"provider={provider!r}, state={state_raw!r}, congress={congress} "
+                f"in {path}"
+            )
+        seen.add(dedup_key)
+
+        url: str = require_string(
+            entry_raw, "url", section_label, path, FetchConfigError
+        )
+        landing_url: str = require_string(
+            entry_raw, "landing_url", section_label, path, FetchConfigError
+        )
+        local_filename: str = require_string(
+            entry_raw, "local_filename", section_label, path, FetchConfigError
+        )
+        checksum: str = require_string(
+            entry_raw, "checksum", section_label, path, FetchConfigError
+        )
+        source_crs: str = require_string(
+            entry_raw, "source_crs", section_label, path, FetchConfigError
+        )
+        district_field: str = require_string(
+            entry_raw, "district_field", section_label, path, FetchConfigError
+        )
+
+        entries.append(
+            GeometrySource(
+                provider=provider,
+                state=state,
+                congress=congress,
+                url=url,
+                landing_url=landing_url,
+                local_filename=local_filename,
+                checksum=checksum,
+                source_crs=source_crs,
+                district_field=district_field,
+            )
+        )
+
+    entries.sort(key=lambda e: (e.congress, e.state, e.provider))
+    return entries
 
 
 def _load_census(census_raw: dict[str, Any], path: Path) -> CensusSource:

@@ -1,4 +1,4 @@
-"""Stitch plan-metadata onto Lewis GeoJSON polygons.
+"""Stitch plan-metadata onto plan source-GeoJSON polygons.
 
 For every polygon feature in a plan's source GeoJSON, attach the slim
 subset of plan metadata defined by `Plan.to_feature_props()` as feature
@@ -154,7 +154,7 @@ def _attach_plan_props(
     collisions: list[str] = sorted(k for k in plan_props if k in existing_props)
     if collisions:
         raise StitchError(
-            f"{plan_id}: feature[{feature_index}] has Lewis properties that "
+            f"{plan_id}: feature[{feature_index}] has source properties that "
             f"collide with plan-metadata fields: {collisions}"
         )
 

@@ -50,7 +50,7 @@ For more information on the project's data sources see the [Data](/data) page.
 
 **ICPSR** ([link](https://www.icpsr.umich.edu/sites/icpsr/home)) — Voteview's canonical numeric identifier for a member of Congress. It is the key the project joins incumbents on.
 
-**Lewis polygons** ([link](https://cdmaps.polisci.ucla.edu/)) — Jeffrey Lewis's *congressional-district-boundaries* archive, the source of every historical district shape the project uses.
+**Lewis polygons** ([link](https://cdmaps.polisci.ucla.edu/)) — Jeffrey Lewis's *congressional-district-boundaries* archive, the source of most historical district shapes the project uses. The archive trails the current cycle, so the newest maps are sourced from the publishing authority instead. See [Architecture](/docs/architecture#sourcing-district-boundaries).
 
 **NHGIS** — A source of historical Census geography, including 1990 block shapes, reserved for a planned pre-2001 extension.
 

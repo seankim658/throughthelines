@@ -109,10 +109,10 @@ def load_block_polygons(
     return gdf, centroids
 
 
-def load_lewis_polygons(
+def load_plan_polygons(
     geojson_path: Path, district_property: str = "district"
 ) -> tuple[GeoDataFrame, str]:
-    """Read a Lewis plan GeoJSON and return polygons with district codes."""
+    """Read a plan GeoJSON and return polygons with district codes."""
     import geopandas as gpd
 
     gdf: GeoDataFrame = gpd.read_file(geojson_path)

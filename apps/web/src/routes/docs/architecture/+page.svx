@@ -29,6 +29,14 @@ Each step in brief:
 
 The artifacts divide into two kinds. **Global** artifacts: `plan_index.json`, `members.json`, and the `basemap.pmtiles` are produced once and shared across states. **Per-state, per-chamber** artifacts: the block lookup and the map tiles, are produced for each covered state and chamber.
 
+## Sourcing district boundaries
+
+A plan's **district boundaries** are the polygons the map is drawn from, and they are also what the plan detail panel attributes when it names who published a map's lines. For most plans these polygons come from the pinned [Lewis archive](https://cdmaps.polisci.ucla.edu/), the same source the spatial-join step uses for the pre-BEF Congresses. The Lewis archive is the common case, but not the only one as it trails the current redistricting cycle by at least one Congress. As a result, the most recent maps (an off-cycle redraw, or simply the newest plan) have no Lewis polygon yet.
+
+When the archive doesn't carry a plan, its boundaries come from the authority that published the map. North Carolina's 2025 mid-decade plan (the 120th Congress) is one such case, its polygons are taken from the North Carolina General Assembly's shapefile. A non-Lewis source is fetched and pinned like every other upstream input (using a SHA-256 checksum of the shapefile rather than a git commit) then normalized to WGS84 GeoJSON and handed to the same stitch step a Lewis polygon would be. From there nothing downstream can tell the difference as the tiles, the map, and the timeline are produced identically regardless of who drew the lines.
+
+Each plan records the provider of its boundaries, and the plan detail panel shows it as the "District boundaries" attribution. This is strictly the geometry axis, independent of how that plan's address-to-district answer is sourced (that is covered on the [Methodology](/docs/methodology) page). A single plan can take its boundaries from one provider and its address lookup from another.
+
 ## The manifest contract
 
 The manifest is the frontend's discovery document. The browser fetches it first, and every other artifact is reached through it. It carries three things.

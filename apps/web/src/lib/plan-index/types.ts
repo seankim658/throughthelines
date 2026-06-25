@@ -60,6 +60,11 @@ export interface Source {
 	archived: string | null;
 }
 
+export interface BoundarySource {
+	provider: string;
+	landing_url: string;
+}
+
 // --- Plan Record ----
 
 export type Chamber = 'congressional';
@@ -72,6 +77,7 @@ export interface Plan {
 	congress_start: number;
 	congress_end: number | null;
 	schema_version: 1;
+	boundary_source: BoundarySource;
 
 	// Dates
 	enacted_date: DateField;
