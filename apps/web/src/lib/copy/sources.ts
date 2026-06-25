@@ -38,7 +38,7 @@ export const DATA_SOURCES: readonly DataSource[] = [
 	{
 		name: 'Lewis Congressional District Boundaries',
 		description:
-			'Historical district polygons for every Congress, used to draw the district maps on the state pages.',
+			'Historical district polygons for most Congresses, used to draw the district maps on the state pages. The newest maps, which the archive does not yet carry, come from the publishing authority instead.',
 		link: { kind: 'manifest', key: 'lewis' },
 		license: 'MIT license',
 		citation: [
@@ -85,10 +85,11 @@ export const DATA_SOURCES: readonly DataSource[] = [
 	},
 	{
 		name: 'Census Block Equivalency Files',
-		description: 'Official block-to-district assignments for the 113th–119th Congresses.',
+		description:
+			'Official block-to-district assignments, used for most Congresses from the 113th on.',
 		link: {
 			kind: 'static',
-			url: 'https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119-congressional-district-bef.html'
+			url: 'https://www.census.gov/geographies/mapping-files.html'
 		},
 		license: 'Public domain'
 	},
@@ -121,6 +122,19 @@ export const DATA_SOURCES: readonly DataSource[] = [
 		description: 'The base map the districts are drawn over.',
 		link: { kind: 'static', url: 'https://maps.protomaps.com/builds' },
 		license: 'Open (OpenStreetMap)'
+	}
+];
+
+/**
+ * State-specific data sources.
+ */
+export const STATE_SOURCES: readonly DataSource[] = [
+	{
+		name: 'North Carolina General Assembly',
+		description:
+			'Congressional maps enacted by the North Carolina legislature and published directly. Supplies the address-lookup files for the 117th and 120th Congresses and the boundary shapefile for the 120th.',
+		link: { kind: 'static', url: 'https://www.ncleg.gov/Redistricting' },
+		license: 'Public domain'
 	}
 ];
 

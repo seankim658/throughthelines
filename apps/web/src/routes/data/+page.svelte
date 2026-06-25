@@ -4,6 +4,7 @@
 	import { STATE_NAMES } from '$lib/states/states';
 	import {
 		DATA_SOURCES,
+		STATE_SOURCES,
 		resolveSourceUrl,
 		formatAccessDate,
 		type DataSource
@@ -98,6 +99,16 @@
 		</p>
 		<ul class="list-none space-y-4 p-0">
 			{#each DATA_SOURCES as source (source.name)}
+				{@render sourceItem(source)}
+			{/each}
+		</ul>
+		<h3 class="pt-4 text-xl">State sources</h3>
+		<p class="text-ink-secondary">
+			Authorities that publish a single state's maps directly, used where the national sources have
+			a gap.
+		</p>
+		<ul class="list-none space-y-4 p-0">
+			{#each STATE_SOURCES as source (source.name)}
 				{@render sourceItem(source)}
 			{/each}
 		</ul>

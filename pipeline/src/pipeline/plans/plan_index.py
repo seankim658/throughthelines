@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import ScopeSettings
+from pipeline.config import ScopeSettings, GeometrySource
 from pipeline.core import SupportedStateCode, write_json_atomic
 from pipeline.plans.models import Plan
 from pipeline.plans.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
@@ -51,7 +51,7 @@ class PlanIndexBuildResult:
     warnings: list[str] = field(default_factory=list)
 
 
-# --- Internals ---
+# --- Helpers ---
 
 
 def _plan_to_record(plan: Plan) -> dict[str, Any]:
@@ -62,8 +62,31 @@ def _plan_to_record(plan: Plan) -> dict[str, Any]:
     return record
 
 
+def _boundary_source_for_plan(
+    plan: Plan,
+    state_geometry_sources: list[GeometrySource],
+    scope: ScopeSettings,
+    lewis_homepage_url: str,
+) -> dict[str, str]:
+    """Resolve who published this plan's district boundaries."""
+    effective_end: int = (
+        plan.congress_end if plan.congress_end is not None else scope.congress_end
+    )
+    for geometry_source in state_geometry_sources:
+        if plan.congress_start <= geometry_source.congress <= effective_end:
+            return {
+                "provider": geometry_source.provider,
+                "landing_url": geometry_source.landing_url,
+            }
+    return {"provider": "lewis", "landing_url": lewis_homepage_url}
+
+
 def _load_state_plans(
-    plans_dir: Path, state: SupportedStateCode, scope: ScopeSettings
+    plans_dir: Path,
+    state: SupportedStateCode,
+    scope: ScopeSettings,
+    state_geometry_sources: list[GeometrySource],
+    lewis_homepage_url: str,
 ) -> _StatePlansResult:
     """Load and filter plans for one state."""
     state_dir: Path = plans_dir / state
@@ -85,7 +108,11 @@ def _load_state_plans(
 
     records: dict[str, dict[str, Any]] = {}
     for plan in in_scope:
-        records[plan.plan_id] = _plan_to_record(plan)
+        record: dict[str, Any] = _plan_to_record(plan)
+        record["boundary_source"] = _boundary_source_for_plan(
+            plan, state_geometry_sources, scope, lewis_homepage_url
+        )
+        records[plan.plan_id] = record
 
     return _StatePlansResult(records=records, warnings=warnings)
 
@@ -94,7 +121,11 @@ def _load_state_plans(
 
 
 def build_plan_index(
-    scope: ScopeSettings, plans_dir: Path, output_path: Path
+    scope: ScopeSettings,
+    plans_dir: Path,
+    output_path: Path,
+    geometry_sources: list[GeometrySource],
+    lewis_homepage_url: str,
 ) -> PlanIndexBuildResult:
     """Build plan index JSON covering every state in scope."""
     states: list[SupportedStateCode] = sorted(scope.chambers.keys())
@@ -105,7 +136,12 @@ def build_plan_index(
     total_plans: int = 0
 
     for state in states:
-        result = _load_state_plans(plans_dir, state, scope)
+        state_geometry_sources: list[GeometrySource] = [
+            gs for gs in geometry_sources if gs.state == state
+        ]
+        result = _load_state_plans(
+            plans_dir, state, scope, state_geometry_sources, lewis_homepage_url
+        )
         all_warnings.extend(result.warnings)
         if result.records:
             plans_by_state[state] = result.records

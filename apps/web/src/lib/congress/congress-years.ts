@@ -17,3 +17,17 @@ export function formatCongressYears(congress: number): string {
 	const { start, end } = congressYears(congress);
 	return `${start}\u2013${end}`;
 }
+
+export type CongressTiming = 'past' | 'current' | 'upcoming';
+
+export function congressTiming(congress: number, now: Date = new Date()): CongressTiming {
+	const { start, end } = congressYears(congress);
+	const year = now.getUTCFullYear();
+	if (year >= end) return 'past';
+	if (year >= start) return 'current';
+	return 'upcoming';
+}
+
+export function congressElectionYear(congress: number): number {
+	return congressYears(congress).start - 1;
+}

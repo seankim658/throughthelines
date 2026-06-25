@@ -1,14 +1,9 @@
 """Polygon-spatial-join block-assignment source.
 
-Derives a block-to-district assignment by spatially joining block centroids
-of the declared vintage against a plan's district polygons. Covers any authority
-that publishes plan boundaries as polygons rather than as a pre-computed block
-assignment file:
-
-    - Jeffrey Lewis's congressional district boundaries archive
-
-Note: the underlying spatial-join helper is named `lewis_spatial_join` for
-historical reasons. It is provider-agnostic.
+Derives a block-to-district assignment by spatially joining block
+centroids of the declared vintage against a plan's district polygons.
+Covers any authority that publishes plan boundaries as polygons rather
+than as a pre-computed block assignment file.
 """
 
 from __future__ import annotations
@@ -16,8 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pipeline.config import BlockVintage
-from pipeline.blocks.readers import load_lewis_polygons
-from pipeline.blocks.spatial_joins import lewis_spatial_join
+from pipeline.blocks.readers import load_plan_polygons
+from pipeline.blocks.spatial_joins import plan_polygon_join
 from pipeline.blocks.sources.base import BlockAssignmentSource, BlockGeometry
 from pipeline.blocks.sources.provenance import PolygonJoinProvenance
 
@@ -53,10 +48,10 @@ class PolygonJoinSource(BlockAssignmentSource):
 
     def load(self, geometry: BlockGeometry) -> dict[str, int]:
         centroids = geometry.centroids(self._block_vintage)
-        plan_polygons, district_col = load_lewis_polygons(
+        plan_polygons, district_col = load_plan_polygons(
             geojson_path=self.geojson_path, district_property=self.district_property
         )
-        return lewis_spatial_join(
+        return plan_polygon_join(
             centroids=centroids, plan_polygons=plan_polygons, district_col=district_col
         )
 

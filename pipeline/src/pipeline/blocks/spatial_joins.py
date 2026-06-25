@@ -65,10 +65,10 @@ def cross_decade_join(
     )
 
 
-def lewis_spatial_join(
+def plan_polygon_join(
     centroids: dict[str, Centroid], plan_polygons: gpd.GeoDataFrame, district_col: str
 ) -> dict[str, int]:
-    """Spatial-join block centroids against Lewis plan polygons."""
+    """Spatial-join block centroids against plan polygons to assign each block a district."""
     import geopandas as gpd
     from shapely import Point
 

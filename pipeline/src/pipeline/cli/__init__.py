@@ -39,6 +39,11 @@ def main(argv: list[str] | None = None) -> int:
 
         return run_scaffold(project_config, args)
 
+    if args.command == "normalize-geometry":
+        from pipeline.cli.geometry import run_normalize_geometry
+
+        return run_normalize_geometry(project_config, args)
+
     if args.command == "stitch":
         from pipeline.cli.stitch import run_stitch
 
@@ -89,19 +94,20 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Build pipeline",
         epilog=(
             "Recommended run order:\n"
-            "  1. fetch           Download upstream sources (except the basemap)\n"
-            "  2. scaffold-plans  Generate placeholder plan-metadata YAMLs\n"
-            "  3. stitch          Stitch plan metadata onto Lewis polygons\n"
-            "  4. members         Slice Voteview into per-state members.json\n"
-            "  5. blocks          Build per-state block-lookup JSON\n"
-            "  6. tiles           Build PMTiles archives via tippecanoe\n"
-            "  7. basemap         Extract CONUS basemap via pmtiles CLI\n"
-            "  8. plan-index      Build plan_index.json for the frontend\n"
-            "  9. manifest        Build manifest.json (run last)\n"
-            " 10. publish         Upload artifacts to R2 (deploy; needs R2_* env)\n"
+            "  1. fetch                 Download upstream sources (except the basemap)\n"
+            "  2. scaffold-plans        Generate placeholder plan-metadata YAMLs\n"
+            "  3. normalize-geometry    Normalize non-Lewis shapefiles into GeoJSON\n"
+            "  3. stitch                Stitch plan metadata onto district polygons\n"
+            "  4. members               Slice Voteview into per-state members.json\n"
+            "  5. blocks                Build per-state block-lookup JSON\n"
+            "  6. tiles                 Build PMTiles archives via tippecanoe\n"
+            "  7. basemap               Extract CONUS basemap via pmtiles CLI\n"
+            "  8. plan-index            Build plan_index.json for the frontend\n"
+            "  9. manifest              Build manifest.json (run last)\n"
+            " 10. publish               Upload artifacts to R2 (deploy; needs R2_* env)\n"
             "\n"
-            "Steps 4-8 are independent and can run in any order after step 3.\n"
-            "Step 10 (publish) requires a built manifest and R2 credentials."
+            "Steps 5-9 are independent and can run in any order after step 4.\n"
+            "Step 11 (publish) requires a built manifest and R2 credentials."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -142,10 +148,29 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    # Normalize geometry
+    normalize_geometry_parser = subparsers.add_parser(
+        "normalize-geometry",
+        help=(
+            "Normalize fetched district shapefiles into WGS84 GeoJSON "
+            "(non-Lewis geometry sources). Run after fetch, before stitch."
+        ),
+    )
+    normalize_geometry_parser.add_argument(
+        "--state",
+        action="append",
+        type=validate_state,
+        metavar="STATE",
+        help=(
+            "Two-letter state code to normalize (repeatable). "
+            "If omitted, normalizes every state configured in sources.toml."
+        ),
+    )
+
     # Stitch
     stitch_parser = subparsers.add_parser(
         "stitch",
-        help="Stitch plan metadata onto Lewis polygons; emit per-state GeoJSON.",
+        help="Stitch plan metadata onto district polygons; emit per-state GeoJSON.",
     )
     stitch_parser.add_argument(
         "--state",

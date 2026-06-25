@@ -14,6 +14,7 @@ from pipeline.config import (
     BlockAssignmentEntry,
     BlockVintage,
     CensusSource,
+    GeometrySource,
     NATIONAL_SCOPE,
     ProjectPaths,
     ScopeSettings,
@@ -109,6 +110,7 @@ def _validate_inputs(
     project_paths: ProjectPaths,
     census_source: CensusSource,
     block_assignments: list[BlockAssignmentEntry],
+    geometry_sources: list[GeometrySource],
     allow_missing: bool,
     spatial_join_fallback: bool,
     lewis_landing_url: str,
@@ -130,6 +132,9 @@ def _validate_inputs(
     assignments_by_key: dict[tuple[str, int], BlockAssignmentEntry] = {
         (entry.state, entry.congress): entry for entry in block_assignments
     }
+    state_geometry_sources: list[GeometrySource] = [
+        gs for gs in geometry_sources if gs.state == state
+    ]
 
     plan_by_congress: dict[int, Plan] = _resolve_plan_coverage(plans, state, scope)
     sources, needed_vintages, resolution_warnings = _resolve_congress_sources(
@@ -141,6 +146,7 @@ def _validate_inputs(
         allow_missing=allow_missing,
         spatial_join_fallback=spatial_join_fallback,
         lewis_landing_url=lewis_landing_url,
+        state_geometry_sources=state_geometry_sources,
     )
     tabblock_paths: dict[BlockVintage, Path] = _resolve_tabblock_paths(
         needed_vintages=needed_vintages,
@@ -204,6 +210,7 @@ def _resolve_congress_sources(
     allow_missing: bool,
     spatial_join_fallback: bool,
     lewis_landing_url: str,
+    state_geometry_sources: list[GeometrySource],
 ) -> tuple[dict[int, BlockAssignmentSource], set[BlockVintage], list[str]]:
     """Decide a `BlockAssignmentSource` for each in-scope Congress.
 
@@ -222,6 +229,9 @@ def _resolve_congress_sources(
 
     for congress in range(scope.congress_start, scope.congress_end + 1):
         plan: Plan = plan_by_congress[congress]
+        geometry_source: GeometrySource | None = _match_geometry_source(
+            plan, state_geometry_sources, scope
+        )
 
         # Step 1: state-specific delimited entry wins
         entry: BlockAssignmentEntry | None = assignments_by_key.get((state, congress))
@@ -246,6 +256,7 @@ def _resolve_congress_sources(
                 plan=plan,
                 congress=congress,
                 raw_dir=project_paths.raw_dir,
+                geometry_source=geometry_source,
                 lewis_landing_url=lewis_landing_url,
             )
             needed_vintages.add(_PRE_BEF_VINTAGE)
@@ -259,6 +270,7 @@ def _resolve_congress_sources(
                     plan=plan,
                     congress=congress,
                     raw_dir=project_paths.raw_dir,
+                    geometry_source=geometry_source,
                     lewis_landing_url=lewis_landing_url,
                 )
                 needed_vintages.add(_PRE_BEF_VINTAGE)
@@ -320,17 +332,27 @@ def _make_delimited_source(
 
 
 def _make_polygon_source(
-    plan: Plan, congress: int, raw_dir: Path, lewis_landing_url: str
+    plan: Plan,
+    congress: int,
+    raw_dir: Path,
+    geometry_source: GeometrySource | None,
+    lewis_landing_url: str,
 ) -> PolygonJoinSource:
     """Resolve and validate a polygon-join source for one Congress."""
     geojson_path: Path = raw_dir / plan.source_file
+    if geometry_source is not None:
+        provider: str = geometry_source.provider
+        landing_url: str = geometry_source.landing_url
+    else:
+        provider = "lewis"
+        landing_url = lewis_landing_url
     try:
         return PolygonJoinSource(
             geojson_path=geojson_path,
             source_file=plan.source_file,
             _block_vintage=_PRE_BEF_VINTAGE,
-            provider="lewis",
-            upstream_landing_url=lewis_landing_url,
+            provider=provider,
+            upstream_landing_url=landing_url,
         )
     except FileNotFoundError as e:
         raise BlocksBuildError(
@@ -338,6 +360,18 @@ def _make_polygon_source(
             f"not found at {geojson_path} "
             f"(did you run `pipeline fetch`?)"
         ) from e
+
+
+def _match_geometry_source(
+    plan: Plan, state_geometry_sources: list[GeometrySource], scope: ScopeSettings
+) -> GeometrySource | None:
+    effective_end: int = (
+        plan.congress_end if plan.congress_end is not None else scope.congress_end
+    )
+    for geometry_source in state_geometry_sources:
+        if plan.congress_start <= geometry_source.congress <= effective_end:
+            return geometry_source
+    return None
 
 
 def _resolve_tabblock_paths(
@@ -425,6 +459,7 @@ def build_blocks(
     project_paths: ProjectPaths,
     census_source: CensusSource,
     block_assignments: list[BlockAssignmentEntry],
+    geometry_sources: list[GeometrySource],
     lewis_landing_url: str,
     output_path: Path,
     allow_missing: bool = False,
@@ -438,6 +473,7 @@ def build_blocks(
         project_paths=project_paths,
         census_source=census_source,
         block_assignments=block_assignments,
+        geometry_sources=geometry_sources,
         allow_missing=allow_missing,
         spatial_join_fallback=spatial_join_fallback,
         lewis_landing_url=lewis_landing_url,

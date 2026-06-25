@@ -19,7 +19,7 @@ These states are not just stored, they are surfaced in the frontend. A pending o
 
 ## A record, uncurated
 
-Every plan begins as a scaffold generated from the source polygons, with the factual fields filled in and everything curation-sensitive set to `pending`. This is what a record looks like before any research has been done:
+Most plans begin as a scaffold generated from the source polygons, with the factual fields filled in and everything curation-sensitive set to `pending`. A plan the Lewis archive does not yet carry, such as the 120th Congress map, is instead hand-authored against the same schema and reaches the same uncurated starting point. This is what a record looks like before any research has been done:
 
 ```yaml
 plan_id: NC_118_2023
@@ -27,7 +27,7 @@ state: NC
 chamber: congressional
 congress_start: 118
 congress_end: 118
-source_file: lewis/NC/North Carolina_118_to_118.geojson
+source_file: district_geometry/lewis/NC/North Carolina_118_to_118.geojson
 source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 enacted_date: pending
@@ -63,7 +63,7 @@ The schema has two tiers. **Factual fields** describe the plan's identity and wh
 | `congress_start` | integer | First Congress this plan governed. Must match the `plan_id` congress segment. |
 | `congress_end` | integer or `null` | Last Congress governed, or `null` if still in force. Must not precede `congress_start`. |
 | `source_file` | string | Path to the polygon file the geometry came from. |
-| `source_commit` | string | Pinned commit of the upstream polygon archive. |
+| `source_commit` | string | Pinned version of the upstream geometry source, a git commit for the Lewis archive or a file checksum for an authority's shapefile. |
 | `schema_version` | `1` | Record schema version. |
 
 A plan whose `congress_end` is `null` is treated as in force and extends forward to the end of the build's range.

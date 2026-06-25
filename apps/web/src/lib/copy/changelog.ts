@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 /** The release history, newest first. */
 export const CHANGELOG: readonly ChangelogEntry[] = [
 	{
+		version: 'v0.6.0',
+		date: '2026-06-25',
+		changes: [
+			'Extended North Carolina coverage through the 120th Congress, adding the 2025 mid-decade map (SL 2025-95). The congressional districts on the 2026 ballot.',
+			'Generalized boundary sourcing beyond the Lewis archive, so a plan can be mapped a cycle before the archive catches up. The 120th map is sourced from the North Carolina General Assembly.',
+			'Each plan now records the publisher of its district boundaries, shown on the plan detail panel.'
+		]
+	},
+	{
 		version: 'v0.5.0',
 		date: '2026-06-20',
 		changes: [
