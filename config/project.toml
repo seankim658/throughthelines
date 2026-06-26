@@ -12,29 +12,28 @@ config_dir = "{repo_root}/config/"
 request_filename = "request.toml"
 sources_filename = "sources.toml"
 
-# Data
+# Raw inputs
 raw_dir = "{repo_root}/data/raw/"
-# Provider neutral parent for all district-geometry sources
-district_geometry_dir = "{repo_root}/data/raw/district_geometry"
-lewis_dir = "{repo_root}/data/raw/district_geometry/lewis"
-voteview_dir = "{repo_root}/data/raw/voteview/"
-census_dir = "{repo_root}/data/raw/census"
-tabblock_dir = "{repo_root}/data/raw/census/tabblock/"
-bef_dir = "{repo_root}/data/raw/census/bef/"
-fetch_state_dir = "{repo_root}/data/raw/fetch_state/"
+district_geometry_dir = "{raw_dir}/district_geometry"
+lewis_dir = "{district_geometry_dir}/lewis"
+voteview_dir = "{raw_dir}/voteview/"
+census_dir = "{raw_dir}/census"
+tabblock_dir = "{census_dir}/tabblock/"
+bef_dir = "{census_dir}/bef/"
+fetch_state_dir = "{raw_dir}/fetch_state/"
 
 # Plans
 plans_dir = "{repo_root}/data/plans/"
 
 # Derived (build artifacts)
 derived_dir = "{repo_root}/data/derived/"
-stitched_dir = "{repo_root}/data/derived/stitched"
-members_file = "{repo_root}/data/derived/members.json"
-block_lookup_dir = "{repo_root}/data/derived/block_lookup/"
-tiles_dir = "{repo_root}/data/derived/tiles/"
-basemap_file = "{repo_root}/data/derived/basemaps/basemap.pmtiles"
-plan_index_file = "{repo_root}/data/derived/plan_index.json"
-manifest_file = "{repo_root}/data/derived/manifest.json"
+stitched_dir = "{derived_dir}/stitched"
+members_file = "{derived_dir}/members.json"
+block_lookup_dir = "{derived_dir}/block_lookup"
+tiles_dir = "{derived_dir}/tiles"
+basemap_file = "{derived_dir}/basemaps/basemap.pmtiles"
+plan_index_file = "{derived_dir}/plan_index.json"
+manifest_file = "{derived_dir}/manifest.json"
 
 [scope]
 congress_start = 107
