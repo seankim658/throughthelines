@@ -2,8 +2,8 @@ from __future__ import annotations
 import argparse
 import sys
 
-from pipeline.cli._common import CliArgError, resolve_target_states
-from pipeline.config import ProjectConfig, load_fetch_config
+from pipeline.cli._common import CliError, load_sources_and_states
+from pipeline.config import ProjectConfig
 from pipeline.core import SupportedStateCode
 from pipeline.plans import (
     PlanLoadError,
@@ -20,17 +20,9 @@ def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
     states_arg: list[SupportedStateCode] | None = args.state
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
-        return 2
-
-    try:
-        target_states: list[SupportedStateCode] = resolve_target_states(
-            states_arg, sources.lewis.states
-        )
-    except CliArgError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _, target_states = load_sources_and_states(project_config, states_arg)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     paths = project_config.project_paths
@@ -66,7 +58,9 @@ def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
             continue
 
         print(f"\t{result.plans_processed} plans:")
-        print(f"\t  {result.polygon_features_written} polygons → {result.polygons_path}")
+        print(
+            f"\t  {result.polygon_features_written} polygons → {result.polygons_path}"
+        )
         print(f"\t  {result.label_features_written} labels → {result.labels_path}")
 
     return 1 if failed else 0

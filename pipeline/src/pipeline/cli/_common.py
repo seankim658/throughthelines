@@ -3,10 +3,15 @@ import argparse
 from typing import Collection, cast
 
 from pipeline.core import SupportedStateCode, SUPPORTED_STATES
+from pipeline.config import FetchConfig, ProjectConfig, load_fetch_config
 
 
 class CliArgError(Exception):
     """Raised when a CLI argument fails resolution against configured state."""
+
+
+class CliError(Exception):
+    """A CLI failure carrying an already-formatted, user-facing message."""
 
 
 def validate_state(value: str) -> SupportedStateCode:
@@ -60,3 +65,22 @@ def resolve_target_states(
         )
 
     return dedupe_states(states_arg)
+
+
+def load_sources_and_states(
+    project_config: ProjectConfig,
+    states_arg: list[SupportedStateCode] | None,
+) -> tuple[FetchConfig, list[SupportedStateCode]]:
+    """Load sources.toml and resolve the --state argument against it.
+    """
+    try:
+        sources: FetchConfig = load_fetch_config(project_config.sources_config_path)
+    except (OSError, ValueError) as e:
+        raise CliError(f"error loading config: {e}") from e
+    try:
+        target_states: list[SupportedStateCode] = resolve_target_states(
+            states_arg, sources.lewis.states
+        )
+    except CliArgError as e:
+        raise CliError(f"error: {e}") from e
+    return sources, target_states
