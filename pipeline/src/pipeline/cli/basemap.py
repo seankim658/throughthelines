@@ -3,9 +3,9 @@ import shutil
 import sys
 from argparse import Namespace
 
-from pipeline.cli._common import format_bytes
+from pipeline.cli._common import format_bytes, CliError, load_sources
 from pipeline.basemap import BasemapBuildError, BasemapBuildResult, build_basemap
-from pipeline.config import ProjectConfig, load_fetch_config
+from pipeline.config import ProjectConfig
 
 
 def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
@@ -18,9 +18,9 @@ def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
         return 2
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
+        sources = load_sources(project_config)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     cfg = sources.protomaps_basemap

@@ -67,16 +67,20 @@ def resolve_target_states(
     return dedupe_states(states_arg)
 
 
+def load_sources(project_config: ProjectConfig) -> FetchConfig:
+    """Load sources.toml."""
+    try:
+        return load_fetch_config(project_config.sources_config_path)
+    except (OSError, ValueError) as e:
+        raise CliError(f"error loading config: {e}") from e
+
+
 def load_sources_and_states(
     project_config: ProjectConfig,
     states_arg: list[SupportedStateCode] | None,
 ) -> tuple[FetchConfig, list[SupportedStateCode]]:
-    """Load sources.toml and resolve the --state argument against it.
-    """
-    try:
-        sources: FetchConfig = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        raise CliError(f"error loading config: {e}") from e
+    """Load sources.toml and resolve the --state argument against it."""
+    sources = load_sources(project_config)
     try:
         target_states: list[SupportedStateCode] = resolve_target_states(
             states_arg, sources.lewis.states

@@ -1,7 +1,8 @@
 from __future__ import annotations
 import sys
 
-from pipeline.config import ProjectConfig, load_fetch_config
+from pipeline.cli._common import CliError, load_sources
+from pipeline.config import ProjectConfig
 from pipeline.plans import PlanIndexBuildError, PlanIndexBuildResult, build_plan_index
 
 
@@ -9,9 +10,9 @@ def run_plan_index(project_config: ProjectConfig) -> int:
     paths = project_config.project_paths
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
+        sources = load_sources(project_config)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     try:
