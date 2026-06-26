@@ -4,7 +4,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from pipeline.cli._common import CliArgError, resolve_target_states
+from pipeline.cli._common import CliArgError, format_bytes, resolve_target_states
 from pipeline.config import ProjectConfig, load_fetch_config
 from pipeline.core import SupportedStateCode
 from pipeline.tiles import TilesBuildError, TilesBuildResult, build_tiles
@@ -63,18 +63,10 @@ def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
 
             print(
                 f"\t[{chamber}] → {result.output_path} "
-                f"({_format_bytes(result.file_size_bytes)})"
+                f"({format_bytes(result.file_size_bytes)})"
             )
             succeeded += 1
 
     print(f"\n{succeeded} state(s) tiled.")
 
     return 1 if failed else 0
-
-
-def _format_bytes(n: int) -> str:
-    if n < 1024:
-        return f"{n} B"
-    if n < 1024 * 1024:
-        return f"{n / 1024:.1f} KB"
-    return f"{n / (1024 * 1024):.1f} MB"

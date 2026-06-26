@@ -5,6 +5,7 @@ import sys
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
+from pipeline.cli._common import format_bytes
 from pipeline.config import ProjectConfig
 from pipeline.publish import PublishError, PublishResult, R2Settings, publish_artifacts
 
@@ -43,10 +44,9 @@ def run_publish(project_config: ProjectConfig) -> int:
     for action, key in result.outcomes:
         print(f"\t{action:8} {key}")
 
-    mb: float = result.total_bytes / (1024 * 1024)
     print(
         f"\n{result.uploaded} uploaded, {result.skipped} skipped "
-        f"({mb:.1f} MB) → {result.bucket}"
+        f"({format_bytes(result.total_bytes)}) → {result.bucket}"
     )
     print(f"manifest → {result.manifest_key} (atomic pointer, written last)")
     return 0

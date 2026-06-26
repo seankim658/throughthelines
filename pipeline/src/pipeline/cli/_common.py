@@ -31,6 +31,16 @@ def status_marker(status: str) -> str:
     return {"wrote": "→", "force": "↻", "skip": "·", "fail": "x"}.get(status, "?")
 
 
+def format_bytes(n: int) -> str:
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    if n < 1024 * 1024 * 1024:
+        return f"{n / (1024 * 1024):.1f} MB"
+    return f"{n / (1024 * 1024 * 1024):.1f} GB"
+
+
 def resolve_target_states(
     states_arg: list[SupportedStateCode] | None,
     configured_states: Collection[SupportedStateCode],
