@@ -2,16 +2,11 @@ from __future__ import annotations
 import argparse
 import sys
 
-from pipeline.cli._common import CliError, load_sources_and_states
+from pipeline.cli._common import CliError, load_in_scope_plans, load_sources_and_states
 from pipeline.config import ProjectConfig
 from pipeline.core import SupportedStateCode
 from pipeline.plans import (
-    PlanLoadError,
-    PlanSetLoadError,
-    PlanSetValidationError,
     StitchError,
-    load_plans_dir,
-    plan_in_scope,
     stitch_state,
 )
 
@@ -31,19 +26,11 @@ def run_stitch(project_config: ProjectConfig, args: argparse.Namespace) -> int:
     for state in target_states:
         print(f"\n[{state}]")
         try:
-            plans = load_plans_dir(paths.plans_dir / state)
-        except (
-            FileNotFoundError,
-            NotADirectoryError,
-            PlanLoadError,
-            PlanSetLoadError,
-            PlanSetValidationError,
-        ) as e:
-            print(f"\terror loading plans: {e}", file=sys.stderr)
+            plans = load_in_scope_plans(paths.plans_dir, state, project_config.scope)
+        except CliError as e:
+            print(str(e), file=sys.stderr)
             failed = True
             continue
-
-        plans = [p for p in plans if plan_in_scope(p, project_config.scope)]
 
         try:
             result = stitch_state(

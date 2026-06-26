@@ -2,17 +2,10 @@ from __future__ import annotations
 import argparse
 import sys
 
-from pipeline.cli._common import CliError, load_sources_and_states
+from pipeline.cli._common import CliError, load_in_scope_plans, load_sources_and_states
 from pipeline.blocks import BlocksBuildError, BlocksBuildResult, build_blocks
 from pipeline.config import ProjectConfig
 from pipeline.core import SupportedStateCode
-from pipeline.plans import (
-    PlanLoadError,
-    PlanSetLoadError,
-    PlanSetValidationError,
-    load_plans_dir,
-    plan_in_scope,
-)
 
 
 def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
@@ -32,19 +25,14 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
     for state in target_states:
         print(f"\n[{state}]")
         try:
-            plans = load_plans_dir(paths.plans_dir / state)
-        except (
-            FileNotFoundError,
-            NotADirectoryError,
-            PlanLoadError,
-            PlanSetLoadError,
-            PlanSetValidationError,
-        ) as e:
-            print(f"\terror loading plans: {e}", file=sys.stderr)
+            in_scope_plans = load_in_scope_plans(
+                paths.plans_dir, state, project_config.scope
+            )
+        except CliError as e:
+            print(str(e), file=sys.stderr)
             failed = True
             continue
 
-        in_scope_plans = [p for p in plans if plan_in_scope(p, project_config.scope)]
         chambers = project_config.scope.chambers[state]
         for chamber in chambers:
             chamber_plans = [p for p in in_scope_plans if p.chamber == chamber]

@@ -1,9 +1,18 @@
 from __future__ import annotations
 import argparse
+from pathlib import Path
 from typing import Collection, cast
 
 from pipeline.core import SupportedStateCode, SUPPORTED_STATES
-from pipeline.config import FetchConfig, ProjectConfig, load_fetch_config
+from pipeline.config import FetchConfig, ProjectConfig, ScopeSettings, load_fetch_config
+from pipeline.plans import (
+    Plan,
+    PlanLoadError,
+    PlanSetLoadError,
+    PlanSetValidationError,
+    load_plans_dir,
+    plan_in_scope,
+)
 
 
 class CliArgError(Exception):
@@ -88,3 +97,19 @@ def load_sources_and_states(
     except CliArgError as e:
         raise CliError(f"error: {e}") from e
     return sources, target_states
+
+
+def load_in_scope_plans(
+    plans_dir: Path, state: SupportedStateCode, scope: ScopeSettings
+) -> list[Plan]:
+    try:
+        plans: list[Plan] = load_plans_dir(plans_dir / state)
+    except (
+        FileNotFoundError,
+        NotADirectoryError,
+        PlanLoadError,
+        PlanSetLoadError,
+        PlanSetValidationError,
+    ) as e:
+        raise CliError(f"\terror loading plans: {e}") from e
+    return [p for p in plans if plan_in_scope(p, scope)]
