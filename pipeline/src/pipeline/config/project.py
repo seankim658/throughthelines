@@ -105,11 +105,43 @@ class ProjectConfig:
 # --- Helpers ---
 
 
-def _require_path(
-    paths_raw: dict[str, Any], key: str, path: Path, repo_root: str
-) -> Path:
-    raw_value: str = require_string(paths_raw, key, "paths", path, ProjectConfigError)
-    return Path(raw_value.format(repo_root=repo_root))
+def _require_path(resolved_paths: dict[str, Any], key: str, path: Path) -> Path:
+    value = resolved_paths.get(key)
+    if not value:
+        raise ProjectConfigError(f"missing or invalid paths.{key} in {path}")
+    return Path(value)
+
+
+def _resolve_paths(
+    paths_raw: dict[str, Any], repo_root: str, path: Path
+) -> dict[str, str]:
+    """Resolve {placeholder} references in the [paths] table."""
+    resolved: dict[str, str] = {"repo_root": repo_root}
+    pending: dict[str, str] = {
+        key: value for key, value in paths_raw.items() if isinstance(value, str)
+    }
+
+    while pending:
+        progressed: bool = False
+        for key in list(pending):
+            try:
+                resolved[key] = pending[key].format(**resolved)
+            except KeyError:
+                continue
+            del pending[key]
+            progressed = True
+        if not progressed:
+            break
+
+    if pending:
+        unresolved = ", ".join(sorted(pending))
+        raise ProjectConfigError(
+            f"unresolved or cyclic path reference(s) in [paths] in "
+            f"{path}: {unresolved}"
+        )
+
+    del resolved["repo_root"]
+    return resolved
 
 
 # --- Loader ---
@@ -142,33 +174,34 @@ def load_project_config(path: Path, repo_root: str) -> ProjectConfig:
     )
 
     paths_raw: dict[str, Any] = require_section(raw, "paths", path, ProjectConfigError)
+    resolved_paths = _resolve_paths(paths_raw, repo_root, path)
     project_paths = ProjectPaths(
-        config_dir=_require_path(paths_raw, "config_dir", path, repo_root),
+        config_dir=_require_path(resolved_paths, "config_dir", path),
         request_filename=require_string(
             paths_raw, "request_filename", "paths", path, ProjectConfigError
         ),
         sources_filename=require_string(
             paths_raw, "sources_filename", "paths", path, ProjectConfigError
         ),
-        raw_dir=_require_path(paths_raw, "raw_dir", path, repo_root),
+        raw_dir=_require_path(resolved_paths, "raw_dir", path),
         district_geometry_dir=_require_path(
-            paths_raw, "district_geometry_dir", path, repo_root
+            resolved_paths, "district_geometry_dir", path
         ),
-        lewis_dir=_require_path(paths_raw, "lewis_dir", path, repo_root),
-        voteview_dir=_require_path(paths_raw, "voteview_dir", path, repo_root),
-        census_dir=_require_path(paths_raw, "census_dir", path, repo_root),
-        tabblock_dir=_require_path(paths_raw, "tabblock_dir", path, repo_root),
-        bef_dir=_require_path(paths_raw, "bef_dir", path, repo_root),
-        fetch_state_dir=_require_path(paths_raw, "fetch_state_dir", path, repo_root),
-        plans_dir=_require_path(paths_raw, "plans_dir", path, repo_root),
-        derived_dir=_require_path(paths_raw, "derived_dir", path, repo_root),
-        stitched_dir=_require_path(paths_raw, "stitched_dir", path, repo_root),
-        members_file=_require_path(paths_raw, "members_file", path, repo_root),
-        block_lookup_dir=_require_path(paths_raw, "block_lookup_dir", path, repo_root),
-        tiles_dir=_require_path(paths_raw, "tiles_dir", path, repo_root),
-        basemap_file=_require_path(paths_raw, "basemap_file", path, repo_root),
-        plan_index_file=_require_path(paths_raw, "plan_index_file", path, repo_root),
-        manifest_file=_require_path(paths_raw, "manifest_file", path, repo_root),
+        lewis_dir=_require_path(resolved_paths, "lewis_dir", path),
+        voteview_dir=_require_path(resolved_paths, "voteview_dir", path),
+        census_dir=_require_path(resolved_paths, "census_dir", path),
+        tabblock_dir=_require_path(resolved_paths, "tabblock_dir", path),
+        bef_dir=_require_path(resolved_paths, "bef_dir", path),
+        fetch_state_dir=_require_path(resolved_paths, "fetch_state_dir", path),
+        plans_dir=_require_path(resolved_paths, "plans_dir", path),
+        derived_dir=_require_path(resolved_paths, "derived_dir", path),
+        stitched_dir=_require_path(resolved_paths, "stitched_dir", path),
+        members_file=_require_path(resolved_paths, "members_file", path),
+        block_lookup_dir=_require_path(resolved_paths, "block_lookup_dir", path),
+        tiles_dir=_require_path(resolved_paths, "tiles_dir", path),
+        basemap_file=_require_path(resolved_paths, "basemap_file", path),
+        plan_index_file=_require_path(resolved_paths, "plan_index_file", path),
+        manifest_file=_require_path(resolved_paths, "manifest_file", path),
     )
 
     scope: ScopeSettings = _load_scope_section(raw, path)
