@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 import argparse
 from pathlib import Path
 from typing import Collection, cast
@@ -43,6 +44,16 @@ def dedupe_states(states: list[SupportedStateCode]) -> list[SupportedStateCode]:
 
 def status_marker(status: str) -> str:
     return {"wrote": "→", "force": "↻", "skip": "·", "fail": "x"}.get(status, "?")
+
+
+def print_warnings(warnings: list[str]) -> None:
+    for warning in warnings:
+        print(f"\twarn: {warning}", file=sys.stderr)
+
+
+def print_warning_count(count: int) -> None:
+    if count > 0:
+        print(f"({count} warning(s))", file=sys.stderr)
 
 
 def format_bytes(n: int) -> str:
