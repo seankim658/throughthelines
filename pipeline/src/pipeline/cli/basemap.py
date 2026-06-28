@@ -3,8 +3,9 @@ import shutil
 import sys
 from argparse import Namespace
 
+from pipeline.cli._common import format_bytes, CliError, load_sources
 from pipeline.basemap import BasemapBuildError, BasemapBuildResult, build_basemap
-from pipeline.config import ProjectConfig, load_fetch_config
+from pipeline.config import ProjectConfig
 
 
 def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
@@ -17,9 +18,9 @@ def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
         return 2
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
+        sources = load_sources(project_config)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     cfg = sources.protomaps_basemap
@@ -46,17 +47,7 @@ def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
     status: str = "cached" if result.cached else "extracted"
     print(
         f"\t→ {result.output_path} "
-        f"({_format_bytes(result.file_size_bytes)}, {status})"
+        f"({format_bytes(result.file_size_bytes)}, {status})"
     )
 
     return 0
-
-
-def _format_bytes(n: int) -> str:
-    if n < 1024:
-        return f"{n} B"
-    if n < 1024 * 1024:
-        return f"{n / 1024:.1f} KB"
-    if n < 1024 * 1024 * 1024:
-        return f"{n / (1024 * 1024):.1f} MB"
-    return f"{n / (1024 * 1024 * 1024):.1f} GB"

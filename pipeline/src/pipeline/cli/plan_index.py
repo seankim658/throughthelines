@@ -1,7 +1,13 @@
 from __future__ import annotations
 import sys
 
-from pipeline.config import ProjectConfig, load_fetch_config
+from pipeline.cli._common import (
+    CliError,
+    load_sources,
+    print_warnings,
+    print_warning_count,
+)
+from pipeline.config import ProjectConfig
 from pipeline.plans import PlanIndexBuildError, PlanIndexBuildResult, build_plan_index
 
 
@@ -9,9 +15,9 @@ def run_plan_index(project_config: ProjectConfig) -> int:
     paths = project_config.project_paths
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
+        sources = load_sources(project_config)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     try:
@@ -26,8 +32,7 @@ def run_plan_index(project_config: ProjectConfig) -> int:
         print(f"plan-index build failed: {e}", file=sys.stderr)
         return 1
 
-    for warning in result.warnings:
-        print(f"\twarn: {warning}", file=sys.stderr)
+    print_warnings(result.warnings)
 
     for state, count in sorted(result.per_state_counts.items()):
         print(f"\n[{state}]")
@@ -38,7 +43,6 @@ def run_plan_index(project_config: ProjectConfig) -> int:
         f"→ {result.output_path}"
     )
 
-    if result.warnings:
-        print(f"({len(result.warnings)} warning(s))", file=sys.stderr)
+    print_warning_count(len(result.warnings))
 
     return 0

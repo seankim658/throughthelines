@@ -2,6 +2,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from pipeline.cli._common import print_warning_count, print_warnings
 from pipeline.config import ProjectConfig
 from pipeline.members import MembersBuildError, MembersBuildResult, build_members
 
@@ -20,8 +21,7 @@ def run_members(project_config: ProjectConfig) -> int:
         print(f"members build failed: {e}", file=sys.stderr)
         return 1
 
-    for warning in result.warnings:
-        print(f"\twarn: {warning}", file=sys.stderr)
+    print_warnings(result.warnings)
 
     print(
         f"\n{result.rows_read} rows read, {result.rows_in_scope} in scope, "
@@ -29,6 +29,6 @@ def run_members(project_config: ProjectConfig) -> int:
         f"→ {result.output_path}"
     )
     if result.warnings:
-        print(f"({len(result.warnings)} warning(s))", file=sys.stderr)
+        print_warning_count(len(result.warnings))
 
     return 0

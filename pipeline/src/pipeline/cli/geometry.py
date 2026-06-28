@@ -3,23 +3,15 @@ import argparse
 import sys
 from pathlib import Path
 
-from pipeline.cli._common import CliArgError, resolve_target_states
+from pipeline.cli._common import CliError, load_in_scope_plans, load_sources_and_states
 from pipeline.config import (
     GeometrySource,
     ProjectConfig,
     ScopeSettings,
-    load_fetch_config,
 )
 from pipeline.core import SupportedStateCode
 from pipeline.geometry import GeometryNormalizeError, normalize_geometry
-from pipeline.plans import (
-    Plan,
-    PlanLoadError,
-    PlanSetLoadError,
-    PlanSetValidationError,
-    load_plans_dir,
-    plan_in_scope,
-)
+from pipeline.plans import Plan
 
 # NOTE : should this be hardcoded here
 _GEOMETRY_PATH_PREFIX: str = "district_geometry/"
@@ -31,17 +23,9 @@ def run_normalize_geometry(
     states_arg: list[SupportedStateCode] | None = args.state
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
-        return 2
-
-    try:
-        target_states: list[SupportedStateCode] = resolve_target_states(
-            states_arg, sources.lewis.states
-        )
-    except CliArgError as e:
-        print(f"error: {e}", file=sys.stderr)
+        sources, target_states = load_sources_and_states(project_config, states_arg)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     paths = project_config.project_paths
@@ -59,19 +43,11 @@ def run_normalize_geometry(
             continue
 
         try:
-            plans = load_plans_dir(paths.plans_dir / state)
-        except (
-            FileNotFoundError,
-            NotADirectoryError,
-            PlanLoadError,
-            PlanSetLoadError,
-            PlanSetValidationError,
-        ) as e:
-            print(f"\terror loading plans: {e}", file=sys.stderr)
+            in_scope_plans = load_in_scope_plans(paths.plans_dir, state, scope)
+        except CliError as e:
+            print(str(e), file=sys.stderr)
             failed = True
             continue
-
-        in_scope_plans = [p for p in plans if plan_in_scope(p, scope)]
 
         for geometry in state_sources:
             if _normalize_one(

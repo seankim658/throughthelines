@@ -4,8 +4,12 @@ import shutil
 import sys
 from pathlib import Path
 
-from pipeline.cli._common import CliArgError, resolve_target_states
-from pipeline.config import ProjectConfig, load_fetch_config
+from pipeline.cli._common import (
+    CliError,
+    format_bytes,
+    load_sources_and_states,
+)
+from pipeline.config import ProjectConfig
 from pipeline.core import SupportedStateCode
 from pipeline.tiles import TilesBuildError, TilesBuildResult, build_tiles
 
@@ -22,17 +26,9 @@ def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
         return 2
 
     try:
-        sources = load_fetch_config(project_config.sources_config_path)
-    except (OSError, ValueError) as e:
-        print(f"error loading config: {e}", file=sys.stderr)
-        return 2
-
-    try:
-        target_states: list[SupportedStateCode] = resolve_target_states(
-            states_arg, sources.lewis.states
-        )
-    except CliArgError as e:
-        print(f"error: {e}", file=sys.stderr)
+        _, target_states = load_sources_and_states(project_config, states_arg)
+    except CliError as e:
+        print(str(e), file=sys.stderr)
         return 2
 
     paths = project_config.project_paths
@@ -63,18 +59,10 @@ def run_tiles(project_config: ProjectConfig, args: argparse.Namespace) -> int:
 
             print(
                 f"\t[{chamber}] → {result.output_path} "
-                f"({_format_bytes(result.file_size_bytes)})"
+                f"({format_bytes(result.file_size_bytes)})"
             )
             succeeded += 1
 
     print(f"\n{succeeded} state(s) tiled.")
 
     return 1 if failed else 0
-
-
-def _format_bytes(n: int) -> str:
-    if n < 1024:
-        return f"{n} B"
-    if n < 1024 * 1024:
-        return f"{n / 1024:.1f} KB"
-    return f"{n / (1024 * 1024):.1f} MB"

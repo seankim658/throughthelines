@@ -10,6 +10,7 @@
 	import type { LookupState } from '$lib/lookup/types';
 	import StateMap from '$lib/map/StateMap.svelte';
 	import { resolveArtifactUrl } from '$lib/manifest/loader';
+	import { getCoveredStateNames, getPlannedStateNames, joinWithAnd } from '$lib/copy/coverage';
 
 	let { data }: { data: PageData } = $props();
 
@@ -117,11 +118,13 @@
 </svelte:head>
 
 {#if data.coverage === 'planned'}
+	{@const coveredNames = joinWithAnd(getCoveredStateNames(data.manifest))}
+	{@const plannedNames = joinWithAnd(getPlannedStateNames(data.manifest))}
 	<div class="mx-auto max-w-3xl space-y-4 p-8">
 		<h1 class="tracking-light font-serif text-5xl font-semibold">{data.stateName}</h1>
 		<p>
-			{data.stateName} is planned for V1 of Through the Lines. The current release covers North Carolina;
-			Pennsylvania and Texas are next on the roadmap.
+			{data.stateName} is on the Through the Lines roadmap but isn't covered yet. The current release
+			covers {coveredNames}. Planned states are {plannedNames}.
 		</p>
 		<p>
 			<a href="/" class="decoration-accent underline underline-offset-4">Back to the home page</a>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sys
 
+from pipeline.cli._common import print_warnings, print_warning_count
 from pipeline.config import ProjectConfig, load_fetch_config, load_request_config
 from pipeline.core import SUPPORTED_STATES
 from pipeline.fetch import FetchError, FetchResult, fetch_national, fetch_state
@@ -46,8 +47,7 @@ def run_fetch(project_config: ProjectConfig) -> int:
         for entry in result.files:
             marker: str = "→" if entry.status == "fetched" else "."
             print(f"\t{marker} {entry.status:9s} {entry.source_url}")
-        for warning in result.warnings:
-            print(f"\twarn: {warning}", file=sys.stderr)
+        print_warnings(result.warnings)
         total_fetched += sum(1 for f in result.files if f.status == "fetched")
         total_unchanged += sum(1 for f in result.files if f.status == "unchanged")
         print(f"\tfetch-state: {result.state_path}")
@@ -57,6 +57,5 @@ def run_fetch(project_config: ProjectConfig) -> int:
         f"across {len(results)} scopes."
     )
     total_warnings: int = sum(len(r.warnings) for r in results)
-    if total_warnings:
-        print(f"({total_warnings} warning(s))", file=sys.stderr)
+    print_warning_count(total_warnings)
     return 0

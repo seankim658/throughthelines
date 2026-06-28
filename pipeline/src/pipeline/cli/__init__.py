@@ -121,17 +121,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "scaffold-plans",
         help="Generate placeholder plan-metadata YAMLs from Lewis GeoJSONs.",
     )
-    scaffold_parser.add_argument(
-        "--state",
-        action="append",
-        type=validate_state,
-        metavar="STATE",
-        help=(
-            "Two-letter state code to scaffold (repeatable, e.g., "
-            "--state NC --state PA). If omitted, scaffolds every state "
-            "configured in sources.toml."
-        ),
-    )
+    _add_state_argument(scaffold_parser, "scaffold")
     scaffold_parser.add_argument(
         "--force",
         action="store_true",
@@ -156,32 +146,14 @@ def _build_parser() -> argparse.ArgumentParser:
             "(non-Lewis geometry sources). Run after fetch, before stitch."
         ),
     )
-    normalize_geometry_parser.add_argument(
-        "--state",
-        action="append",
-        type=validate_state,
-        metavar="STATE",
-        help=(
-            "Two-letter state code to normalize (repeatable). "
-            "If omitted, normalizes every state configured in sources.toml."
-        ),
-    )
+    _add_state_argument(normalize_geometry_parser, "normalize")
 
     # Stitch
     stitch_parser = subparsers.add_parser(
         "stitch",
         help="Stitch plan metadata onto district polygons; emit per-state GeoJSON.",
     )
-    stitch_parser.add_argument(
-        "--state",
-        action="append",
-        type=validate_state,
-        metavar="STATE",
-        help=(
-            "Two-letter state code to stitch (repeatable). "
-            "If omitted, stitches every state configured in sources.toml."
-        ),
-    )
+    _add_state_argument(stitch_parser, "stitch")
 
     # Members
     subparsers.add_parser("members", help="Slice Voteview CSV into members.json.")
@@ -191,16 +163,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "blocks",
         help="Build per-state block-lookup JSON for the address-lookup pipeline.",
     )
-    blocks_parser.add_argument(
-        "--state",
-        action="append",
-        type=validate_state,
-        metavar="STATE",
-        help=(
-            "Two-letter state code to build (repeatable). "
-            "If omitted, builds every state configured in sources.toml."
-        ),
-    )
+    _add_state_argument(blocks_parser, "build")
     blocks_parser.add_argument(
         "--allow-missing",
         action="store_true",
@@ -224,16 +187,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "tiles",
         help="Build per-state PMTiles archive from stitched GeoJSON via tippecanoe.",
     )
-    tiles_parser.add_argument(
-        "--state",
-        action="append",
-        type=validate_state,
-        metavar="STATE",
-        help=(
-            "Two-letter state code to file (repeatable). "
-            "If omitted, tiles every state configured in sources.toml."
-        ),
-    )
+    _add_state_argument(tiles_parser, "tile")
 
     # Basemap
     basemap_parser = subparsers.add_parser(
@@ -272,3 +226,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+
+def _add_state_argument(parser: argparse.ArgumentParser, verb: str) -> None:
+    parser.add_argument(
+        "--state",
+        action="append",
+        type=validate_state,
+        metavar="STATE",
+        help=(
+            f"Two-letter state code to {verb} (repeatable, e.g. "
+            "--state NC --state PA). If omitted, applies to every state "
+            "configured in sources.toml."
+        ),
+    )

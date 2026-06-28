@@ -4,6 +4,7 @@
 
 import { PUBLIC_ARTIFACTS_BASE, PUBLIC_ARTIFACTS_LAYOUT } from '$env/static/public';
 import type { ArtifactRef, Manifest } from './types';
+import { fetchVersionedJson } from '$lib/fetch-json';
 
 const _MANIFEST_VERSION = 1;
 const MANIFEST_PATH = 'manifest.json';
@@ -13,18 +14,7 @@ export async function loadManifest(
 	fetch: typeof globalThis.fetch = globalThis.fetch
 ): Promise<Manifest> {
 	const url = `${PUBLIC_ARTIFACTS_BASE}/${MANIFEST_PATH}`;
-	const response = await fetch(url);
-	if (!response.ok) {
-		throw new Error(
-			`failed to fetch manifest at ${url}: ${response.status} ${response.statusText}`
-		);
-	}
-	const manifest = (await response.json()) as Manifest;
-	if (manifest.schema_version !== _MANIFEST_VERSION) {
-		throw new Error(
-			`manifest schema_version ${manifest.schema_version} is not supported by this build`
-		);
-	}
+	const manifest = await fetchVersionedJson<Manifest>(url, 'manifest', _MANIFEST_VERSION, fetch);
 
 	// In dev, artifacts are served flat under PUBLIC_ARTIFACTS_BASE
 	if (isFlatLayout()) {
