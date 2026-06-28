@@ -1,6 +1,7 @@
 import { resolveArtifactUrl } from '$lib/manifest/loader';
 import type { Manifest } from '$lib/manifest/types';
 import type { BlockLookup } from './types';
+import { fetchVersionedJson } from '$lib/fetch-json';
 
 const _BLOCK_LOOKUP_SCHEMA_VERSION = 1;
 const _CHAMBER = 'congressional';
@@ -26,19 +27,5 @@ export async function loadBlockLookup(
 	}
 
 	const url = resolveArtifactUrl(manifest, chamberSection.artifacts.block_lookup);
-	const response = await fetch(url);
-	if (!response.ok) {
-		throw new Error(
-			`failed to fetch block_lookup at ${url}: ${response.status} ${response.statusText}`
-		);
-	}
-
-	const blockLookup = (await response.json()) as BlockLookup;
-	if (blockLookup.schema_version !== _BLOCK_LOOKUP_SCHEMA_VERSION) {
-		throw new Error(
-			`block_lookup schema_version ${blockLookup.schema_version} is not supported by this build`
-		);
-	}
-
-	return blockLookup;
+	return fetchVersionedJson<BlockLookup>(url, 'block_lookup', _BLOCK_LOOKUP_SCHEMA_VERSION, fetch);
 }
