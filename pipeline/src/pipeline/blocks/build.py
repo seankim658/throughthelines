@@ -12,6 +12,7 @@ from typing import Any
 
 from pipeline.config import (
     BlockAssignmentEntry,
+    BlockAssignmentCarry,
     BlockVintage,
     CensusSource,
     GeometrySource,
@@ -86,6 +87,18 @@ class _BlockLinkage:
     warnings: list[str]
 
 
+@dataclass(frozen=True)
+class _ResolvedAssignment:
+    """A real block-assignment entry chosen for a Congress, plus its origin.
+
+    `entry` always owns its file. `derived_from` is the Congress a carry
+    borrowed from, or None when the Congress had its own real entry.
+    """
+
+    entry: BlockAssignmentEntry
+    derived_from: int | None
+
+
 # --- Models ---
 
 
@@ -110,6 +123,7 @@ def _validate_inputs(
     project_paths: ProjectPaths,
     census_source: CensusSource,
     block_assignments: list[BlockAssignmentEntry],
+    block_carries: list[BlockAssignmentCarry],
     geometry_sources: list[GeometrySource],
     allow_missing: bool,
     spatial_join_fallback: bool,
@@ -132,6 +146,9 @@ def _validate_inputs(
     assignments_by_key: dict[tuple[str, int], BlockAssignmentEntry] = {
         (entry.state, entry.congress): entry for entry in block_assignments
     }
+    carries_by_key: dict[tuple[str, int], BlockAssignmentCarry] = {
+        (carry.state, carry.congress): carry for carry in block_carries
+    }
     state_geometry_sources: list[GeometrySource] = [
         gs for gs in geometry_sources if gs.state == state
     ]
@@ -141,6 +158,7 @@ def _validate_inputs(
         plan_by_congress=plan_by_congress,
         scope=scope,
         assignments_by_key=assignments_by_key,
+        carries_by_key=carries_by_key,
         project_paths=project_paths,
         state=state,
         allow_missing=allow_missing,
@@ -205,6 +223,7 @@ def _resolve_congress_sources(
     plan_by_congress: dict[int, Plan],
     scope: ScopeSettings,
     assignments_by_key: dict[tuple[str, int], BlockAssignmentEntry],
+    carries_by_key: dict[tuple[str, int], BlockAssignmentCarry],
     project_paths: ProjectPaths,
     state: SupportedStateCode,
     allow_missing: bool,
@@ -214,17 +233,19 @@ def _resolve_congress_sources(
 ) -> tuple[dict[int, BlockAssignmentSource], set[BlockVintage], list[str]]:
     """Decide a `BlockAssignmentSource` for each in-scope Congress.
 
-    Resolution order, per Congress:
-        1. State-specific [[block_assignment]] entry
-        2. National [[block_assignment]] entry (state = "*")
-        3. Pre-BEF polygon fallback (unconditional below _FIRST_BEF_CONGRESS)
-        4. BEF-era polygon fallback under --spatial-join-fallback
-        5. Unsourced under --allow-missing
-        6. Rasises BlocksBuildError
+    Resolution order, per Congress. State-specific entries beat national ones;
+    within a scope a real entry (owns its file) beats a carry (borrows another
+    Congress's file):
+        1. Real or carried [[block_assignment]] entry (see _resolve_assignment)
+        2. Pre-BEF polygon fallback (unconditional below _FIRST_BEF_CONGRESS)
+        3. BEF-era polygon fallback under --spatial-join-fallback
+        4. Unsourced under --allow-missing
+        5. Raises BlocksBuildError
     """
     sources: dict[int, BlockAssignmentSource] = {}
     needed_vintages: set[BlockVintage] = set()
     polygon_fallback_congresses: list[int] = []
+    carried_congresses: list[tuple[int, int]] = []
     state_fips: str = STATE_INFO[state].fips
 
     for congress in range(scope.congress_start, scope.congress_end + 1):
@@ -233,24 +254,26 @@ def _resolve_congress_sources(
             plan, state_geometry_sources, scope
         )
 
-        # Step 1: state-specific delimited entry wins
-        entry: BlockAssignmentEntry | None = assignments_by_key.get((state, congress))
-
-        # Step 2: national delimited entry
-        if entry is None:
-            entry = assignments_by_key.get((NATIONAL_SCOPE, congress))
-
-        if entry is not None:
+        # Step 1: a real or carried delimited entry (state-specific first)
+        resolved: _ResolvedAssignment | None = _resolve_assignment(
+            state=state,
+            congress=congress,
+            assignments_by_key=assignments_by_key,
+            carries_by_key=carries_by_key,
+        )
+        if resolved is not None:
             sources[congress] = _make_delimited_source(
-                entry=entry,
+                entry=resolved.entry,
                 congress=congress,
                 state_fips=state_fips,
                 bef_dir=project_paths.bef_dir,
             )
-            needed_vintages.add(entry.vintage)
+            needed_vintages.add(resolved.entry.vintage)
+            if resolved.derived_from is not None:
+                carried_congresses.append((congress, resolved.derived_from))
             continue
 
-        # Step 3: pre-BEF polygon fallback (unconditional)
+        # Step 2: pre-BEF polygon fallback (unconditional)
         if congress < _FIRST_BEF_CONGRESS:
             sources[congress] = _make_polygon_source(
                 plan=plan,
@@ -263,7 +286,7 @@ def _resolve_congress_sources(
             polygon_fallback_congresses.append(congress)
             continue
 
-        # Step 4: BEF-era polygon fallback under --spatial-join-fallback
+        # Step 3: BEF-era polygon fallback under --spatial-join-fallback
         if spatial_join_fallback:
             try:
                 sources[congress] = _make_polygon_source(
@@ -282,12 +305,12 @@ def _resolve_congress_sources(
                     continue
                 raise
 
-        # Step 5: unsourced under --allow-missing
+        # Step 4: unsourced under --allow-missing
         if allow_missing:
             sources[congress] = UnsourcedSource()
             continue
 
-        # Step 6: error
+        # Step 5: error
         raise BlocksBuildError(
             f"no block-assignment entry configured for Congress {congress} "
             f"(state {state}); expected in BEF era ({_FIRST_BEF_CONGRESS}th+). "
@@ -301,8 +324,47 @@ def _resolve_congress_sources(
             f"{sorted(polygon_fallback_congresses)} sourced via "
             f"PolygonJoinSource declared block_vintage={_PRE_BEF_VINTAGE}."
         )
+    if carried_congresses:
+        pairs: str = ", ".join(
+            f"{congress}<-{source}" for congress, source in sorted(carried_congresses)
+        )
+        resolution_warnings.append(
+            f"Carried block assignments (congress<-source): {pairs}. "
+            f"District numbers borrowed from another Congress's file."
+        )
 
     return sources, needed_vintages, resolution_warnings
+
+
+def _resolve_assignment(
+    state: SupportedStateCode,
+    congress: int,
+    assignments_by_key: dict[tuple[str, int], BlockAssignmentEntry],
+    carries_by_key: dict[tuple[str, int], BlockAssignmentCarry],
+) -> _ResolvedAssignment | None:
+    """Find the real entry serving `congress`, honoring precedence."""
+    for scope_state in (state, NATIONAL_SCOPE):
+        real: BlockAssignmentEntry | None = assignments_by_key.get(
+            (scope_state, congress)
+        )
+        if real is not None:
+            return _ResolvedAssignment(entry=real, derived_from=None)
+
+        carry: BlockAssignmentCarry | None = carries_by_key.get((scope_state, congress))
+        if carry is not None:
+            target: BlockAssignmentEntry | None = assignments_by_key.get(
+                (scope_state, carry.same_as_congress)
+            )
+            if target is None:
+                raise BlocksBuildError(
+                    f"carry for Congress {congress} (state {scope_state}) names "
+                    f"same_as_congress={carry.same_as_congress}, which has no "
+                    f"real block-assignment entry in that scope"
+                )
+            return _ResolvedAssignment(
+                entry=target, derived_from=carry.same_as_congress
+            )
+    return None
 
 
 def _make_delimited_source(
@@ -459,6 +521,7 @@ def build_blocks(
     project_paths: ProjectPaths,
     census_source: CensusSource,
     block_assignments: list[BlockAssignmentEntry],
+    block_carries: list[BlockAssignmentCarry],
     geometry_sources: list[GeometrySource],
     lewis_landing_url: str,
     output_path: Path,
@@ -473,6 +536,7 @@ def build_blocks(
         project_paths=project_paths,
         census_source=census_source,
         block_assignments=block_assignments,
+        block_carries=block_carries,
         geometry_sources=geometry_sources,
         allow_missing=allow_missing,
         spatial_join_fallback=spatial_join_fallback,

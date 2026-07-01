@@ -49,6 +49,7 @@ def run_blocks(project_config: ProjectConfig, args: argparse.Namespace) -> int:
                     project_paths=paths,
                     census_source=sources.census,
                     block_assignments=sources.block_assignments,
+                    block_carries=sources.block_carries,
                     geometry_sources=sources.geometry_sources,
                     lewis_landing_url=sources.lewis.landing_url,
                     output_path=output_path,
