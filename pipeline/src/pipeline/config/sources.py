@@ -28,6 +28,16 @@ SUPPORTED_VINTAGES: tuple[BlockVintage, ...] = get_args(BlockVintage)
 # Wildcard for a block-assignment entry that applies to all states
 NATIONAL_SCOPE: Literal["*"] = "*"
 
+_CARRY_FORBIDDEN_KEYS: tuple[str, ...] = (
+    "vintage",
+    "url",
+    "landing_url",
+    "inner_filename",
+    "district_column",
+    "geoid_column",
+    "delimiter",
+)
+
 
 # --- Errors ---
 
@@ -93,6 +103,21 @@ class BlockAssignmentEntry:
 
 
 @dataclass(frozen=True)
+class BlockAssignmentCarry:
+    """A block-assignment entry that borrows another Congress's source file.
+
+    Used where no Census BEF exists for a Congress but a non-redrawing state's
+    districts are identical to an adjacent Congress's.
+    """
+
+    provider: str
+    state: SupportedStateCode | Literal["*"]
+    congress: int
+    same_as_congress: int
+    note: str | None = None
+
+
+@dataclass(frozen=True)
 class CensusSource:
 
     tabblock_templates: dict[BlockVintage, str]
@@ -121,6 +146,7 @@ class FetchConfig:
     voteview: VoteviewSource
     census: CensusSource
     block_assignments: list[BlockAssignmentEntry]
+    block_carries: list[BlockAssignmentCarry]
     protomaps_basemap: ProtomapsBasemapSource
 
 
@@ -165,7 +191,7 @@ def load_fetch_config(path: Path) -> FetchConfig:
     census_raw: dict[str, Any] = require_section(raw, "census", path, FetchConfigError)
     census = _load_census(census_raw, path)
 
-    block_assignments: list[BlockAssignmentEntry] = _load_block_assignments(raw, path)
+    block_assignments, block_carries = _load_block_assignments(raw, path)
 
     protomaps_basemap_raw: dict[str, Any] = require_section(
         raw, "protomaps_basemap", path, FetchConfigError
@@ -202,8 +228,12 @@ def load_fetch_config(path: Path) -> FetchConfig:
         voteview=voteview,
         census=census,
         block_assignments=block_assignments,
+        block_carries=block_carries,
         protomaps_basemap=protomaps_basemap,
     )
+
+
+# --- Helpers ---
 
 
 def _load_lewis_states(
@@ -331,7 +361,7 @@ def _load_census(census_raw: dict[str, Any], path: Path) -> CensusSource:
 
 def _load_block_assignments(
     raw: dict[str, Any], path: Path
-) -> list[BlockAssignmentEntry]:
+) -> tuple[list[BlockAssignmentEntry], list[BlockAssignmentCarry]]:
     if "block_assignment" not in raw:
         raise FetchConfigError(
             f"missing [[block_assignment]] entries in {path}; expected at "
@@ -344,7 +374,9 @@ def _load_block_assignments(
         )
 
     seen: set[tuple[str, str, int]] = set()
-    entries: list[BlockAssignmentEntry] = []
+    files: list[BlockAssignmentEntry] = []
+    carries: list[BlockAssignmentCarry] = []
+
     for idx, entry_raw in enumerate(entries_raw):
         if not isinstance(entry_raw, dict):
             raise FetchConfigError(
@@ -352,91 +384,182 @@ def _load_block_assignments(
             )
         section_label: str = f"block_assignment[{idx}]"
 
-        provider: str = require_string(
-            entry_raw, "provider", section_label, path, FetchConfigError
+        provider, state, congress = _load_block_assignment_identity(
+            entry_raw, section_label, path
         )
 
-        state_raw: str = require_string(
-            entry_raw, "state", section_label, path, FetchConfigError
-        )
-
-        if state_raw != NATIONAL_SCOPE and state_raw not in SUPPORTED_STATES:
-            supported_list: str = ", ".join(SUPPORTED_STATES)
-            raise FetchConfigError(
-                f"unknown state {state_raw!r} in [[{section_label}]] in {path} "
-                f"(expected '*' or one of: {supported_list})"
-            )
-        state: SupportedStateCode | Literal["*"] = cast(
-            "SupportedStateCode | Literal['*']", state_raw
-        )
-
-        congress: int = require_int(
-            entry_raw, "congress", section_label, path, FetchConfigError
-        )
-
-        dedup_key: tuple[str, str, int] = (provider, state_raw, congress)
+        dedup_key: tuple[str, str, int] = (provider, state, congress)
         if dedup_key in seen:
             raise FetchConfigError(
                 f"duplicate [[block_assignment]] entry for "
-                f"provider={provider!r}, state={state_raw!r}, congress={congress} "
+                f"provider={provider!r}, state={state!r}, congress={congress} "
                 f"in {path}"
             )
         seen.add(dedup_key)
 
-        vintage_raw: str = require_string(
-            entry_raw, "vintage", section_label, path, FetchConfigError
+        if "same_as_congress" in entry_raw:
+            carries.append(
+                _load_block_assignment_carry(
+                    entry_raw, provider, state, congress, section_label, path
+                )
+            )
+        else:
+            files.append(
+                _load_block_assignment_file(
+                    entry_raw, provider, state, congress, section_label, path
+                )
+            )
+
+    _validate_carry_targets(files, carries, path)
+
+    files.sort(key=lambda e: (e.congress, e.state, e.provider))
+    carries.sort(key=lambda c: (c.congress, c.state, c.provider))
+    return files, carries
+
+
+def _load_block_assignment_identity(
+    entry_raw: dict[str, Any], section_label: str, path: Path
+) -> tuple[str, SupportedStateCode | Literal["*"], int]:
+    """Parse the provider/state/congress shared by file and carry entries."""
+    provider = require_string(
+        entry_raw, "provider", section_label, path, FetchConfigError
+    )
+
+    state_raw = require_string(
+        entry_raw, "state", section_label, path, FetchConfigError
+    )
+    if state_raw != NATIONAL_SCOPE and state_raw not in SUPPORTED_STATES:
+        supported_list: str = ", ".join(SUPPORTED_STATES)
+        raise FetchConfigError(
+            f"unknown state {state_raw!r} in [[{section_label}]] in {path} "
+            f"(expected '*' or one of: {supported_list})"
         )
-        if vintage_raw not in SUPPORTED_VINTAGES:
-            supported_vintages: str = ", ".join(SUPPORTED_VINTAGES)
+    state: SupportedStateCode | Literal["*"] = cast(
+        "SupportedStateCode | Literal['*']", state_raw
+    )
+
+    congress = require_int(entry_raw, "congress", section_label, path, FetchConfigError)
+
+    return provider, state, congress
+
+
+def _load_block_assignment_file(
+    entry_raw: dict[str, Any],
+    provider: str,
+    state: SupportedStateCode | Literal["*"],
+    congress: int,
+    section_label: str,
+    path: Path,
+) -> BlockAssignmentEntry:
+    """Parse a block-assignment entry that owns its source file."""
+    vintage_raw = require_string(
+        entry_raw, "vintage", section_label, path, FetchConfigError
+    )
+    if vintage_raw not in SUPPORTED_VINTAGES:
+        supported_vintages: str = ", ".join(SUPPORTED_VINTAGES)
+        raise FetchConfigError(
+            f"unknown vintage {vintage_raw!r} in [[{section_label}]] in "
+            f"{path} (supported: {supported_vintages})"
+        )
+
+    url = require_string(entry_raw, "url", section_label, path, FetchConfigError)
+    landing_url = require_string(
+        entry_raw, "landing_url", section_label, path, FetchConfigError
+    )
+    inner_filename = require_string(
+        entry_raw, "inner_filename", section_label, path, FetchConfigError
+    )
+    district_column = require_string(
+        entry_raw, "district_column", section_label, path, FetchConfigError
+    )
+
+    geoid_column_raw: Any = entry_raw.get("geoid_column")
+    if geoid_column_raw is not None and not isinstance(geoid_column_raw, str):
+        raise FetchConfigError(
+            f"geoid_column in [[{section_label}]] in {path} must be a string"
+        )
+    geoid_column: str | None = geoid_column_raw
+
+    delimiter_raw: Any = entry_raw.get("delimiter", ",")
+    if not isinstance(delimiter_raw, str):
+        raise FetchConfigError(
+            f"delimiter in [[{section_label}]] in {path} must be a string"
+        )
+    delimiter: str = delimiter_raw
+
+    return BlockAssignmentEntry(
+        provider=provider,
+        state=state,
+        congress=congress,
+        vintage=cast(BlockVintage, vintage_raw),
+        url=url,
+        landing_url=landing_url,
+        inner_filename=inner_filename,
+        district_column=district_column,
+        geoid_column=geoid_column,
+        delimiter=delimiter,
+    )
+
+
+def _load_block_assignment_carry(
+    entry_raw: dict[str, Any],
+    provider: str,
+    state: SupportedStateCode | Literal["*"],
+    congress: int,
+    section_label: str,
+    path: Path,
+) -> BlockAssignmentCarry:
+    """Parse a block-assignment entry that borrows another Congress's file."""
+    present_forbidden: list[str] = [
+        key for key in _CARRY_FORBIDDEN_KEYS if key in entry_raw
+    ]
+    if present_forbidden:
+        raise FetchConfigError(
+            f"[[{section_label}]] in {path} sets same_as_congress and may not "
+            f"also set file field(s): {', '.join(sorted(present_forbidden))}"
+        )
+
+    same_as_congress = require_int(
+        entry_raw, "same_as_congress", section_label, path, FetchConfigError
+    )
+    if same_as_congress == congress:
+        raise FetchConfigError(
+            f"[[{section_label}]] in {path} cannot carry from its own congress "
+            f"({congress})"
+        )
+
+    note_raw: Any = entry_raw.get("note")
+    if note_raw is not None and not isinstance(note_raw, str):
+        raise FetchConfigError(
+            f"note in [[{section_label}]] in {path} must be a string"
+        )
+    note: str | None = note_raw
+
+    return BlockAssignmentCarry(
+        provider=provider,
+        state=state,
+        congress=congress,
+        same_as_congress=same_as_congress,
+        note=note,
+    )
+
+
+def _validate_carry_targets(
+    files: list[BlockAssignmentEntry], carries: list[BlockAssignmentCarry], path: Path
+) -> None:
+    """Every carry must point at a real (non-carry) entry in the same scope (and no chains)."""
+    real_by_key: dict[tuple[str, int], BlockAssignmentEntry] = {
+        (entry.state, entry.congress): entry for entry in files
+    }
+    for carry in carries:
+        target_key: tuple[str, int] = (carry.state, carry.same_as_congress)
+        if target_key not in real_by_key:
             raise FetchConfigError(
-                f"unknown vintage {vintage_raw!r} in [[{section_label}]] in "
-                f"{path} (supported: {supported_vintages})"
+                f"block_assignment carry for state={carry.state!r}, "
+                f"congress={carry.congress} references same_as_congress="
+                f"{carry.same_as_congress}, but no source-owning "
+                f"[[block_assignment]] exists for that (state, congress) in {path}"
             )
-
-        url: str = require_string(
-            entry_raw, "url", section_label, path, FetchConfigError
-        )
-        landing_url: str = require_string(
-            entry_raw, "landing_url", section_label, path, FetchConfigError
-        )
-        inner_filename: str = require_string(
-            entry_raw, "inner_filename", section_label, path, FetchConfigError
-        )
-        district_column: str = require_string(
-            entry_raw, "district_column", section_label, path, FetchConfigError
-        )
-
-        geoid_column_raw: Any = entry_raw.get("geoid_column")
-        if geoid_column_raw is not None and not isinstance(geoid_column_raw, str):
-            raise FetchConfigError(
-                f"geoid_column in [[{section_label}]] in {path} must be a string"
-            )
-        geoid_column: str | None = geoid_column_raw
-
-        delimiter_raw: Any = entry_raw.get("delimiter", ",")
-        if not isinstance(delimiter_raw, str):
-            raise FetchConfigError(
-                f"delimiter in [[{section_label}]] in {path} must be a string"
-            )
-        delimiter: str = delimiter_raw
-
-        entries.append(
-            BlockAssignmentEntry(
-                provider=provider,
-                state=state,
-                congress=congress,
-                vintage=cast(BlockVintage, vintage_raw),
-                url=url,
-                landing_url=landing_url,
-                inner_filename=inner_filename,
-                district_column=district_column,
-                geoid_column=geoid_column,
-                delimiter=delimiter,
-            )
-        )
-
-    entries.sort(key=lambda e: (e.congress, e.state, e.provider))
-    return entries
 
 
 def _load_census_tabblock_templates(

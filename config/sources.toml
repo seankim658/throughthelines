@@ -1,8 +1,8 @@
 # Configuration for upstream data sources.
 #
-# This file is the single source of truth for WHAT to fetch and from WHERE.
-# The fetch pipeline reads it, downloads the listed files to data/raw/,
-# and writes a manifest recording the bytes it actually got.
+# This file is the single source of truth for WHAT to fetch and from WHERE. The fetch pipeline 
+# reads it, downloads the listed files to data/raw/, and writes a manifest recording the bytes 
+# it actually got.
 #
 # Versioning:
 #   - lewis.commit_sha : a git commit SHA on master. Once pinned, the
@@ -37,14 +37,13 @@ files = [
 
 # --- District geometry sources ---
 #
-# Congressional district boundaries published as polygons (shapefile/GeoJSON) by a
-# non-Lewis authority. A geometry source exists for a plan only when the Lewis archive 
-# has no polygon for it yet (Lewis lags the current cycle).
+# Congressional district boundaries published as polygons (shapefile/GeoJSON) by a non-Lewis 
+# authority. A geometry source exists for a plan only when the Lewis archive has no polygon 
+# for it yet (Lewis lags the current cycle).
 #
-# Always state-specific: there is no national congressional-shapefile authority, so
-# (unlike [[block_assignment]]) state = "*" is not allowed. Provider naming follows
-# the same convention as [[block_assignment]]: a lowercase short label for the
-# publishing authority (e.g. "ncga").
+# Always state-specific: there is no national congressional-shapefile authority, so (unlike 
+# [[block_assignment]]) state = "*" is not allowed. Provider naming follows the same convention 
+# as [[block_assignment]]: a lowercase short label for the publishing authority (e.g. "ncga").
 
 [[geometry_source]]
 provider = "ncga"
@@ -83,25 +82,43 @@ url_template = "https://www2.census.gov/geo/tiger/TIGER2010/TABBLOCK/2000/tl_201
 
 # --- Block Equivalency Files ---
 # 
-# Each entry maps Census tabulation blocks of `vintage` to district numbers under one Congress's plan.
+# Each entry maps Census tabulation blocks of `vintage` to district numbers under one 
+# Congress's plan.
 # 
-# Resolution: for (state, congress), the builder prefers a state-specific entry (state = "NC") over a 
-# national one (state = "*"). This lets a state authority's file override an absent or missing Census 
-# BEF without flag wrangling.
+# Resolution: for (state, congress), the builder prefers a state-specific entry (e.g. 
+# state = "NC") over a national one (state = "*"). This lets a state authority's file 
+# override an absent or missing Census BEF without flag wrangling. An entry may also 
+# set `same_as_congress` to borrow another Congress's file instead of naming its own 
+# url/vintage (a "carry"); a real entry beats a carry in the same scope, so a state 
+# file overrides a national carry just as it overrides a national BEF.
 # 
-# Provider naming convention: lowercase short label for the publishing authority. Examples: "census", 
-# "ncga". For future state authorities prefer the abbreviation contributors will recognize (e.g. "pa_lrc" 
-# for the PA Legislative Reapportionment Commission).
+# Provider naming convention: lowercase short label for the publishing authority. 
+# Examples: "census", "ncga". For future state authorities prefer the abbreviation 
+# contributors will recognize (e.g. "pa_lrc" for the PA Legislative Reapportionment 
+# Commission).
 # 
-# Census BEF URL pattern note: the 119th release uses directory "119-congressional-district-befs" (plural), 
-# older releases use the singular "...-bef".
+# Census BEF URL pattern note: the 119th release uses directory "119-congressional-district-befs" 
+# (plural), older releases use the singular "...-bef".
 #
-# Census BEF coverage gap: the Census Redistricting Data Program does not collect boundaries for the Congress 
-# whose elections align with the decennial census, so there is no 117th Census BEF. For NC, the 117th entry below 
-# points at the NC General Assembly's block assignment file for the 2019-enacted congressional plan (HB 1029, SL 2019-249), 
-# which was used for the 2020 election. For the other 49 states, the 116th BEF data is identical to the 117th and is carried 
-# forward by build-time logic; no per-state 117th entry is required.
+# Census BEF coverage gaps: two in-scope Congresses have no national Census BEF, for 
+# different reasons.
+#   - 117th (permanent): the Census Redistricting Data Program does not collect boundaries
+#     for the Congress whose election coincides with the decennial census, so no cd117 BEF
+#     is ever published.
+#   - 120th (temporary): the cd120 is not yet published as of this build (expected ~2027, after
+#     the 2026 election).
+#
+# NC redrew at both, so its 117th and 120th entries below point at NC General Assembly 
+# block-assignment files (the 117th's is the 2019 enacted plan, HB 1029 / SL 2019-249, used 
+# for the 2020 election). A state whose districts are unchanged at one of these Congresses reuses
+# the adjacent BEF via the national carry below (`same_as_congress`: the 116th for the 117th, the
+# 119th for the 120th). A state that redrew must override with its own state entry.
 # Source: https://www.census.gov/programs-surveys/decennial-census/about/rdo/congressional-districts.117th_Congress.html
+# 
+# A state file overrides the national carry. NOTE: When the cd120 BEF ships, replace the 120th carry
+# with a real national entry. 
+
+### National
 
 [[block_assignment]]
 provider = "census"
@@ -144,15 +161,12 @@ inner_filename = "National_CD116.txt"
 district_column = "CD116"
 
 [[block_assignment]]
-provider = "ncga"
-state = "NC"
+# Carry: no cd117 BEF exists (permanent). Non-redrawing states reuse their 116th assignments.
+provider = "census"
+state = "*"
 congress = 117
-vintage = "v2010"
-landing_url = "https://www.ncleg.gov/Redistricting"
-url = "https://www.ncleg.gov/Files/GIS/Plans_Main/Congress_2019/HB1029%203rd%20Edition%20-%20Blockfile.zip"
-inner_filename = "C-Goodwin-A-1-TC.csv"
-district_column = "District"
-geoid_column = "Block"
+same_as_congress = 116
+note = "No cd117 BEF (2020 census-year election); permanent carry from the 116th."
 
 [[block_assignment]]
 provider = "census"
@@ -173,6 +187,28 @@ landing_url = "https://www.census.gov/geographies/mapping-files/2025/dec/rdo/119
 url = "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip"
 inner_filename = "NationalCD119.txt"
 district_column = "CDFP"
+
+[[block_assignment]]
+# Carry: cd120 BEF not yet published (temporary). Non-redrawing states reuse their
+# 119th assignments until it ships
+provider = "census"
+state = "*"
+congress = 120
+same_as_congress = 119
+note = "cd120 BEF not yet published; temporary carry from the 119th. Revisit on next Census BEF release."
+
+### State
+
+[[block_assignment]]
+provider = "ncga"
+state = "NC"
+congress = 117
+vintage = "v2010"
+landing_url = "https://www.ncleg.gov/Redistricting"
+url = "https://www.ncleg.gov/Files/GIS/Plans_Main/Congress_2019/HB1029%203rd%20Edition%20-%20Blockfile.zip"
+inner_filename = "C-Goodwin-A-1-TC.csv"
+district_column = "District"
+geoid_column = "Block"
 
 [[block_assignment]]
 provider = "ncga"
