@@ -17,6 +17,7 @@ Missingness model:
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date
 from typing import Annotated, Any, Literal, ClassVar
 
@@ -126,6 +127,25 @@ class Source(BaseModel):
         ]
         | None
     ) = None
+
+
+# --- Prose Citation Helpers ---
+
+# Broad bracket matcher, captures the contents of any [...] group
+_BRACKET_RE = re.compile(r"\[([^\[\]]*)\]")
+
+
+def _collect_source_codes(
+    citations: list[CourtCitation], sources: list[Source]
+) -> list[str]:
+    """All non-None source_codes across a plan's references, in order."""
+    references: list[CourtCitation | Source] = [*citations, *sources]
+    return [ref.source_code for ref in references if ref.source_code is not None]
+
+
+def _bracket_tokens(prose: str) -> list[str]:
+    """Inner text of every [...] group."""
+    return [match.group(1) for match in _BRACKET_RE.finditer(prose)]
 
 
 # --- Plan Models ---
@@ -253,6 +273,50 @@ class Plan(BaseModel):
             raise ValueError(
                 f"plan_id congress ({congress_from_id}) does not match congress_start ({self.congress_start})"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _source_codes_are_unique(self) -> Plan:
+        """No two references in this plan may share a source_code."""
+        codes: list[str] = _collect_source_codes(self.court_citations, self.sources)
+        duplicates: list[str] = sorted(
+            code for code, count in Counter(codes).items() if count > 1
+        )
+        if duplicates:
+            raise ValueError(
+                "source_code must be unique within a plan; "
+                f"duplicated: {', '.join(duplicates)}"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _inline_citations_resolve(self) -> Plan:
+        """Every [CODE] in a prose field must be well-formed and match a source_code defined
+        on this plan's references.
+        """
+        defined: set[str] = set(
+            _collect_source_codes(self.court_citations, self.sources)
+        )
+        prose_fields: list[tuple[str, str]] = [
+            ("origin_details", self.origin_details),
+            ("struck_down_details", self.struck_down_details),
+            ("notes", self.notes),
+        ]
+        errors: list[str] = []
+        for field_name, prose in prose_fields:
+            for token in _bracket_tokens(prose):
+                if not re.match(SOURCE_CODE_PATTERN, token):
+                    errors.append(
+                        f"{field_name}: malformed citation '[{token}]' "
+                        "(write one uppsercase code per brakcet, e.g. '[AAR]')"
+                    )
+                elif token not in defined:
+                    errors.append(
+                        f"{field_name}: citation '[{token}]' matches no "
+                        "source_code on this plan"
+                    )
+        if errors:
+            raise ValueError("unresolved inline citations:\n - " + "\n - ".join(errors))
         return self
 
     # Projections for downstream consumers
