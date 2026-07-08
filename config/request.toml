@@ -6,4 +6,4 @@ initial_backoff_seconds = 1.0
 backoff_multiplier = 2.0
 request_timeout_seconds = 300.0
 jitter_seconds = 0.5
-retryable_http_codes = [429, 500, 502, 503, 504] 
+retryable_http_codes = [429, 500, 502, 503, 504, 520] 

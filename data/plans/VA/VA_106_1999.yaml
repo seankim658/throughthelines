@@ -1,0 +1,112 @@
+# =============================================================================
+# VA_106_1999: Virginia 1998 remedial congressional plan (post-Moon v. Meadows).
+# Governs the 106th-107th Congresses (1998-2000 U.S. House elections).
+#
+# Source tags:
+#   [AAR]        All About Redistricting, VA     https://redistricting.lls.edu/state/virginia/
+#   [LIS-SB13]   Virginia LIS bill page, SB 13   https://legacylis.virginia.gov/cgi-bin/legp604.exe?981+sum+SB13
+#   [MOON]                                       see court_citations below
+# =============================================================================
+plan_id: VA_106_1999
+state: VA
+chamber: congressional
+congress_start: 106
+congress_end: 107
+source_file: district_geometry/lewis/VA/Virginia_106_to_107.geojson
+source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
+schema_version: 1
+
+# [LIS-SB13]
+# SB 13 (patron Sen. Kevin G. Miller); Senate 32-Y 7-N (1998-01-21), House 69-Y 27-N (1998-02-02).
+# Approved by the Governor as Chapter 1 of the 1998 Acts of Assembly; date is the approval date.
+enacted_date: 1998-02-11
+# [AAR, LIS-SB13, MOON]
+# Virginia was a Section 5 covered jurisdiction, so effective_date should be the DOJ preclearance
+# date. That date is not determinable from the authoritative sources consulted (AAR VA page, the
+# DOJ Section 5 submission-notice series, the Moon v. Meadows opinion). The statutory effective
+# date under Chapter 1 was 1998-02-11 [LIS-SB13]; preclearance occurred in 1998, before the map
+# governed the November 1998 election. Verify via DOJ Section 5 determination records for the
+# 1998 Virginia congressional submission. NOTE: the 1992-02-18 preclearance in the Moon opinion
+# is the PREDECESSOR 1991 plan's, and 2001-10-16 is the SUCCESSOR VA_108_2003 plan's (neither is
+# this plan's).
+effective_date: unknown
+
+# [LIS-SB13, MOON, AAR]
+origin: legislature
+# [LIS-SB13] SB 13 revised the 1st, 2nd, 3rd, 4th, and 7th Districts "in response to the
+#            three-judge federal district court order in Moon v. Meadows"; enacted as Chapter 1.
+# [MOON]     Moon v. Meadows (three-judge E.D. Va., 1997-02-07) struck District 3 of the
+#            PREDECESSOR 1991 plan and enjoined further District-3 elections until the General
+#            Assembly enacted, and the Governor approved, a conforming plan.
+# NOT court-drawn: the General Assembly drew and enacted the remedy, so origin is `legislature`,
+#            not `remedial`. Moon v. Meadows is carried as an ENABLING citation, not invalidating.
+origin_details: >-
+  After a three-judge panel of the U.S. District Court for the Eastern District of Virginia held 
+  in Moon v. Meadows that the Third Congressional District of Virginia's post-1990-Census plan 
+  was an unconstitutional racial gerrymander and enjoined any further election in that district 
+  until a conforming plan was enacted, the General Assembly passed Senate Bill 13, which redrew 
+  the 1st, 2nd, 3rd, 4th, and 7th Districts. Governor James S. Gilmore III approved it as Chapter
+  1 of the 1998 Acts of Assembly on February 11, 1998. Because Virginia was then a Section 5 
+  covered jurisdiction, the plan required U.S. Department of Justice preclearance before it 
+  could be enforced. It governed the 1998 and 2000 U.S. House elections.
+
+# This 1998 remedial plan was itself NOT struck down. It governed the 1998 and 2000 U.S. House
+# elections and was replaced through the ordinary post-2000-Census cycle. Moon v. Meadows struck
+# District 3 of the PREDECESSOR 1991 plan, NOT this plan. [MOON, AAR]
+struck_down: false
+struck_down_details: >-
+  This plan was not struck down. It was the General Assembly's remedial response to Moon v.
+  Meadows, which invalidated the Third District of the predecessor 1991 plan. The 1998 map 
+  governed the 1998 and 2000 elections without being invalidated and was superseded by
+  Virginia's post-2000-Census plan through the normal redistricting cycle.
+struck_down_districts: []
+
+# predecessor = the 1991 congressional plan (Chapter 6, 1991 Va. Acts; DOJ-precleared 1992-02-18),
+#   whose District 3 was struck in Moon v. Meadows. It is out of the coverage window and not
+#   modeled as a plan record, so predecessor is null; the strike is documented here as context.
+# superseded_by VA_108_2003 = Virginia's post-2000-Census plan (HB 18, signed 2001-07-19,
+#   DOJ-precleared 2001-10-16), governing the 108th Congress onward. [AAR]
+superseded_by: VA_108_2003
+predecessor: null
+
+# [MOON] Moon v. Meadows (three-judge E.D. Va., 1997-02-07) -> enabling: struck District 3 of the
+#        predecessor 1991 plan as a racial gerrymander under the Equal Protection Clause (the
+#        Shaw v. Reno / Miller v. Johnson line) and enjoined further District-3 elections until a
+#        conforming plan was enacted — the order that prompted SB 13. Docket 3:95CV942; three-judge
+#        panel Widener, Merhige, Ellis. 
+# Excluded on purpose: Wilkins v. West (Va. 2002) and Hall v. Virginia / Hall v. Warner challenged
+#        the SUCCESSOR 2001 plan and belong in VA_108_2003, not here.
+# TODO: add archive links
+court_citations:
+  - case: Moon v. Meadows
+    citation: "952 F. Supp. 1141 (E.D. Va. 1997)"
+    role: enabling
+    url: https://law.justia.com/cases/federal/district-courts/FSupp/952/1141/1432147/
+
+# [MOON] Struck 1991 plan's District 3 Black VAP: 58.50% in the initial 1991 draft, raised to
+#   61.17% by the Governor's amendments (enacted; precleared 1992-02-18) and 61.6% after the 1993
+#   technical amendments — the configuration Moon struck. This plan's OWN post-remedy District 3
+#   BVAP is not in Moon or AAR; not asserted until sourced.
+notes: >-
+  The predecessor 1991 plan's Third District, struck in Moon v. Meadows, had been drawn to a Black
+  voting-age population of about 61%. this plan was the legislative redraw that remedied it.
+  Data-vintage note: the source polygons (Lewis's Virginia_106_to_107.geojson) are this 1990s-era
+  plan joined in the pipeline against 2000 Census blocks, producing a thin boundary seam for a
+  small number of addresses at the 107th Congress.
+
+# Coverage (which source to re-check for which field):
+#   [AAR]      origin corroboration; successor identity (HB 18, precleared 2001-10-16); post-remedy
+#              District 3 BVAP; Section 5 coverage
+#   [LIS-SB13] enacted_date; SB 13 chapter number and floor votes; districts revised; statutory
+#              effective date
+#   [MOON]     enabling strike of the predecessor's District 3; pre-remedy BVAP; docket and panel
+# TODO: add archive links
+sources:
+  - url: https://redistricting.lls.edu/state/virginia/
+    accessed: 2026-07-06
+  - url: https://legacylis.virginia.gov/cgi-bin/legp604.exe?981+sum+SB13
+    accessed: 2026-07-06
+
+curation_status: curated
+curation_last_reviewed: 2026-07-06
+extensions: {}
