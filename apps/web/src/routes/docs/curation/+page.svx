@@ -99,11 +99,38 @@ To see an example of a curated plan, see the [NC 113th plan file](https://github
 
 ## When is a plan "curated"?
 
-`curation_status` is your judgment of the record's completeness. It is not derived automatically, the curator sets it. The recommended bar:
+`curation_status` is your judgment of the record's completeness, you set it by
+hand (it is not derived). A record has two things to finish: 
 
-- **`pending`:** Untouched. No research done.
-- **`partial`:** Some fields researched, but not all, or not yet fully sourced. The record is useful and is honest about which fields remain `pending`.
-- **`curated`:** Every curation-sensitive field holds a real value or a deliberate `unknown` (none left `pending`). Every substantive claim is backed by a `sources` entry and every legal claim by a `court_citations` entry; and `curation_last_reviewed` is set to the date you finished.
+- Its **coverage** (how many fields still say `pending`) 
+- Its **sourcing** (whether the answers you filled in carry a citation) 
+
+Two fields carry the record: **`origin`** (who drew the plan) and **`struck_down`**
+(whether a court invalidated it). These are the questions the tool leads with and
+the two curation fields baked into the map itself, so they set the bar for leaving
+the `pending` state.
+
+- **`pending`:** Untouched, or not yet far enough to be useful, `origin` and
+  `struck_down` are not both resolved. `curation_last_reviewed` is empty.
+
+- **`partial`:** `origin` and `struck_down` are both resolved (each a real value or
+  a deliberate `unknown`) and each is sourced, so the record answers the tool's
+  headline question. It falls short of `curated` because at least one other field is
+  still `pending`, or a filled-in claim is not yet sourced. The record is useful and
+  honest about what remains.
+
+- **`curated`:** Both axes are complete. Every curation-sensitive field holds a real
+  value or a deliberate `unknown`, nothing is left `pending`, and every substantive
+  claim carries a `sources` entry, every legal claim a `court_citations` entry. Set
+  `curation_last_reviewed` to the date you finished.
+
+A record can be in a `curated` state with many `unknown` fields. A `curated` state means 
+*fully researched*, not *fully populated*. An `unknown` you looked into and recorded a
+source for is a finished answer. Only a `pending` field keeps a record out of `curated`.
+
+If a plan was struck down (`struck_down: true`), then `struck_down_details` and `struck_down_districts` 
+are substantive claims a `curated` record fills and cites; if it was not (`struck_down: false`), 
+they do not apply.
 
 Set `curation_last_reviewed` whenever you review a record, even if you leave it `partial`.
 

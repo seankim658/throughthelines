@@ -35,6 +35,15 @@ files = [
     "GeoJson/North Carolina_119_to_119.geojson",
 ]
 
+[lewis.states.VA]
+files = [
+  "GeoJson/Virginia_106_to_107.geojson",
+  "GeoJson/Virginia_108_to_112.geojson",
+  "GeoJson/Virginia_113_to_114.geojson",
+  "GeoJson/Virginia_115_to_117.geojson",
+  "GeoJson/Virginia_118_to_119.geojson",
+]
+
 # --- District geometry sources ---
 #
 # Congressional district boundaries published as polygons (shapefile/GeoJSON) by a non-Lewis 

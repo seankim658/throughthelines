@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, get_args
 
-SupportedStateCode = Literal["NC"]
+SupportedStateCode = Literal["NC", "VA"]
 SupportedChamberType = Literal["congressional"]
 SUPPORTED_CHAMBERS: tuple[SupportedChamberType, ...] = ("congressional",)
 
@@ -42,7 +42,10 @@ class StateInfo:
 STATE_INFO: dict[SupportedStateCode, StateInfo] = {
     "NC": StateInfo(
         code="NC", fips="37", name_upper="NORTH_CAROLINA", display_name="North Carolina"
-    )
+    ),
+    "VA": StateInfo(
+        code="VA", fips="51", name_upper="VIRGINIA", display_name="Virginia"
+    ),
 }
 
 SUPPORTED_STATES: tuple[SupportedStateCode, ...] = tuple(STATE_INFO.keys())
