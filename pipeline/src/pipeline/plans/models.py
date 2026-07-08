@@ -64,6 +64,11 @@ ProseField = str
 # real plan_id string, the sentinel "pending", or None.
 PlanRefField = str | None
 
+# Inline-citation code, a short uppercase tag that lets a reference
+# be cited inline from a prose field as "[CODE]". Optional per reference
+# and unique within a plan.
+SOURCE_CODE_PATTERN: str = r"^[A-Z0-9][A-Z0-9-]*$"
+
 # --- Sub-Models ---
 
 
@@ -83,6 +88,17 @@ class CourtCitation(BaseModel):
     archived_url: HttpUrl | None = Field(
         default=None, description="Wayback or archive.org snapshot URL."
     )
+    source_code: (
+        Annotated[
+            str,
+            Field(
+                pattern=SOURCE_CODE_PATTERN,
+                description="Short uppercase tag for citing this case inline in "
+                "prose, e.g., 'HARPER-ORDER'. Unique within a plan.",
+            ),
+        ]
+        | None
+    ) = None
 
 
 class Source(BaseModel):
@@ -97,6 +113,19 @@ class Source(BaseModel):
     archived: HttpUrl | None = Field(
         default=None, description="Wayback or archive.org snapshot URL, if captured."
     )
+    source_code: (
+        Annotated[
+            str,
+            Field(
+                pattern=SOURCE_CODE_PATTERN,
+                description=(
+                    "Short uppercase tag for citing this sourcee inline in "
+                    "prose, e.g., 'AAR'. Unique within a plan."
+                ),
+            ),
+        ]
+        | None
+    ) = None
 
 
 # --- Plan Models ---
