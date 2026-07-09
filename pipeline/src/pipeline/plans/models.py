@@ -68,6 +68,10 @@ PlanRefField = str | None
 # Inline-citation code, a short uppercase tag that lets a reference
 # be cited inline from a prose field as "[CODE]". Optional per reference
 # and unique within a plan.
+#
+# This must stay in sync with the frontend's CITATION_TOKEN_PATTERN.
+# This pattern is the build-time gate, the frontend pattern is the 
+# renderer.
 SOURCE_CODE_PATTERN: str = r"^[A-Z0-9][A-Z0-9-]*$"
 
 # --- Sub-Models ---

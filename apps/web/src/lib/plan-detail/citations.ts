@@ -9,6 +9,7 @@
 
 import type { Plan } from '$lib/plan-index/types';
 
+// Must stay in sync with the pipeline's SOURCE_CODE_PATTERN
 const CITATION_TOKEN_PATTERN = /\[([A-Z0-9][A-Z0-9-]*)\]/;
 
 export type ProseSegment =
