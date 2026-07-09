@@ -95,20 +95,33 @@ Both dates follow the same three-valued model as the curation-sensitive fields: 
 A `court_citations` entry records a single case:
 
 ```yaml
-- case: Harper v. Hall            # short case name
-  citation: "<reporter citation>" # formal citation string
-  role: invalidating              # enabling | invalidating | remedial | affirming | context
-  url: https://...                # live link to the opinion (required)
+- case: Harper v. Hall                        # short case name
+  citation: "<reporter citation>"             # formal citation string
+  role: invalidating                          # enabling | invalidating | remedial | affirming | context
+  url: https://...                            # live link to the opinion (required)
   archived_url: https://web.archive.org/...   # snapshot (optional)
+  source_code: HARPER                         # tag for inline citation (optional)
 ```
 
 A `sources` entry records something consulted during curation:
 
 ```yaml
 - url: https://...
-  accessed: 2026-05-01            # date consulted
+  accessed: 2026-05-01                    # date consulted
   archived: https://web.archive.org/...   # snapshot (optional)
+  source_code: AAR                        # tag for inline citation (optional)
 ```
+
+### Inline citations
+
+The prose fields (`origin_details`, `struck_down_details`, and `notes`) can cite a court citation or source inline by referencing its `source_code` in square brackets:
+
+```yaml
+origin_details: >-
+  Enacted as SL 2011-403 [NCGA-453] and challenged the same year [AAR].
+```
+
+A `source_code` is a short uppercase tag (letters, digits, hyphens) unique within the file. One code per bracket, and every bracketed code must match a `source_code` on one of the file's citations or sources — the build enforces this. The site renders each as a numbered marker linking to that reference. Codes are optional; a reference without one simply can't be cited inline. The [Curation guide](/docs/curation#provenance-in-the-plan-file) covers the authoring convention.
 
 ### Completeness and extensions
 
@@ -124,7 +137,7 @@ A `sources` entry records something consulted during curation:
 
 Validation runs at two levels, and continuous integration enforces both on every change.
 
-**Per record.** Each file is checked against the schema in isolation: field types, the `plan_id` pattern, agreement between the `plan_id` and the `state`/`congress_start` fields, an ordered Congress range, and the rule that every curation-sensitive field holds either a real value or one of the two sentinels. The schema also rejects any top-level key it does not recognize, the only place arbitrary keys are allowed is `extensions`.
+**Per record.** Each file is checked against the schema in isolation: field types, the `plan_id` pattern, agreement between the `plan_id` and the `state`/`congress_start` fields, an ordered Congress range, and the rule that every curation-sensitive field holds either a real value or one of the two sentinels. Every `source_code` must be unique within the file, and every inline `[CODE]` in a prose field must resolve to one of them. The schema also rejects any top-level key it does not recognize, the only place arbitrary keys are allowed is `extensions`.
 
 **Across records.** Once every file is individually valid, the set is checked as a whole, each `plan_id` must be unique, every non-pending `predecessor` and `superseded_by` must point at a plan that exists, and those pointers must agree (if one plan says it was superseded by another, that other plan must name it as its predecessor).
 
