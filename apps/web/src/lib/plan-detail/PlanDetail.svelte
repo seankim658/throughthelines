@@ -227,6 +227,13 @@
 			{/if}
 		</div>
 
+		{#if isRealProse(plan.notes)}
+			<div class="mt-6">
+				<h3 class="text-ink-primary text-sm font-medium">Notes</h3>
+				<Prose text={plan.notes} numbers={citationNumbers} planId={plan.plan_id} />
+			</div>
+		{/if}
+
 		{#if plan.court_citations.length > 0}
 			<div class="mt-6">
 				<h3 class="text-ink-primary text-sm font-medium">
@@ -269,13 +276,6 @@
 			</div>
 		{/if}
 
-		{#if isRealProse(plan.notes)}
-			<div class="mt-6">
-				<h3 class="text-ink-primary text-sm font-medium">Notes</h3>
-				<Prose text={plan.notes} numbers={citationNumbers} planId={plan.plan_id} />
-			</div>
-		{/if}
-
 		{#if plan.sources.length > 0}
 			<div class="mt-6">
 				<h3 class="text-ink-primary text-sm font-medium">
@@ -283,14 +283,16 @@
 				</h3>
 				<ul class="mt-2 flex flex-col gap-1">
 					{#each plan.sources as source (source.url)}
-            {@const srcNum = source.source_code ? citationNumbers.get(source.source_code) : undefined}
-						<li 
-              id={source.source_code && srcNum !== undefined
+						{@const srcNum = source.source_code
+							? citationNumbers.get(source.source_code)
+							: undefined}
+						<li
+							id={source.source_code && srcNum !== undefined
 								? citationAnchorId(plan.plan_id, source.source_code)
 								: undefined}
-							class="text-ink-secondary scroll-mt-4 rounded text-sm target:bg-surface-sunken"
-            >
-              {#if srcNum !== undefined}<span class="text-ink-muted mr-1">[{srcNum}]</span>{/if}
+							class="text-ink-secondary target:bg-surface-sunken scroll-mt-4 rounded text-sm"
+						>
+							{#if srcNum !== undefined}<span class="text-ink-muted mr-1">[{srcNum}]</span>{/if}
 							<a
 								href={source.url}
 								target="_blank"
