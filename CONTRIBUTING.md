@@ -11,8 +11,8 @@ Curation is editing one YAML file under `data/plans/<STATE>/`. The full process,
 
 1. Pick a plan file, e.g. `data/plans/NC/NC_113_2013.yaml`.
 2. Replace each `pending` with a researched value, or with `unknown` if you looked and it cannot be settled.
-3. Record every source in `sources`, and every court opinion in `court_citations`.
-4. Note where each value came from in short, source-tagged YAML comments. These are for curators and never reach the site.
+3. Record every source in `sources`, and every court opinion in `court_citations`, giving each a `source_code`.
+4. Cite your sources: in prose fields (`origin_details`, `struck_down_details`, `notes`) write a reference's `source_code` inline as `[CODE]`; for other fields, note the source in short, source-tagged YAML comments (curator-only, never rendered).
 5. Set `curation_status` and `curation_last_reviewed`.
 6. Open a pull request with only your YAML change.
 

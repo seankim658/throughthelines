@@ -23,7 +23,7 @@ Every value you enter should be traceable to one of these. Curation is not inter
 1. **Pick a plan.** Choose one plan to work on. Its file is at `data/plans/<STATE>/<PLAN_ID>.yaml` (for example `data/plans/NC/NC_118_2023.yaml`).
 2. **Research it** from the sources above.
 3. **Fill the fields**, replacing `pending` with a real value or with `unknown`.
-4. **Record your sources** in the `sources` list, and any court opinions in `court_citations`.
+4. **Record your sources** in the `sources` list, and any court opinions in `court_citations`, giving each a `source_code` so you can cite it inline.
 5. **Set the status.** Update `curation_status` and `curation_last_reviewed`.
 6. **Check it** (see [Validating](#validating)), or rely on CI to check it for you.
 7. **Propose the change** as a pull request.
@@ -40,15 +40,15 @@ The fields that need research are the *curation-sensitive* ones. The discipline 
 
 See the [Data Model & Schema](/docs/data-model#the-missingness-model) page for more information.
 
-**`origin`:** Which of the five categories produced the plan: `legislature`, `court`, `commission`, `remedial`, or `unchanged`. Decide it from how the plan came into force, not from what happened to it later. A legislature-drawn plan that a court later replaced will still use `legislature` as the origin. The court's replacement is a separate plan with origin `remedial`. Put the reasoning and specifics in `origin_details`.
+**`origin`:** Which of the five categories produced the plan (`legislature`, `court`, `commission`, `remedial`, or `unchanged`). Decide it from how the plan came into force, not from what happened to it later. A legislature-drawn plan that a court later replaced will still use `legislature` as the origin. The court's replacement is a separate plan with origin `remedial`. Put the reasoning and specifics in `origin_details`.
 
 **`struck_down`:** Whether a court stopped the plan, see [Recording a strikedown](#recording-a-strikedown) for the rule, which covers injunctions and rulings that were later undone. When specific districts were struck rather than the whole plan, list them in `struck_down_districts`; the plan-level flag is `true` whenever that list is non-empty. Explain the circumstances in `struck_down_details`.
 
 **`predecessor` and `superseded_by`:** The plan IDs of the maps immediately before and after this one. This is the one place a multi-file edit might be required, the two plans must agree. If you set `superseded_by: NC_119_2025` on one plan, the `NC_119_2025` file must name this plan as its `predecessor`, or validation rejects the pair. Use `null` for a genuine end of the chain (a plan still in force has no successor).
 
-**`court_citations`:** One entry per case in the plan's legal history, each with the case name, a formal citation, a `role` (`enabling`, `invalidating`, `remedial`, `affirming`, or `context`), and a link to the opinion. The link is required and an `archived_url` snapshot is strongly encouraged, because opinion URLs can rot. See [Court citation roles](#court-citation-roles) for more details.
+**`court_citations`:** One entry per case in the plan's legal history, each with the case name, a formal citation, a `role` (`enabling`, `invalidating`, `remedial`, `affirming`, or `context`), and a link to the opinion. The link is required and an `archived_url` snapshot is strongly encouraged, because opinion URLs can rot. Give an entry a `source_code` to cite it inline from the prose fields (see [Provenance in the plan file](#provenance-in-the-plan-file)). See [Court citation roles](#court-citation-roles) for more details.
 
-**`sources`:** Where your values came from, each with a URL and the date you accessed it. An archived snapshot is again encouraged.
+**`sources`:** Where your values came from, each with a URL and the date you accessed it. An archived snapshot is again encouraged, and a `source_code` lets you cite the source inline from prose (see [Provenance in the plan file](#provenance-in-the-plan-file)).
 
 **`notes`:** Anything that does not fit the structured fields.
 
@@ -84,7 +84,18 @@ The phrase *not later undone* is what the rule turns on, and the 2016 [North Car
 
 ## Provenance in the plan file
 
-In each plan's YAML files, use YAML comments in order to record the provenance of the data. This helps other curators quickly validate and find the sources for each field. For example:
+Provenance is recorded two ways, depending on the field.
+
+**Prose fields**: `origin_details`, `struck_down_details`, and `notes` carry **inline citations**. Give each court citation or source a short `source_code` (an uppercase tag like `AAR` or `HARPER-ORDER`), then cite it in the prose by writing that code in square brackets:
+
+```yaml
+origin_details: >-
+  Enacted as SL 2011-403 [NCGA-453], the plan drew immediate challenge [AAR].
+```
+
+One code per bracket. For several, use adjacent brackets (`[HARPER-I] [MOORE]`). Each code must match the `source_code` of a citation or source in the same file, or the build fails. On the site these render as markers linking down to the reference, a source renders as a footnote number and a court citation renders it's code.
+
+**Everything else**: Other fields such as dates, `origin`, `struck_down`, the predecessor/successor links can't hold a bracket, so record their provenance in **YAML comments** above the field. Comments are for the next curator; they are dropped when the file loads (`yaml.safe_load`) and never reach the site.
 
 ```yaml
 # [NCGA-453, AAR]
@@ -93,9 +104,37 @@ In each plan's YAML files, use YAML comments in order to record the provenance o
 enacted_date: 2011-07-28
 ```
 
-Define each source tag once near the top of the file, then refer to it. Comments are dropped when the file is loaded (`yaml.safe_load`), so nothing in them reaches the site, they exist solely for the next curator.
+Define each source tag once near the top of the file as a comment legend, mirroring the `source_code`'s below, so the inline citations and the comments draw on one vocabulary.
 
 To see an example of a curated plan, see the [NC 113th plan file](https://github.com/seankim658/throughthelines/blob/main/data/plans/NC/NC_113_2013.yaml).
+
+## Naming a code
+
+When creating `source_code`'s, use uppercase letters, digits, hyphens (`^[A-Z0-9][A-Z0-9-]*$`), 
+give each reference exactly one code, and keep court codes short since they render as the marker 
+itself. By type:
+
+- **Court opinion**: The distinguishing party's surname: `HARRIS`, `COOPER`,
+  `STEPHENSON`. If two cases in the file share a party (e.g. *Dickson v. Rucho* and
+  *Rucho v. Common Cause*), use the party unique to each. For several opinions in one
+  case, add a chronological Roman ordinal (`HARPER-I`, `HARPER-II`); use a descriptive
+  suffix (`-ORDER`, `-REMAND`) only when citing a specific procedural document rather
+  than a numbered opinion. Pick one suffix style per case, don't mix ordinals and years.
+- **Legislative bill**: `{AUTHORITY}-{chamber}{number}`, with a single chamber letter
+  so SB 453 and HB 453 stay distinct: `NCGA-S453`, `NCGA-H1029`. `{AUTHORITY}` is the
+  body's short tag (`NCGA` for the North Carolina General Assembly; an LIS-based tag for
+  Virginia). Cite a session law directly as `SL-{number}` only when there's no bill to
+  key to.
+- **Other legislature page**: `{AUTHORITY}-{DESCRIPTOR}`: `NCGA-PROC`, `NCGA-MAP`, or
+  bare `NCGA` for the landing page.
+- **All About Redistricting**: `AAR` for the state page; `AAR-{case initials}` for a
+  case sub-page (`AAR-CCR`).
+- **Constitution or primary code**: `{JURISDICTION}-CONST`: `NC-CONST`, `US-CONST`.
+- **Named secondary source**: A short, recognizable tag: `SABATO`, `LII`, `BALLOTPEDIA`.
+- **Government or agency source**: A short agency tag: `DOJ-PC`, `NCSBE`, `CENSUS`.
+
+When something doesn't fit a category, reach for the most stable, recognizable
+identifier (a party name, a bill number) over an ad-hoc descriptor, and keep it short.
 
 ## When is a plan "curated"?
 
@@ -121,8 +160,8 @@ the `pending` state.
 
 - **`curated`:** Both axes are complete. Every curation-sensitive field holds a real
   value or a deliberate `unknown`, nothing is left `pending`, and every substantive
-  claim carries a `sources` entry, every legal claim a `court_citations` entry. Set
-  `curation_last_reviewed` to the date you finished.
+  claim carries a citation and `sources` or `court_citations` entry, cited inline where
+  the claim appears in prose. Set `curation_last_reviewed` to the date you finished.
 
 A record can be in a `curated` state with many `unknown` fields. A `curated` state means 
 *fully researched*, not *fully populated*. An `unknown` you looked into and recorded a

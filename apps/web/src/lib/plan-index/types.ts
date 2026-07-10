@@ -52,12 +52,14 @@ export interface CourtCitation {
 	role: CourtCitationRole;
 	url: string;
 	archived_url: string | null;
+	source_code: string | null;
 }
 
 export interface Source {
 	url: string;
 	accessed: IsoDate;
 	archived: string | null;
+	source_code: string | null;
 }
 
 export interface BoundarySource {
