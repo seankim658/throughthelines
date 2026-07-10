@@ -93,7 +93,7 @@ origin_details: >-
   Enacted as SL 2011-403 [NCGA-453], the plan drew immediate challenge [AAR].
 ```
 
-One code per bracket. For several, use adjacent brackets (`[HARPER-I] [MOORE]`). Each code must match the `source_code` of a citation or source in the same file, or the build fails. On the site these render as numbered markers linking down to the reference.
+One code per bracket. For several, use adjacent brackets (`[HARPER-I] [MOORE]`). Each code must match the `source_code` of a citation or source in the same file, or the build fails. On the site these render as markers linking down to the reference, a source renders as a footnote number and a court citation renders it's code.
 
 **Everything else**: Other fields such as dates, `origin`, `struck_down`, the predecessor/successor links can't hold a bracket, so record their provenance in **YAML comments** above the field. Comments are for the next curator; they are dropped when the file loads (`yaml.safe_load`) and never reach the site.
 
@@ -107,6 +107,34 @@ enacted_date: 2011-07-28
 Define each source tag once near the top of the file as a comment legend, mirroring the `source_code`'s below, so the inline citations and the comments draw on one vocabulary.
 
 To see an example of a curated plan, see the [NC 113th plan file](https://github.com/seankim658/throughthelines/blob/main/data/plans/NC/NC_113_2013.yaml).
+
+## Naming a code
+
+When creating `source_code`'s, use uppercase letters, digits, hyphens (`^[A-Z0-9][A-Z0-9-]*$`), 
+give each reference exactly one code, and keep court codes short since they render as the marker 
+itself. By type:
+
+- **Court opinion**: The distinguishing party's surname: `HARRIS`, `COOPER`,
+  `STEPHENSON`. If two cases in the file share a party (e.g. *Dickson v. Rucho* and
+  *Rucho v. Common Cause*), use the party unique to each. For several opinions in one
+  case, add a chronological Roman ordinal (`HARPER-I`, `HARPER-II`); use a descriptive
+  suffix (`-ORDER`, `-REMAND`) only when citing a specific procedural document rather
+  than a numbered opinion. Pick one suffix style per case, don't mix ordinals and years.
+- **Legislative bill**: `{AUTHORITY}-{chamber}{number}`, with a single chamber letter
+  so SB 453 and HB 453 stay distinct: `NCGA-S453`, `NCGA-H1029`. `{AUTHORITY}` is the
+  body's short tag (`NCGA` for the North Carolina General Assembly; an LIS-based tag for
+  Virginia). Cite a session law directly as `SL-{number}` only when there's no bill to
+  key to.
+- **Other legislature page**: `{AUTHORITY}-{DESCRIPTOR}`: `NCGA-PROC`, `NCGA-MAP`, or
+  bare `NCGA` for the landing page.
+- **All About Redistricting**: `AAR` for the state page; `AAR-{case initials}` for a
+  case sub-page (`AAR-CCR`).
+- **Constitution or primary code**: `{JURISDICTION}-CONST`: `NC-CONST`, `US-CONST`.
+- **Named secondary source**: A short, recognizable tag: `SABATO`, `LII`, `BALLOTPEDIA`.
+- **Government or agency source**: A short agency tag: `DOJ-PC`, `NCSBE`, `CENSUS`.
+
+When something doesn't fit a category, reach for the most stable, recognizable
+identifier (a party name, a bill number) over an ad-hoc descriptor, and keep it short.
 
 ## When is a plan "curated"?
 

@@ -121,7 +121,7 @@ origin_details: >-
   Enacted as SL 2011-403 [NCGA-453] and challenged the same year [AAR].
 ```
 
-A `source_code` is a short uppercase tag (letters, digits, hyphens) unique within the file. One code per bracket, and every bracketed code must match a `source_code` on one of the file's citations or sources — the build enforces this. The site renders each as a numbered marker linking to that reference. Codes are optional; a reference without one simply can't be cited inline. The [Curation guide](/docs/curation#provenance-in-the-plan-file) covers the authoring convention.
+A `source_code` is a short uppercase tag (letters, digits, hyphens) unique within the file. One code per bracket, and every bracketed code must match a `source_code` on one of the file's citations or sources (the build enforces this). The site renders each as a marker linking to that reference, sources are rendered as footnote numbers and court citations render their code. Codes are optional, a reference without one simply can't be cited inline. The [Curation guide](/docs/curation#provenance-in-the-plan-file) covers the authoring convention.
 
 ### Completeness and extensions
 
