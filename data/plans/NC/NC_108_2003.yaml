@@ -1,12 +1,16 @@
 # =============================================================================
 # NC_108_2003: North Carolina 2001 congressional plan ("Congress ZeroDeviation").
-# Governs the 108th-112th Congresses (2002, 2004, 2006, 2008, 2010 elections).
+# HB 32 / SL 2001-479. Governs the 108th-112th Congresses
+# (2002, 2004, 2006, 2008, 2010 elections). ("2003" in the id = the 108th Congress's
+# start; there was NO distinct 2003 congressional session law.)
 #
-# Source tags:
+# Source tags (each is a source_code on a reference below; cite inline in prose as [CODE]):
 #   [AAR]        All About Redistricting, NC       https://redistricting.lls.edu/state/north-carolina/
-#   [NCGA-32]    NCGA bill page, HB 32             https://www.ncleg.gov/BillLookUp/2001/H32
+#   [NCGA-H32]   NCGA bill page, HB 32             https://www.ncleg.gov/BillLookUp/2001/H32
 #   [SL-479]     Session law text, SL 2001-479     https://www.ncleg.net/enactedlegislation/sessionlaws/html/2001-2002/sl2001-479.html
 #   [NCGA]       NCGA redistricting page           https://www.ncleg.gov/redistricting
+#   [NC-CONST]   N.C. Const. art. II, § 22(5)      https://www.ncleg.gov/Laws/Constitution/Article2
+#   [CLERK]      Clerk of the U.S. House, election stats  https://history.house.gov/Institution/Election-Statistics/
 #   [STEPHENSON]                                   see court_citations below
 # =============================================================================
 plan_id: NC_108_2003
@@ -18,32 +22,35 @@ source_file: district_geometry/lewis/NC/North Carolina_108_to_112.geojson
 source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 
-# [NCGA-32, SL-479]
+# [NCGA-H32, SL-479]
 # HB 32: House concurred in the Senate committee substitute 2001-12-05 (64-43); Senate 2nd/3rd
 # reading 2001-12-04 (30-13); ratified and chaptered as SL 2001-479 on 2001-12-05. SL 2001-479 § 1
 # repealed the earlier SL 2001-471 (HB 1477, ratified 2001-11-28).
 enacted_date: 2001-12-05
 # [AAR]
-# Precleared under VRA Section 5 on 2002-02-15 (NC had 40 covered counties pre-Shelby). Date per AAR,
-# corroborated by the American Redistricting Project; primary DOJ letter not located, and the date may
-# be conflated with the 2002-02 Stephenson state-court timeline (the 2001 LEGISLATIVE plans were
-# precleared 2002-02-11 per Stephenson I). Verify against the DOJ Voting Section file / NC Register.
+# Precleared under VRA Section 5 on 2002-02-15 (NC had 40 covered counties pre-Shelby). SECONDARY only:
+# date per AAR, corroborated by the American Redistricting Project. The primary DOJ "no objection" letter
+# is NOT published online (DOJ posts only objection letters); a primary record would require a FOIA of the
+# DOJ Voting Section Section 5 file. (Companion 2001 LEGISLATIVE plans precleared 2002-02-11 per Stephenson I.)
 effective_date: 2002-02-15
 
-# [NCGA-32, AAR]
+# [NCGA-H32, AAR]
 origin: legislature
-# [NCGA-32] HB 32 -> SL 2001-479; named "Congress ZeroDeviation"; primary sponsor Goodwin
-#           (co-sponsors Dedmon, Justus, Shubert); added the 13th district after the 2000 census.
-# [AAR]     Democratic-controlled General Assembly; precleared 2002-02-15; used 2002-2010;
-#           NC congressional plans not subject to gubernatorial veto (N.C. Const. art. II, § 22(5)).
+# [NCGA-H32] HB 32 -> SL 2001-479; named "Congress ZeroDeviation"; primary sponsor Goodwin
+#            (co-sponsors Dedmon, Justus, Shubert).
+# [NCGA]     added the 13th district after the 2000 census (NC won the 435th seat); 2000-census blocks.
+# [AAR]      Democratic-controlled General Assembly; precleared Feb 2002; used 2002-2010.
+# [NC-CONST] NC congressional plans not subject to gubernatorial veto (art. II, § 22(5)).
 origin_details: >-
   Enacted by the Democratic-controlled North Carolina General Assembly as House Bill 32, which
-  became Session Law 2001-479 and is named "Congress ZeroDeviation." It was the post-2000-census
-  congressional plan, expanding North Carolina from twelve to thirteen districts after the state
-  gained a seat in reapportionment, and it created a new 13th District in the northern Piedmont.
-  The plan was ratified on December 5, 2001, precleared under Section 5 of the Voting Rights Act,
-  and used for the 2002, 2004, 2006, 2008, and 2010 U.S. House elections. North Carolina's
-  congressional plans are drawn by the legislature and are not subject to gubernatorial veto.
+  became Session Law 2001-479 and is named "Congress ZeroDeviation" [NCGA-H32]. It was the
+  post-2000-census congressional plan, expanding North Carolina from twelve to thirteen districts
+  after the state gained a seat in reapportionment, and it created a new 13th District in the
+  northern Piedmont [NCGA]. The plan was ratified on December 5, 2001 [NCGA-H32], precleared under
+  Section 5 of the Voting Rights Act in February 2002 because North Carolina was then a covered
+  jurisdiction, and used for the 2002, 2004, 2006, 2008, and 2010 U.S. House elections [AAR]. North
+  Carolina's congressional plans are drawn by the legislature and are not subject to gubernatorial
+  veto [NC-CONST].
 
 # Used across five elections (2002-2010) and replaced by ordinary decennial redistricting; never
 # enjoined or invalidated. Stephenson v. Bartlett struck only the 2001 LEGISLATIVE plans. [AAR, STEPHENSON]
@@ -53,15 +60,16 @@ struck_down: false
 struck_down_details: >-
   This plan was not struck down. It governed five consecutive U.S. House elections (2002 through
   2010) and was replaced by ordinary decennial redistricting after the 2010 census; it does not
-  appear to have been challenged in court. The contemporaneous Stephenson v. Bartlett litigation
-  invalidated only North Carolina's 2001 state legislative plans, under the state constitution's
-  Whole County Provisions, which do not apply to congressional districts, and did not concern this
-  congressional plan.
+  appear to have been challenged in court [AAR]. The contemporaneous Stephenson v. Bartlett
+  litigation invalidated only North Carolina's 2001 state legislative plans, under the state
+  constitution's Whole County Provisions, which do not apply to congressional districts, and did
+  not concern this congressional plan [STEPHENSON].
 struck_down_districts: []
+
 # predecessor NC_107_2001 = 1990s-era plan in force for the 2000 election (107th Congress), a
-#   12-district map predating the 13th seat added here. [NCGA, AAR]
+#   12-district map predating the 13th seat added here.
 # superseded_by NC_113_2013 = 2011 plan "Rucho-Lewis Congress 3" (SB 453 / SL 2011-403,
-#   ratified 2011-07-28), first used in 2012. [NCGA]
+#   ratified 2011-07-28; technical correction SL 2011-414), first used in 2012. [NCGA]
 superseded_by: NC_113_2013
 predecessor: NC_107_2001
 
@@ -77,36 +85,53 @@ court_citations:
     role: context
     url: https://law.justia.com/cases/north-carolina/supreme-court/2002/094-02-1.html
     archived_url: https://web.archive.org/web/20241106025213/https://law.justia.com/cases/north-carolina/supreme-court/2002/094-02-1.html
+    source_code: STEPHENSON
 
+# [CLERK] delegation splits (D-R): 2002 7-6, 2004 7-6, 2006 7-6, 2008 8-5, 2010 7-6 (13 seats throughout).
+# [SL-479] repeal of the earlier SL 2001-471. [NCGA] successor plan SL 2011-403.
 notes: >-
   This plan added North Carolina's 13th congressional district following the 2000 census and was
-  drawn by the Democratic-controlled General Assembly; Democrats held seven of the thirteen seats
-  from 2002 through 2008 and six of thirteen in 2010. An earlier 2001 congressional act (House Bill
-  1477, Session Law 2001-471, ratified November 28, 2001) was expressly repealed one week later by
-  Session Law 2001-479, so House Bill 32 / Session Law 2001-479 is the operative, election-governing
-  plan. The plan was replaced by ordinary decennial redistricting after the 2010 census with the
-  2011 "Rucho-Lewis Congress 3" plan (Senate Bill 453, Session Law 2011-403).
+  drawn by the Democratic-controlled General Assembly. Under it the delegation stayed narrowly
+  Democratic: Democrats held seven of the thirteen seats after the 2002, 2004, and 2006 elections,
+  gained an eighth in 2008, and returned to a seven-to-six edge in 2010 even as Republicans swept
+  nationally [CLERK]. An earlier 2001 congressional act (House Bill 1477, Session Law 2001-471,
+  ratified November 28, 2001) was expressly repealed one week later by Session Law 2001-479, so
+  House Bill 32 / Session Law 2001-479 is the operative, election-governing plan [SL-479]. The plan
+  was replaced by ordinary decennial redistricting after the 2010 census with the 2011
+  "Rucho-Lewis Congress 3" plan (Senate Bill 453, Session Law 2011-403) [NCGA].
 
 # Coverage (which source to re-check for which field):
-#   [AAR]        origin narrative, preclearance, "not challenged", veto exemption, partisan effect
-#   [NCGA-32]    HB 32 -> SL 2001-479; name "Congress ZeroDeviation"; sponsors; votes; ratified 2001-12-05
+#   [AAR]        origin narrative; preclearance; "not challenged"; used 2002-2010
+#   [NCGA-H32]   HB 32 -> SL 2001-479; name "Congress ZeroDeviation"; sponsors; votes; ratified 2001-12-05
 #   [SL-479]     session-law text; repeal of SL 2001-471; effective-on-becoming-law clause; 13 districts
-#   [NCGA]       plan list; "used 2002-2010"; predecessor/successor sequence
+#   [NCGA]       plan list; designation; 2000-census-block basis; predecessor/successor sequence
+#   [NC-CONST]   no gubernatorial veto for congressional plans (art. II, § 22(5))
+#   [CLERK]      per-cycle delegation splits, 2002-2010 (7-6, 7-6, 7-6, 8-5, 7-6 D)
 #   [STEPHENSON] legislative-plan invalidation (Whole County Provisions); confirms it was not the CD plan
 sources:
-  - url: https://www.ncleg.gov/BillLookUp/2001/H32
-    accessed: 2026-06-11
-    archived: https://web.archive.org/web/20260601020601/https://www.ncleg.gov/BillLookup/2001/H32
-  - url: https://www.ncleg.net/enactedlegislation/sessionlaws/html/2001-2002/sl2001-479.html
-    accessed: 2026-06-11
-    archived: https://web.archive.org/web/20150911193355/https://www.ncleg.net/EnactedLegislation/SessionLaws/HTML/2001-2002/SL2001-479.html
-  - url: https://www.ncleg.gov/redistricting
-    accessed: 2026-06-11
-    archived: https://web.archive.org/web/20260102184443/https://www.ncleg.gov/redistricting
   - url: https://redistricting.lls.edu/state/north-carolina/
-    accessed: 2026-06-11
-    archived: https://web.archive.org/web/20260124205142/https://redistricting.lls.edu/state/north-carolina/
+    accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260617001603/https://redistricting.lls.edu/state/north-carolina/
+    source_code: AAR
+  - url: https://www.ncleg.gov/BillLookUp/2001/H32
+    accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260601020601/https://www.ncleg.gov/BillLookup/2001/H32
+    source_code: NCGA-H32
+  - url: https://www.ncleg.net/enactedlegislation/sessionlaws/html/2001-2002/sl2001-479.html
+    accessed: 2026-07-09
+    archived: https://web.archive.org/web/20150911193355/https://www.ncleg.net/EnactedLegislation/SessionLaws/HTML/2001-2002/SL2001-479.html
+    source_code: SL-479
+  - url: https://www.ncleg.gov/redistricting
+    accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260102184443/https://www.ncleg.gov/redistricting
+    source_code: NCGA
+  - url: https://www.ncleg.gov/Laws/Constitution/Article2
+    accessed: 2026-07-09
+    source_code: NC-CONST
+  - url: https://history.house.gov/Institution/Election-Statistics/
+    accessed: 2026-07-09
+    source_code: CLERK
 
 curation_status: curated
-curation_last_reviewed: 2026-06-11
+curation_last_reviewed: 2026-07-09
 extensions: {}

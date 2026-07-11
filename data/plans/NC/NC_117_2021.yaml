@@ -1,13 +1,15 @@
 # =============================================================================
-# NC_117_2021: North Carolina 2019 remedial congressional plan.
+# NC_117_2021: North Carolina 2019 remedial congressional plan
+# (HB 1029 / SL 2019-249, "An Act to Realign the Congressional Districts").
 # Governs the 117th Congress (2020 U.S. House election only).
 #
-# Source tags:
-#   [AAR]      All About Redistricting, NC          https://redistricting.lls.edu/state/north-carolina/
-#   [AAR-HVL]  AAR case page, Harper v. Lewis        https://redistricting.lls.edu/case/harper-v-lewis/
-#   [NCGA-H1029] NCGA bill page, HB 1029 / SL 2019-249  https://www.ncleg.gov/BillLookUp/2019/H1029
-#   [NCGA-MAP]   NCGA plan page, C2019E             https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2019E
-#   [HARPER]   transcript, 2019-12-02 disposition   https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-transcript.pdf
+# Source tags (each is a source_code on a reference below; cite inline in prose as [CODE]):
+#   [AAR]         All About Redistricting, NC             https://redistricting.lls.edu/state/north-carolina/
+#   [NCGA-H1029]  NCGA bill page, HB 1029 / SL 2019-249   https://www.ncleg.gov/BillLookUp/2019/H1029
+#   [NCGA-MAP]    NCGA plan page, C2019E (HB1029 3rd Ed.) https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2019E
+#   [NC-CONST]    N.C. Const. art. II, § 22(5)            https://www.ncleg.gov/Laws/Constitution/Article2
+#   [CLERK-2020]  Clerk of the U.S. House, 2020 stats     https://clerk.house.gov/member_info/electionInfo/2020/statistics2020.pdf
+#   [HARPER-I] [HARPER-II] [SHELBY]                       see court_citations below
 # =============================================================================
 plan_id: NC_117_2021
 state: NC
@@ -19,91 +21,120 @@ source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 
 # [NCGA-H1029]
-# HB 1029: House vote 2019-11-14 (55-46); Senate 2nd/3rd readings 2019-11-15 (24-17);
+# HB 1029: House 2nd reading 2019-11-14 (55-46); Senate 2nd + 3rd readings 2019-11-15 (24-17);
 # ratified and chaptered as SL 2019-249 on 2019-11-15.
 enacted_date: 2019-11-15
-# [NCGA-H1029, AAR]
+# [NCGA-H1029, SHELBY]
 # No Section 5 preclearance required (Shelby County v. Holder, 2013, ended coverage);
-# took effect on enactment.
+# effective when it became law (2019-11-15).
 effective_date: 2019-11-15
 
 # [NCGA-H1029, AAR]
 origin: legislature
-# [NCGA-H1029] HB 1029 → SL 2019-249; sponsors Lewis, D. Hall; amends G.S. 163-201.
-# [HARPER]     remedial trigger: 2016 plan preliminarily enjoined 2019-10-28; GA invited to enact a remedy.
-# [AAR]        drawn by the Joint Select Committee in public, livestreamed sessions; the court allowed it to
-#              govern the 2020 elections; not subject to gubernatorial veto (N.C. Const. art. II, § 22(5)).
+# [NCGA-H1029] HB 1029 -> SL 2019-249; primary sponsors Lewis, D. Hall; no gubernatorial veto.
+# [HARPER-I]   remedial trigger: 2016 plan preliminarily enjoined 2019-10-28; GA redrew in response.
+# [AAR]        drawn by the Joint Select Committee in open, livestreamed sessions; election/racial data barred.
+# [SHELBY]     no preclearance (post-Shelby County). [NC-CONST] no veto (art. II, § 22(5)).
 origin_details: >-
   Drawn and enacted by the North Carolina General Assembly as House Bill 1029, which became
-  Session Law 2019-249, as a remedy after a state court preliminarily enjoined the prior 2016
-  plan in Harper v. Lewis as a likely partisan gerrymander under the North Carolina
-  Constitution. The Joint Select Committee on Congressional Redistricting drew the map in
-  public, livestreamed committee sessions, adopting criteria that barred the use of election
-  and racial data. Because Shelby County v. Holder had ended Section 5 coverage, the plan was
-  not precleared, and North Carolina's congressional plans are not subject to gubernatorial
-  veto. It was used only for the 2020 U.S. House election and was then replaced through the
-  ordinary redistricting cycle that followed the 2020 census.
+  Session Law 2019-249 [NCGA-H1029]. It was a remedy: a state three-judge panel had
+  preliminarily enjoined the prior 2016 plan in Harper v. Lewis on October 28, 2019 as a likely
+  partisan gerrymander under the North Carolina Constitution, and the General Assembly redrew the
+  map in response [HARPER-I]. The Joint Select Committee on Congressional Redistricting drew the
+  plan in open, livestreamed committee sessions under criteria that barred the use of election and
+  racial data [AAR]. Because Shelby County v. Holder had ended the practical operation of Voting
+  Rights Act Section 5 preclearance in 2013, the plan was not precleared and took effect on
+  enactment [SHELBY]. North Carolina's congressional plans are drawn by the legislature and are
+  not subject to gubernatorial veto [NC-CONST]. It was used only for the 2020 U.S. House election
+  and was then replaced through the ordinary redistricting cycle that followed the 2020 census
+  [AAR].
 
-# Never invalidated. On 2019-12-02 the Harper v. Lewis panel declined to enjoin this plan and
-# lifted the candidate-filing stay so the 2020 elections could proceed; it did NOT rule on the
-# plan's constitutionality (taking that, and mootness, under advisement). The plan ended by
-# ordinary decennial (2020 census) replacement, not by any court ruling. [HARPER, AAR]
+# Never invalidated. The plan ended by ordinary decennial (2020 census) replacement, not by any
+# court ruling -> struck_down: false; struck_down_districts: [].
+# [HARPER-II] On 2019-12-02 the Harper v. Lewis panel lifted the candidate-filing stay and allowed
+#             the 2020 elections to proceed under this plan, without ruling on its constitutionality.
 struck_down: false
 struck_down_details: >-
   This plan was not struck down. It was enacted as a remedy, used for the 2020 U.S. House
   election, and then replaced through the ordinary redistricting cycle that followed the 2020
-  census. In Harper v. Lewis, the state court that had enjoined the predecessor plan declined
-  on December 2, 2019 to enjoin this remedial plan and allowed the 2020 elections to proceed
-  under it, without ruling on its constitutionality.
+  census [AAR]. In Harper v. Lewis, the state court that had enjoined the predecessor plan lifted
+  its candidate-filing stay on December 2, 2019 and allowed the 2020 elections to proceed under
+  this remedial plan, without ruling on its constitutionality [HARPER-II].
 struck_down_districts: []
 
 # predecessor NC_115_2017 = 2016 plan (SB 2 / SL 2016-1); preliminarily enjoined in Harper v. Lewis,
-#   which compelled this remedial plan.
+#   which compelled this remedial plan. [HARPER-I]
 # superseded_by NC_118_2023 = the plan used for the 2022 election (118th Congress), reached through the
-#   post-2020-census cycle. The 2021 enacted plan (SB 740 / SL 2021-174) was struck in Harper v. Hall and
-#   the 2022 election ran on a court-drawn interim plan; that successor's litigation belongs to its own file.
+#   post-2020-census cycle. The 2021 enacted plan (SB 740 / SL 2021-174) was struck in Harper v. Hall
+#   (868 S.E.2d 499, N.C. 2022) and the 2022 election ran on a court-drawn interim plan; that successor's
+#   litigation belongs to its own file.
 superseded_by: NC_118_2023
 predecessor: NC_115_2017
 
-# [HARPER] Harper v. Lewis → enabling: the preliminary injunction against the 2016 plan compelled this
-#          remedy; on 2019-12-02 the same panel declined to enjoin this plan (no merits ruling).
-#          Unpublished orders, No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty.).
+# Roles are relative to THIS (2019) plan:
+# [HARPER-I]  Harper v. Lewis, 2019-10-28 preliminary injunction against the 2016 plan -> enabling:
+#             the strike of the predecessor that compelled this remedy. Unpublished order,
+#             No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty.).
+# [HARPER-II] Harper v. Lewis, 2019-12-02 order -> context: lifted the filing stay and allowed the
+#             2020 elections under this plan; no merits ruling on this plan. Same case/court.
+# [SHELBY]    Shelby County v. Holder (2013) -> context: ended the practical operation of VRA Section 5,
+#             so this plan needed no preclearance.
 # Not included: Harper v. Hall (868 S.E.2d 499, N.C. 2022) and Moore v. Harper (600 U.S. 1, 2023) concern
 #   the LATER 2021 plan (SL 2021-174), not this plan; they belong in the successor's file.
 court_citations:
   - case: Harper v. Lewis
-    citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Dec. 2, 2019)"
+    citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Oct. 28, 2019)"
     role: enabling
-    url: https://redistricting.lls.edu/case/harper-v-lewis/
-    archived_url: https://web.archive.org/web/20260427230051/https://redistricting.lls.edu/case/harper-v-lewis/
+    url: https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191028-congressional-order-1.pdf
+    source_code: HARPER-I
+  - case: Harper v. Lewis
+    citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Dec. 2, 2019)"
+    role: context
+    url: https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-order.pdf
+    source_code: HARPER-II
+  - case: Shelby County v. Holder
+    citation: "570 U.S. 529 (2013)"
+    role: context
+    url: https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
+    source_code: SHELBY
 
-# [AAR] 2020 election ran 8 R - 5 D, narrowing the prior 10-3 Republican delegation.
+# [NCGA-MAP] single-cycle interim map on 2010-census block geometry.
+# [CLERK-2020] 2020 result: 8 R - 5 D; NC-2 (Ross) and NC-6 (Manning) flipped Democratic.
 notes: >-
-  This plan was North Carolina's only congressional map used for a single election in the
-  2010s, governing the 117th Congress alone. It was drawn in an unusually public process, in
-  livestreamed committee sessions and under criteria that excluded election and racial data,
-  in response to the Harper v. Lewis injunction against the prior plan.
+  This was North Carolina's only congressional map used for a single election in the 2010s,
+  governing the 117th Congress alone, and it was drawn on 2010-census block geometry as an interim
+  replacement [NCGA-MAP]. Under the plan, the November 2020 election produced an eight-to-five
+  Republican-to-Democratic delegation, narrowing the prior ten-to-three Republican advantage:
+  Districts 2 and 6, redrawn to lean Democratic around Raleigh and Greensboro, both flipped after
+  their Republican incumbents declined to seek re-election in the redrawn seats [CLERK-2020].
+
 # Coverage (which source to re-check for which field):
-#   [AAR]        litigation narrative; public drawing process; veto exemption; 2020 result
-#   [AAR-HVL]    Harper v. Lewis sequence; hosts the 2019-12-02 transcript
-#   [NCGA-H1029] HB 1029 → SL 2019-249; sponsors; enactment date/votes
-#   [NCGA-MAP]   plan title and 2010-census-block basis
-#   [HARPER]     2019-12-02 disposition: declined to enjoin, lifted filing stay, no merits ruling
+#   [AAR]         litigation narrative; open drawing process; veto exemption; single-cycle use
+#   [NCGA-H1029]  HB 1029 -> SL 2019-249; sponsors; votes; ratified 2019-11-15
+#   [NCGA-MAP]    plan designation (HB1029 3rd Edition); 2010-census-block basis
+#   [NC-CONST]    no gubernatorial veto for congressional plans (art. II, § 22(5))
+#   [CLERK-2020]  2020 U.S. House result (8-5); flipped Districts 2 and 6
+#   [HARPER-I]    2019-10-28 injunction against the 2016 plan (the remedial trigger)
+#   [HARPER-II]   2019-12-02 order allowing this plan for 2020 (no merits ruling)
+#   [SHELBY]      end of VRA Section 5 practical operation (no preclearance)
 sources:
   - url: https://redistricting.lls.edu/state/north-carolina/
-    accessed: 2026-06-07
+    accessed: 2026-07-09
     archived: https://web.archive.org/web/20260617001603/https://redistricting.lls.edu/state/north-carolina/
-  - url: https://redistricting.lls.edu/case/harper-v-lewis/
-    accessed: 2026-06-07
-    archived: https://web.archive.org/web/20260427230051/https://redistricting.lls.edu/case/harper-v-lewis/
+    source_code: AAR
   - url: https://www.ncleg.gov/BillLookUp/2019/H1029
-    accessed: 2026-06-07
+    accessed: 2026-07-09
+    source_code: NCGA-H1029
   - url: https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2019E
-    accessed: 2026-06-07
-  - url: https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-transcript.pdf
-    accessed: 2026-06-07
-    archived: https://web.archive.org/web/20260427230052/https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-transcript.pdf
+    accessed: 2026-07-09
+    source_code: NCGA-MAP
+  - url: https://www.ncleg.gov/Laws/Constitution/Article2
+    accessed: 2026-07-09
+    source_code: NC-CONST
+  - url: https://clerk.house.gov/member_info/electionInfo/2020/statistics2020.pdf
+    accessed: 2026-07-09
+    source_code: CLERK-2020
 
 curation_status: curated
-curation_last_reviewed: 2026-06-07
+curation_last_reviewed: 2026-07-09
 extensions: {}
