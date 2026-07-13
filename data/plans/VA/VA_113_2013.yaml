@@ -2,13 +2,13 @@
 # VA_113_2013: Virginia 2012 congressional plan (post-2010-Census; struck down).
 # Governs the 113th-114th Congresses (2012 and 2014 U.S. House elections).
 #
-# Source tags:
+# Source tags (each is a source_code on a reference below; cite inline in prose as [CODE]):
 #   [AAR]        All About Redistricting, VA     https://redistricting.lls.edu/state/virginia/
-#   [LIS-302.2]  Va. Code s. 24.2-302.1 (repeal) https://law.lis.virginia.gov/vacodefull/title24.2/chapter3/article2/
+#   [LIS-H251]   Virginia LIS, HB 251 (2012)     https://legacylis.virginia.gov/cgi-bin/legp604.exe?121+sum+HB251
+#   [ACTS-1]     2012 Va. Acts, Chapter 1        https://legacylis.virginia.gov/cgi-bin/legp604.exe?121+ful+CHAP0001
 #   [SABATO]     UVA Center for Politics         https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
-#   [LII]        Cornell LII (Page II quote)     https://www.law.cornell.edu/supct/cert/14-1504
-#   [PAGE]                                       see court_citations below
-#   [WITTMAN]                                    see court_citations below
+#   [CLERK]      Clerk of the U.S. House, stats  https://history.house.gov/Institution/Election-Statistics/
+#   [PAGE-II] [CANTOR] [WITTMAN]                 see court_citations below
 # =============================================================================
 plan_id: VA_113_2013
 state: VA
@@ -19,116 +19,150 @@ source_file: district_geometry/lewis/VA/Virginia_113_to_114.geojson
 source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 
-# [LIS-302.2, AAR]
-# HB 251 (2012 Regular Session), enacted as Chapter 1 of the 2012 Acts of Assembly
-# (Acts 2012, c. 1); codified at Va. Code s. 24.2-302.2. The predecessor s. 24.2-302.1 repeal
-# note reads "Repealed by Acts 2012, c. 1, cl. 2, effective January 25, 2012." Signed by
-# Gov. Bob McDonnell (R) on 2012-01-25 (the enacted date); passed the General Assembly
-# 2012-01-20.
+# [LIS-H251, LIS-302-2]
+# HB 251 (2012 Regular Session; chief patron Del. Robert B. Bell) passed the House 74-Y 21-N
+# (2012-01-13) and the Senate 20-Y 19-N (2012-01-20). Gov. Bob McDonnell approved it on
+# 2012-01-25 as Chapter 1 of the 2012 Acts of Assembly. The chapter enacted Va. Code
+# s. 24.2-302.2 and provided that the act was in force from its passage.
 enacted_date: 2012-01-25
-# [AAR, PAGE]
-# Section 5 covered jurisdiction; effective_date is the DOJ preclearance date. AAR gives
-# 2012-03-14, and the Page opinion recites that DOJ precleared the plan on that date. (Shelby
-# County v. Holder, 2013-06-25, later ended Section 5 coverage but does not change this
-# plan's preclearance.)
+# [PAGE-II, AAR]
+# Virginia was then subject to Section 5 preclearance. DOJ precleared the congressional plan on
+# 2012-03-14; the Page three-judge court records that date, and AAR independently reports it.
 effective_date: 2012-03-14
 
-# [SABATO, LII]
+# [LIS-H251, SABATO]
 origin: legislature
-# [SABATO] Enacted under unified Republican control (Gov. McDonnell; Republican House of
-#          Delegates; a 20-20 state Senate with Republican Lt. Gov. Bolling breaking ties). An
-#          incumbent-protection map that preserved the 8-3 Republican delegation split.
-# [LII]    Raised District 3's Black voting-age population from 53.1% to 56.3% using a 55% BVAP
-#          target, packing Black (Democratic-leaning) voters to make surrounding districts safer.
+# [LIS-H251, ACTS-1] HB 251, chiefly patroned by Del. Robert B. Bell, became Chapter 1 of the
+#                    2012 Acts of Assembly. Bell was the patron of the enacted bill; Bill Janis
+#                    had sponsored the substantially similar 2011 proposal discussed in later
+#                    accounts of the map's development.
+# [SABATO]           The 2011 effort stalled under divided legislative control; after the 2011
+#                    election produced a 20-20 Senate, Lt. Gov. Bill Bolling could break ties.
+# [PAGE-II]          The enacted plan increased District 3 BVAP from 53.1% to 56.3%; the court
+#                    found that mapdrawers used a 55% BVAP threshold for District 3.
 origin_details: >-
-  A 2011 attempt deadlocked between the Republican-controlled House and the then 
-  Democratic-controlled Senate; after the November 2011 elections shifted the Senate to a 
-  20-20 tie under Republican Lt. Gov. Bill Bolling, the General Assembly passed essentially 
-  the same map (authored by Del. Bill Janis and enacted as HB 251, patroned by Del. Robert 
-  B. "Rob" Bell) in January 2012, and Gov. Bob McDonnell (R) signed it on January 25, 2012. 
-  It was an incumbent-protection map: the General Assembly used a 55% Black-voting-age-population 
-  target and raised the Third District's BVAP from 53.1% to 56.3%, concentrating Black, 
-  Democratic-leaning voters and thereby making the adjacent Republican-held districts safer. 
-  Under this map Republicans held 8 of Virginia's 11 seats.
+  The Virginia General Assembly enacted the plan through House Bill 251, chiefly patroned by
+  Delegate Robert B. Bell, which Governor Bob McDonnell approved as Chapter 1 of the 2012 Acts of
+  Assembly on January 25, 2012 [LIS-H251] [ACTS-1]. The enacted bill followed a substantially
+  similar 2011 proposal associated with Delegate Bill Janis that had stalled while the House of
+  Delegates and Senate were controlled by different parties; after the 2011 election left the
+  Senate divided 20-20, Republican Lieutenant Governor Bill Bolling could cast tie-breaking votes
+  [SABATO]. During preparation of the plan, mapdrawers used a 55 percent Black-voting-age-population
+  threshold for the Third District, whose Black voting-age population increased from 53.1 percent
+  to 56.3 percent [PAGE-II]. The resulting map protected the existing delegation configuration, under
+  which Republicans held eight of Virginia's eleven congressional seats [SABATO].
 
-# Struck down as an unconstitutional racial gerrymander of District 3 by a three-judge E.D. Va.
-# court, left in place after the Supreme Court's 2016 standing dismissal. [PAGE, WITTMAN]
+# A three-judge E.D. Va. court held District 3 to be an unconstitutional racial gerrymander.
+# The Supreme Court later dismissed the intervenors' appeal for lack of standing without reaching
+# the merits, leaving the district court's judgment undisturbed. [PAGE-II, WITTMAN]
 struck_down: true
+# [PAGE-II] the operative invalidating decision (on remand, 2015-06-05).
+# [CANTOR]  the SCOTUS GVR (2015-03-30) that vacated the first decision (Page I).
+# [WITTMAN] the standing dismissal (2016-05-23); the Court did not reach the merits, and the
+#           district court's judgment remained in effect.
+# [AAR]     the remedial sequence: missed 2015-09-01 deadline -> special-master map for 2016.
 struck_down_details: >-
-  Struck down. A three-judge U.S. District Court for the Eastern District of Virginia first held
-  the Third District an unconstitutional racial gerrymander in Page v. Virginia State Board of
-  Elections, 58 F. Supp. 3d 533 (E.D. Va. 2014) (Page I): race predominated in raising the
-  district's Black voting-age population to 56.3%, and the plan was not narrowly tailored. The
-  Supreme Court vacated and remanded for reconsideration in light of Alabama Legislative Black
-  Caucus v. Alabama (Cantor v. Personhuballah, 575 U.S. ___ (2015)); on remand the panel again
-  held District 3 unconstitutional (Page II, cited below) and set a September 1, 2015 deadline
-  to redraw. The plan still governed the 2012 and 2014 elections; when the General Assembly did
-  not act, the court adopted a special-master remedial map for 2016 (the successor,
-  VA_115_2017). The invalidation became final after the Supreme Court dismissed the intervenors'
-  appeal for lack of standing (Wittman v. Personhuballah, below) without reaching the merits.
+  Struck down. In October 2014, a three-judge U.S. District Court for the Eastern District of
+  Virginia held the Third District to be an unconstitutional racial gerrymander. The Supreme Court
+  subsequently vacated that judgment and remanded the case for reconsideration in light of Alabama
+  Legislative Black Caucus v. Alabama [CANTOR]. On remand, the same panel again held that race
+  predominated in drawing the Third District and that the district was not narrowly tailored to a
+  compelling governmental interest; that June 5, 2015 judgment is the operative merits decision
+  supporting this record's strikedown designation [PAGE-II]. The panel ordered the General Assembly
+  to adopt a remedial plan by September 1, 2015 [PAGE-II]. The plan nonetheless governed the 2012 and
+  2014 elections; when the General Assembly did not meet the deadline, the court adopted a
+  special-master-drawn remedial map for the 2016 election — the successor plan [AAR]. The Supreme 
+  Court later dismissed the intervenor members of Congress's appeal for lack of Article III 
+  standing without reaching the merits, leaving the district court's judgment in effect [WITTMAN].
 struck_down_districts: [3]
 
-# predecessor VA_108_2003 = Virginia's 2001 plan (HB 18, Acts 2001 Sp. Sess. I c. 7,
-#   s. 24.2-302.1), governing the 108th-112th Congresses. Setting this predecessor closes the
-#   reciprocity with VA_108_2003.superseded_by.
-# superseded_by VA_115_2017 = the 2016 court-drawn remedial plan (special master Bernard
-#   Grofman; adopted by the E.D. Va. three-judge court 2016-01-07 in Personhuballah v. Alcorn,
-#   155 F. Supp. 3d 552), governing the 115th onward. [AAR]
+# predecessor VA_108_2003 = Virginia's 2001 legislative plan, which governed the
+#   108th-112th Congresses. This reference is reciprocal with
+#   VA_108_2003.superseded_by.
+# superseded_by VA_115_2017 = the court-imposed remedial plan adopted on 2016-01-07
+#   in Personhuballah v. Alcorn. It governed the 115th-117th Congresses before being
+#   replaced by Virginia's post-2020-Census plan. [AAR]
 superseded_by: VA_115_2017
 predecessor: VA_108_2003
 
-# [PAGE]    Page v. Va. State Bd. of Elections (Page II, on remand) -> invalidating: the
-#           operative, reaffirmed decision striking District 3 as a racial gerrymander. The
-#           earlier Page I (58 F. Supp. 3d 533 (E.D. Va. 2014)) was VACATED by the Supreme
-#           Court's GVR (Cantor v. Personhuballah, 575 U.S. ___ (2015)), so Page II is the
-#           decision that stands; both are recounted in struck_down_details.
+# Roles are relative to this plan:
+# [PAGE-II] Page v. Virginia State Board of Elections (on remand) -> invalidating: the June 5,
+#           2015 merits decision holding District 3 to be an unconstitutional racial gerrymander.
+#           The Supreme Court had vacated the panel's earlier 2014 judgment before this ruling.
+# [CANTOR]  Cantor v. Personhuballah -> context: the Supreme Court's summary disposition vacating
+#           the 2014 judgment and remanding in light of Alabama Legislative Black Caucus v.
+#           Alabama. Not a merits ruling for or against the plan.
 # [WITTMAN] Wittman v. Personhuballah -> context: the Supreme Court dismissed the intervenors'
-#           appeal for lack of Article III standing. This is a STANDING dismissal, NOT a merits
-#           affirmance; its effect was to leave Page II (and the strike) in place.
-# Excluded on purpose: Personhuballah v. Alcorn, 155 F. Supp. 3d 552 (E.D. Va. 2016), is the
-#           court's REMEDIAL order adopting the special master's map; it draws the SUCCESSOR and
-#           belongs in VA_115_2017, not here.
+#           appeal for lack of Article III standing without reaching the merits; the district
+#           court's June 5, 2015 judgment remained in effect.
 court_citations:
   - case: Page v. Virginia State Board of Elections
     citation: "No. 3:13-cv-00678, 2015 WL 3604029 (E.D. Va. June 5, 2015) (three-judge court)"
     role: invalidating
     url: https://law.justia.com/cases/federal/district-courts/virginia/vaedce/3:2013cv00678/299639/137/
+    archived_url: https://web.archive.org/web/20260713211115/https://law.justia.com/cases/federal/district-courts/virginia/vaedce/3:2013cv00678/299639/137/
+    source_code: PAGE-II
+  - case: Cantor v. Personhuballah
+    citation: "135 S. Ct. 1699 (2015) (mem.)"
+    role: context
+    url: https://www.supremecourt.gov/orders/courtorders/033015zor_5iek.pdf
+    archived_url: https://web.archive.org/web/20260709033640/https://www.supremecourt.gov/orders/courtorders/033015zor_5iek.pdf
+    source_code: CANTOR
   - case: Wittman v. Personhuballah
     citation: "578 U.S. 539, 136 S. Ct. 1732 (2016)"
     role: context
     url: https://supreme.justia.com/cases/federal/us/578/14-1504/
+    archived_url: https://web.archive.org/web/20251125054849/https://supreme.justia.com/cases/federal/us/578/14-1504/
+    source_code: WITTMAN
 
-# Third District Black VAP across the cycle: 53.1% (2001 plan) -> 56.3% under this plan (the act
-#   that triggered the racial-gerrymander finding) [LII] -> 45.3% under the 2016 remedial plan.
+# [PAGE-II] District 3 BVAP increased from 53.1% under the predecessor to 56.3% under this plan;
+#           the opinion also describes the mapdrawers' 55% BVAP threshold.
+# [WITTMAN] The strike stood without a merits ruling.
+# [CLERK]   The 2012 and 2014 House election statistics each show Virginia electing eight Republicans 
+#           and three Democrats.
 notes: >-
-  This plan increased the Third District's Black voting-age population to 56.3% (from 53.1% under
-  the predecessor), which the court found was the product of a racial gerrymander; the 2016
-  remedial plan later reduced it to 45.3%. The plan governed the 2012 and 2014 elections before
-  being replaced for 2016.
+  This plan raised the Third District's Black voting-age population from 53.1 percent under the
+  predecessor to 56.3 percent [PAGE-II]. The court held that race predominated in drawing the
+  district and that its design was not narrowly tailored to a compelling governmental interest
+  [PAGE-II]. The plan governed the 2012 and 2014 elections before being replaced by the
+  court-imposed remedial plan for the 2016 election [AAR]. Virginia's eleven-member U.S. House
+  delegation was eight Republicans and three Democrats in both the 113th and 114th Congresses
+  [CLERK]. The Supreme Court dismissed the intervenors' appeal for lack of Article III standing 
+  and did not review the district court's racial-gerrymandering judgment on the merits [WITTMAN].
 
 # Coverage (which source to re-check for which field):
-#   [AAR]       preclearance date; enacting/signing dates; successor identity; 2011-2012 sequence
-#   [LIS-302.2] enacting chapter (Acts 2012, c. 1); codification; predecessor repeal note
-#   [SABATO]    partisan control; incumbent-protection design; 8-3 seat split
-#   [LII]       District 3 BVAP 53.1% -> 56.3%; 55% BVAP target
-#   [PAGE]      invalidating decision (Page II); Page I / Cantor GVR history; 2012-03-14 preclearance
-#   [WITTMAN]   standing dismissal leaving the strike in place
-# TODO: HB 251 floor-vote counts (LIS 121+sum+HB251); add `archived` Wayback snapshots for all
-#       URLs.
+#   [AAR]       DOJ preclearance-date corroboration; successor identity; remedial sequence
+#   [LIS-H251]  HB 251 patron; floor votes; governor's approval date; Chapter 1 designation
+#   [ACTS-1]    enacted districting text; Chapter 1 effective clause
+#   [SABATO]    2011-2012 legislative background; partisan control; incumbent protection;
+#               8-3 delegation configuration
+#   [CLERK]     2012 and 2014 Virginia U.S. House results; 8 R - 3 D in each election
+#   [PAGE-II]   operative June 5, 2015 invalidating decision; prior proceedings;
+#               predecessor and enacted-plan District 3 BVAP; 55% BVAP threshold
+#   [CANTOR]    Supreme Court vacatur of the 2014 judgment and remand
+#   [WITTMAN]   standing dismissal without a decision on the merits
 sources:
   - url: https://redistricting.lls.edu/state/virginia/
-    accessed: 2026-07-06
-  - url: https://law.lis.virginia.gov/vacodefull/title24.2/chapter3/article2/
-    accessed: 2026-07-06
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260713205036/https://redistricting.lls.edu/state/virginia/
+    source_code: AAR
+  - url: https://legacylis.virginia.gov/cgi-bin/legp604.exe?121+sum+HB251
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260427221312/https://legacylis.virginia.gov/cgi-bin/legp604.exe?121+sum+HB251
+    source_code: LIS-H251
+  - url: https://legacylis.virginia.gov/cgi-bin/legp604.exe?121+ful+CHAP0001
+    accessed: 2026-07-12
+    archived: https://web.archive.org/web/20250415170102/https://legacylis.virginia.gov/cgi-bin/legp604.exe?121+ful+CHAP0001
+    source_code: ACTS-1
   - url: https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
-    accessed: 2026-07-06
-  - url: https://www.law.cornell.edu/supct/cert/14-1504
-    accessed: 2026-07-06
-  - url: https://law.justia.com/cases/federal/district-courts/virginia/vaedce/3:2013cv00678/299639/137/
-    accessed: 2026-07-06
-  - url: https://supreme.justia.com/cases/federal/us/578/14-1504/
-    accessed: 2026-07-06
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260713205849/https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
+    source_code: SABATO
+  - url: https://history.house.gov/Institution/Election-Statistics/
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260521142459/https://history.house.gov/Institution/Election-Statistics/
+    source_code: CLERK
 
 curation_status: curated
-curation_last_reviewed: 2026-07-06
+curation_last_reviewed: 2026-07-13
 extensions: {}

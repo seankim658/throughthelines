@@ -2,12 +2,13 @@
 # VA_108_2003: Virginia 2001 congressional plan (post-2000-Census, GOP trifecta).
 # Governs the 108th-112th Congresses (2002-2010 U.S. House elections).
 #
-# Source tags:
-#   [AAR]        All About Redistricting, VA     https://redistricting.lls.edu/state/virginia/
-#   [LIS-302.1]  Va. Code s. 24.2-302.1 text     https://law.justia.com/codes/virginia/2006/toc2402000/24.2-302.1.html
-#   [LIS-302]    Va. Code s. 24.2-302 (repeal)   https://law.lis.virginia.gov/vacode/title24.2/chapter3/section24.2-302/
-#   [SABATO]     UVA Center for Politics         https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
-#   [HALL]                                       see court_citations below
+# Source tags (each is a source_code on a reference below; cite inline in prose as [CODE]):
+#   [AAR]        All About Redistricting, VA        https://redistricting.lls.edu/state/virginia/
+#   [LIS-302-1]  Va. Code s. 24.2-302.1 (enacted)   https://law.justia.com/codes/virginia/2006/toc2402000/24.2-302.1.html
+#   [LIS-302]    Va. Code s. 24.2-302 (repeal note) https://law.lis.virginia.gov/vacode/title24.2/chapter3/section24.2-302/
+#   [SABATO]     UVA Center for Politics            https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
+#   [CLERK]      Clerk of the U.S. House, stats     https://history.house.gov/Institution/Election-Statistics/
+#   [HALL]                                          see court_citations below
 # =============================================================================
 plan_id: VA_108_2003
 state: VA
@@ -18,106 +19,127 @@ source_file: district_geometry/lewis/VA/Virginia_108_to_112.geojson
 source_commit: f107b1b6c149c1b759cbb9b5bb14111a2355d6a1
 schema_version: 1
 
-# [LIS-302.1, LIS-302]
-# HB 18, enacted as Chapter 7 of the 2001 Special Session I Acts of Assembly
-# (Acts 2001, Sp. Sess. I, c. 7); codified at Va. Code s. 24.2-302.1. The codified text
-# ends "(2001, Sp. Sess. I, c. 7.)" and the predecessor s. 24.2-302 repeal note reads
-# "Repealed by Acts 2001, Sp. Sess. I, c. 7, cl. 2, effective July 19, 2001." Passed the
-# General Assembly July 10, 2001; approved by Gov. Gilmore July 19, 2001 (the enacted date).
+# [LIS-302-1, LIS-302, HALL]
+# HB 18 became Chapter 7 of the 2001 Special Session I Acts of Assembly (Acts 2001, Sp. Sess. I,
+# c. 7) and was codified at Va. Code s. 24.2-302.1. Governor James S. Gilmore III approved it on
+# 2001-07-19; Chapter 7's second enactment clause made the plan effective that same day. HB 18's
+# patron, chamber-passage dates, and floor votes remain unverified because the legacy LIS bill
+# history has not been retrieved.
 enacted_date: 2001-07-19
 # [AAR, HALL]
-# Section 5 covered jurisdiction; effective_date is the DOJ preclearance date. AAR gives
-# 2001-10-16 (secondary source); the Hall opinion confirms the plan was precleared under
-# Section 5 but does not recite the date. No primary DOJ letter located — verify via DOJ
-# Section 5 determination records if a primary source is needed.
+# Section 5 covered jurisdiction; effective_date is the DOJ preclearance date. The Hall district-
+# court opinion recites DOJ preclearance on 2001-10-16, and AAR gives the same date. The underlying
+# DOJ no-objection letter has not been located, so the date is supported here by the court's recital
+# and a corroborating secondary source.
 effective_date: 2001-10-16
 
-# [SABATO, AAR]
+# [LIS-302-1, SABATO, HALL]
 origin: legislature
-# [SABATO] First Virginia redistricting under unified Republican control (Gov. Gilmore plus
-#          both chambers); an incumbent-protection map.
+# [LIS-302-1] HB 18 -> Chapter 7 (Acts 2001, Sp. Sess. I, c. 7); codified at Va. Code s. 24.2-302.1.
+# [LIS-302]   Chapter 7 effective 2001-07-19 (predecessor s. 24.2-302 repeal clause).
+# [SABATO]    first VA congressional map under a unified Republican trifecta (Gov. Gilmore + GOP
+#             House and Senate); an incumbent-protection map.
+# [HALL]      Governor Gilmore approved the legislation on 2001-07-19.
+# [HALL]      shifted Black residents from the 4th into the 3rd and 5th Districts; after the redraw,
+#             Black residents were about 54% of the 3rd's total population and 33.6% of the 4th's.
 origin_details: >-
-  Enacted by the Virginia General Assembly as House Bill 18, which became Chapter 7 of the
-  2001 Special Session I Acts of Assembly (codified at Va. Code § 24.2-302.1). The General
-  Assembly passed HB 18 on July 10, 2001, and Governor Jim Gilmore (R) signed it on July 19,
-  2001. It was the first Virginia congressional redistricting under a Republican trifecta
-  (Gov. Gilmore and Republican majorities in both the House of Delegates and the state
-  Senate) and was an incumbent-protection map for members of both parties. It left Rep. Bobby 
-  Scott's (D) majority-minority Third District largely intact while shifting Black population 
-  out of the Fourth District (lowering its Black voting-age population from about 37.8% to 
-  32.3%), making both seats safer for their incumbents. Under this map Republicans generally 
-  held 8 of Virginia's 11 seats and Democrats 3 through the 2002-2010 elections.
+  The Virginia General Assembly adopted the plan through House Bill 18, which became Chapter 7 of
+  the 2001 Special Session I Acts of Assembly and was codified at Va. Code § 24.2-302.1 [LIS-302-1].
+  Governor James S. Gilmore III approved the legislation on July 19, 2001, and Chapter 7 made the
+  plan effective that same day [HALL] [LIS-302]. It was the first Virginia congressional redistricting
+  under a unified Republican trifecta—Governor Gilmore together with Republican majorities in both
+  the House of Delegates and the state Senate—and was an incumbent-protection map for members of
+  both parties [SABATO]. It shifted Black residents out of the Fourth District and into the Third
+  and Fifth Districts; after the redraw, Black residents made up about 54 percent of the Third
+  District's total population and 33.6 percent of the Fourth District's total population [HALL].
+  Because Virginia was then a Section 5 covered jurisdiction, the plan was precleared by the U.S.
+  Department of Justice before it governed the 2002 through 2010 U.S. House elections [AAR].
 
 # Upheld, not struck. A VRA Section 2 vote-dilution challenge to the Fourth District (Hall v.
 # Virginia) was dismissed and the dismissal affirmed. [HALL]
 struck_down: false
+# [HALL] Section 2 challenge dismissed with prejudice (E.D. Va., 2003-08-07) and affirmed (4th Cir.,
+#        2004-09-22); no district invalidated. Plaintiffs failed the first Gingles precondition
+#        because they could not show a reasonably configured Black-majority Fourth District.
 struck_down_details: >-
-  Not struck down. Nine Black voters challenged the plan under Section 2 of the Voting Rights
-  Act in Hall v. Virginia, alleging it "packed" Black voters into the Third District and
-  "cracked" the Fourth. The U.S. District Court for the Eastern District of Virginia dismissed
-  the complaint, holding that Black voters could not form a numerical majority in a single
-  Fourth District and so failed the first Gingles precondition (a coalition/influence-district
-  theory not being cognizable under Section 2); the Fourth Circuit affirmed. No district was
-  invalidated.
+  This plan was not struck down. Nine Black voters challenged it under Section 2 of the Voting Rights
+  Act in Hall v. Virginia, alleging it "packed" Black voters into the Third District and "cracked"
+  the Fourth. The U.S. District Court for the Eastern District of Virginia dismissed the complaint,
+  holding that the plaintiffs could not show that Black voters were sufficiently numerous and
+  geographically compact to form a majority in a reasonably configured Fourth District and
+  therefore failed the first Gingles precondition. The Fourth Circuit affirmed on September 22,
+  2004, rejecting the plaintiffs' proposed coalition- and influence-district theories in this case
+  [HALL]. No district was invalidated, and the plan governed the 2002 through 2010 elections before
+  being replaced through the normal post-2010-Census cycle [AAR].
 struck_down_districts: []
 
-# predecessor VA_106_1999 = Virginia's 1998 remedial plan (SB 13, Chapter 1, 1998 Acts),
-#   governing the 106th-107th Congresses. Setting this predecessor closes the reciprocity
-#   with VA_106_1999.superseded_by.
+# predecessor VA_106_1999 = Virginia's 1998 remedial plan (SB 13, Chapter 1, 1998 Acts), governing
+#   the 106th-107th Congresses. Setting this closes reciprocity with VA_106_1999.superseded_by.
 # superseded_by VA_113_2013 = Virginia's post-2010-Census plan (HB 251, Acts 2012, c. 1,
-#   s. 24.2-302.2; signed 2012-01-25, DOJ-precleared 2012-03-14), governing the 113th onward.
-#   [AAR, LIS-302.1]
+#   s. 24.2-302.2; signed 2012-01-25, DOJ-precleared 2012-03-14), governing the 113th onward. [AAR]
 superseded_by: VA_113_2013
 predecessor: VA_106_1999
 
-# [HALL] Hall v. Commonwealth of Virginia -> affirming: the Fourth Circuit upheld this plan
-#        against a VRA Section 2 challenge to the Fourth District. Corrects the erroneous
-#        "314 F. Supp. 2d 1357 (N.D. Va. 2004)" cite sometimes attached to this plan — Virginia
-#        has no Northern District; the district-court decision is 276 F. Supp. 2d 528 (E.D. Va.
-#        2003), affirmed at 385 F.3d 421 (4th Cir. 2004).
-# Excluded on purpose: Wilkins v. West, 264 Va. 447, 571 S.E.2d 100 (2002), adjudicated the
-#        2001 STATE House and Senate plans, NOT this congressional plan (the AAR page groups
-#        the cycle's litigation together). State-legislative plans are out of scope and not
-#        modeled, so Wilkins is not carried here.
-# Excluded on purpose: Page v. Va. State Bd. of Elections and Wittman v. Personhuballah concern
-#        the SUCCESSOR 2012 plan and belong in VA_113_2013.
+# [HALL] Hall v. Commonwealth of Virginia is the controlling litigation for this plan. The district
+#        court dismissed the Section 2 challenge to the Fourth District, and the Fourth Circuit
+#        affirmed. District court: 276 F. Supp. 2d 528 (E.D. Va. 2003); court of appeals:
+#        385 F.3d 421 (4th Cir. 2004). The URL below opens the district-court opinion; the appellate
+#        disposition is identified by its reporter citation. No certiorari petition was located.
+# Excluded on purpose: Wilkins v. West concerned Virginia's 2001 state-legislative plans, not this
+#        congressional plan. Page v. Virginia State Board of Elections and Wittman v. Personhuballah
+#        concern the successor 2012 congressional plan and belong in VA_113_2013.
 court_citations:
   - case: Hall v. Commonwealth of Virginia
     citation: "276 F. Supp. 2d 528 (E.D. Va. 2003), aff'd, 385 F.3d 421 (4th Cir. 2004)"
     role: affirming
-    url: https://www.courtlistener.com/opinion/2968020/hall-v-commonwealth-of-va/
+    url: https://law.justia.com/cases/federal/district-courts/FSupp2/276/528/2464706/
+    archived_url: https://web.archive.org/web/20170910081625/http://law.justia.com/cases/federal/district-courts/FSupp2/276/528/2464706/
+    source_code: HALL
 
-# Third District Black VAP under this plan: ~53.2% (per the Fourth Circuit), remaining Rep.
-#   Bobby Scott's (D) majority-minority district [HALL]. The Fourth District's reduction to
-#   ~32.3% BVAP was the subject of the Hall challenge [HALL].
+# [HALL]  The redraw shifted Black residents from the 4th into the 3rd and 5th Districts; afterward,
+#         Black residents were about 54% of the 3rd's total population and 33.6% of the 4th's.
+# [CLERK] Delegation: 8 R - 3 D in the 108th-110th; 6 D - 5 R in the 111th (2008 Democratic gains in
+#         the 2nd, 5th, and open 11th); 8 R - 3 D in the 112th (2010 Republican gains in the 2nd, 5th,
+#         and 9th).
 notes: >-
-  This plan kept the Third District a majority-minority seat (about 53% Black voting-age
-  population) while reducing the Fourth District's Black voting-age population to about 32%;
-  the Fourth District change was the basis of the unsuccessful Hall v. Virginia Section 2
-  challenge.
+  The redraw shifted Black residents out of the Fourth District and into the Third and Fifth
+  Districts. Afterward, Black residents made up about 54 percent of the Third District's total
+  population and 33.6 percent of the Fourth District's total population; the Fourth District change
+  was the basis of the unsuccessful Hall v. Virginia Section 2 challenge [HALL]. Virginia's
+  eleven-member U.S. House delegation was eight Republicans and three Democrats through the 108th,
+  109th, and 110th Congresses, flipped to six Democrats and five Republicans in the 111th Congress
+  after the 2008 election, and returned to eight Republicans and three Democrats in the 112th
+  Congress after the 2010 election [CLERK].
 
 # Coverage (which source to re-check for which field):
-#   [AAR]       preclearance date; successor identity; state-vs-federal litigation sequence
-#   [LIS-302.1] enacting chapter (Acts 2001, Sp. Sess. I, c. 7); codification; successor repeal
-#   [LIS-302]   enacted/effective date (repeal note); predecessor codification
-#   [SABATO]    partisan control; incumbent-protection design; 3rd/4th district BVAP; seat split
-#   [HALL]      affirming litigation; Section 2 theory and Gingles holding; 3rd/4th BVAP figures
-# TODO: HB 18 floor-vote counts (LIS 012+sum+HB18); add `archived` Wayback snapshots for all
-#       URLs; optional spot-verify of the 2001-07-10 passage date.
+#   [AAR]       preclearance date corroboration; successor identity; used-for-2002-2010; exclusions
+#   [LIS-302-1] enacting chapter (Acts 2001, Sp. Sess. I, c. 7); codification (s. 24.2-302.1)
+#   [LIS-302]   2001-07-19 effective date and predecessor-section repeal note
+#   [SABATO]    Republican trifecta; incumbent-protection design
+#   [CLERK]     delegation composition across the 108th-112th Congresses
+#   [HALL]      gubernatorial-approval and preclearance recitals; affirming litigation; Gingles
+#               holding; 3rd/4th total-population figures
 sources:
   - url: https://redistricting.lls.edu/state/virginia/
-    accessed: 2026-07-06
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260713205036/https://redistricting.lls.edu/state/virginia/
+    source_code: AAR
   - url: https://law.justia.com/codes/virginia/2006/toc2402000/24.2-302.1.html
-    accessed: 2026-07-06
+    accessed: 2026-07-11
+    source_code: LIS-302-1
   - url: https://law.lis.virginia.gov/vacode/title24.2/chapter3/section24.2-302/
-    accessed: 2026-07-06
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260713210814/https://law.lis.virginia.gov/vacode/title24.2/chapter3/section24.2-302/
+    source_code: LIS-302
   - url: https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
-    accessed: 2026-07-06
-  - url: https://law.justia.com/cases/federal/district-courts/FSupp2/276/528/2464706/
-    accessed: 2026-07-06
-  - url: https://www.courtlistener.com/opinion/2968020/hall-v-commonwealth-of-va/
-    accessed: 2026-07-06
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260713205849/https://centerforpolitics.org/crystalball/virginias-redistricting-history-whats-past-is-prologue/
+    source_code: SABATO
+  - url: https://history.house.gov/Institution/Election-Statistics/
+    accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260521142459/https://history.house.gov/Institution/Election-Statistics/
+    source_code: CLERK
 
 curation_status: curated
-curation_last_reviewed: 2026-07-06
+curation_last_reviewed: 2026-07-11
 extensions: {}
