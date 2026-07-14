@@ -156,9 +156,11 @@ sources:
     source_code: NCGA
   - url: https://www.ncleg.gov/Laws/Constitution/Article2
     accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260713212845/https://www.ncleg.gov/Laws/Constitution/Article2
     source_code: NC-CONST
   - url: https://history.house.gov/Institution/Election-Statistics/
     accessed: 2026-07-11
+    archived: https://web.archive.org/web/20260521142459/https://history.house.gov/Institution/Election-Statistics/
     source_code: CLERK-2000
 
 curation_status: curated
