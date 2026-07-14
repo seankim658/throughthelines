@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 /** The release history, newest first. */
 export const CHANGELOG: readonly ChangelogEntry[] = [
 	{
+		version: 'v0.7.0',
+		date: '2026-07-13',
+		changes: [
+			"Added Virginia, covering the 107th through 120th Congresses.",
+			"Plan narratives now carry inline citations. A claim in a plan's origin, strike-down, or notes text links directly to the court opinion or source it rests on.",
+			'Added inline citations for North Carolina plan records.'
+		]
+	},
+	{
 		version: 'v0.6.0',
 		date: '2026-06-25',
 		changes: [
