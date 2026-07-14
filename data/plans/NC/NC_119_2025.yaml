@@ -108,6 +108,7 @@ court_citations:
     citation: "570 U.S. 529 (2013)"
     role: context
     url: https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
+    archived_url: https://web.archive.org/web/20260709211603/https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
     source_code: SHELBY
 
 # [CLERK-2024] 2024 result: 10 R - 4 D (from 7-7); three formerly Democratic seats flipped.
@@ -149,15 +150,19 @@ sources:
     source_code: NCGA-S757
   - url: https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2023E
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260504052257/https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2023E
     source_code: NCGA-MAP
   - url: https://www.ncleg.gov/Laws/Constitution/Article2
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260713212845/https://www.ncleg.gov/Laws/Constitution/Article2
     source_code: NC-CONST
   - url: https://clerk.house.gov/member_info/electionInfo/2024/statistics2024.pdf
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260711013017/https://clerk.house.gov/member_info/electionInfo/2024/statistics2024.pdf
     source_code: CLERK-2024
   - url: https://www.ncleg.gov/BillLookUp/2025/S249
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260714004108/https://www.ncleg.gov/BillLookUp/2025/S249
     source_code: NCGA-S249
 
 curation_status: curated

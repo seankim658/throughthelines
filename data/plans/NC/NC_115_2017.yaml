@@ -98,11 +98,13 @@ court_citations:
     citation: "159 F. Supp. 3d 600 (M.D.N.C. 2016)"
     role: enabling
     url: https://law.justia.com/cases/federal/district-courts/north-carolina/ncmdce/1:2013cv00949/64259/142/
+    archived_url: https://web.archive.org/web/20260713213213/https://law.justia.com/cases/federal/district-courts/north-carolina/ncmdce/1:2013cv00949/64259/142/
     source_code: HARRIS
   - case: Rucho v. Common Cause
     citation: "588 U.S. 684 (2019)"
     role: context
     url: https://www.supremecourt.gov/opinions/18pdf/18-422_9ol1.pdf
+    archived_url: https://web.archive.org/web/20260625001337/https://www.supremecourt.gov/opinions/18pdf/18-422_9ol1.pdf
     source_code: RUCHO
   - case: Harper v. Lewis
     citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Oct. 28, 2019)"
@@ -114,6 +116,7 @@ court_citations:
     citation: "570 U.S. 529 (2013)"
     role: context
     url: https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
+    archived_url: https://web.archive.org/web/20260709211603/https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
     source_code: SHELBY
 
 # [RUCHO] (quoting the M.D.N.C. record, 318 F. Supp. 3d 777, 808–809): Lewis's 10–3 statement.
@@ -159,18 +162,23 @@ sources:
     source_code: AAR-HVL
   - url: https://www.ncleg.gov/BillLookUp/2015E1/sb2
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260427221354/https://www.ncleg.gov/BillLookUp/2015E1/sb2
     source_code: NCGA-S2
   - url: https://www.ncleg.gov/Redistricting/Process2016
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260414083814/https://www.ncleg.gov/Redistricting/Process2016
     source_code: NCGA-PROC
   - url: https://www.ncleg.gov/Laws/Constitution/Article2
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260713212845/https://www.ncleg.gov/Laws/Constitution/Article2
     source_code: NC-CONST
   - url: https://history.house.gov/Institution/Election-Statistics/
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260521142459/https://history.house.gov/Institution/Election-Statistics/
     source_code: CLERK-2016
   - url: https://www.ncsbe.gov/results-data/election-results/historical-election-results-data
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260502022829/https://www.ncsbe.gov/results-data/election-results/historical-election-results-data
     source_code: NCSBE
 
 curation_status: curated

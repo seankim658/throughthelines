@@ -86,16 +86,19 @@ court_citations:
     citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Oct. 28, 2019)"
     role: enabling
     url: https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191028-congressional-order-1.pdf
+    archived_url: https://web.archive.org/web/20260428023718/https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191028-congressional-order-1.pdf
     source_code: HARPER-I
   - case: Harper v. Lewis
     citation: "No. 19-CVS-012667 (N.C. Super. Ct., Wake Cnty. Dec. 2, 2019)"
     role: context
     url: https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-order.pdf
+    archived_url: https://web.archive.org/web/20260427230049/https://redistricting.lls.edu/wp-content/uploads/NC-harper-20191202-order.pdf
     source_code: HARPER-II
   - case: Shelby County v. Holder
     citation: "570 U.S. 529 (2013)"
     role: context
     url: https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
+    archived_url: https://web.archive.org/web/20260709211603/https://tile.loc.gov/storage-services/service/ll/usrep/usrep570/usrep570529/usrep570529.pdf
     source_code: SHELBY
 
 # [NCGA-MAP] single-cycle interim map on 2010-census block geometry.
@@ -124,15 +127,19 @@ sources:
     source_code: AAR
   - url: https://www.ncleg.gov/BillLookUp/2019/H1029
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260427221315/https://www.ncleg.gov/BillLookUp/2019/H1029
     source_code: NCGA-H1029
   - url: https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2019E
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260104100326/https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2019E
     source_code: NCGA-MAP
   - url: https://www.ncleg.gov/Laws/Constitution/Article2
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260713212845/https://www.ncleg.gov/Laws/Constitution/Article2
     source_code: NC-CONST
   - url: https://clerk.house.gov/member_info/electionInfo/2020/statistics2020.pdf
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20250918215236/https://clerk.house.gov/member_info/electionInfo/2020/statistics2020.pdf
     source_code: CLERK-2020
 
 curation_status: curated

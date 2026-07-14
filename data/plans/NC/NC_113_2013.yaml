@@ -71,17 +71,19 @@ court_citations:
     citation: "367 N.C. 542, 766 S.E.2d 238 (2014)"
     role: context
     url: https://law.justia.com/cases/north-carolina/supreme-court/2014/201pa12-2.html
+    archived_url: https://web.archive.org/web/20151005105721/https://law.justia.com/cases/north-carolina/supreme-court/2014/201pa12-2.html
     source_code: DICKSON
   - case: Harris v. McCrory
     citation: "159 F. Supp. 3d 600 (M.D.N.C. 2016)"
     role: invalidating
     url: https://law.justia.com/cases/federal/district-courts/north-carolina/ncmdce/1:2013cv00949/64259/142/
+    archived_url: https://web.archive.org/web/20260713213213/https://law.justia.com/cases/federal/district-courts/north-carolina/ncmdce/1:2013cv00949/64259/142/
     source_code: HARRIS
   - case: Cooper v. Harris
     citation: "581 U.S. 285 (2017)"
     role: affirming
     url: https://www.supremecourt.gov/opinions/16pdf/15-1262_db8e.pdf
-    archived_url: https://web.archive.org/web/20260605114656/https://www.supremecourt.gov/opinions/16pdf/15-1262_db8e.pdf
+    archived_url: https://web.archive.org/web/20260617002852/https://www.supremecourt.gov/opinions/16pdf/15-1262_db8e.pdf
     source_code: COOPER
 
 # Racial-gerrymander history of this plan is kept distinct from the successor's partisan case.
@@ -119,12 +121,15 @@ sources:
     source_code: NCGA-S453
   - url: https://www.ncleg.gov/BillLookup/2011/S689
     accessed: 2026-06-04
+    archived: https://web.archive.org/web/20260427221404/https://www.ncleg.gov/BillLookup/2011/S689
     source_code: NCGA-S689
   - url: https://www.ncleg.gov/Laws/Constitution/Article2
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260713212845/https://www.ncleg.gov/Laws/Constitution/Article2
     source_code: NC-CONST
   - url: https://centerforpolitics.org/crystalball/north-carolina-redistricting-republicans-bring-out-their-golden-goose-again/
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20250323070954/https://centerforpolitics.org/crystalball/north-carolina-redistricting-republicans-bring-out-their-golden-goose-again/
     source_code: SABATO
 
 curation_status: curated

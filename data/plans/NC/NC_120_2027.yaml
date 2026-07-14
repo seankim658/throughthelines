@@ -92,6 +92,7 @@ court_citations:
     citation: "No. 1:23-cv-01057, 2025 WL 3296273 (M.D.N.C. Nov. 26, 2025)"
     role: context
     url: https://www.democracydocket.com/wp-content/uploads/2023/12/2025-11-26-Memorandum-opinion-and-order.pdf
+    archived_url: https://web.archive.org/web/20260714005440/https://www.democracydocket.com/wp-content/uploads/2023/12/2025-11-26-Memorandum-opinion-and-order.pdf
     source_code: WILLIAMS
 
 # [SABATO] 11-3 is a PROJECTION (no general election yet). [NCSBE] map in force; used in the 2026 primary.
@@ -129,21 +130,27 @@ sources:
     source_code: AAR-WVH
   - url: https://www.ncleg.gov/BillLookUp/2025/S249
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260714004108/https://www.ncleg.gov/BillLookUp/2025/S249
     source_code: NCGA-S249
   - url: https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2025E
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260511142437/https://www.ncleg.gov/Redistricting/DistrictPlanMap/C2025E
     source_code: NCGA-MAP
   - url: https://www.ncleg.gov/Laws/Constitution/Article2
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260713212845/https://www.ncleg.gov/Laws/Constitution/Article2
     source_code: NC-CONST
   - url: https://carolinademography.cpc.unc.edu/2025/10/28/demographic-change-in-ncs-new-congressional-districts/
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260628033927/https://carolinademography.cpc.unc.edu/2025/10/28/demographic-change-in-ncs-new-congressional-districts/
     source_code: DEMOG
   - url: https://centerforpolitics.org/crystalball/rating-the-new-north-carolina-republican-gerrymander/
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260221172359/https://centerforpolitics.org/crystalball/rating-the-new-north-carolina-republican-gerrymander/
     source_code: SABATO
   - url: https://www.ncsbe.gov/news/press-releases/2026/03/25/state-board-certifies-state-and-local-primary-contests-consider-most-federal-contests-april
     accessed: 2026-07-09
+    archived: https://web.archive.org/web/20260419222007/https://www.ncsbe.gov/news/press-releases/2026/03/25/state-board-certifies-state-and-local-primary-contests-consider-most-federal-contests-april
     source_code: NCSBE
 
 curation_status: curated
