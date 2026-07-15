@@ -6,6 +6,7 @@ authority and produces the GeoJSON for the stitch step to consume.
 
 from __future__ import annotations
 import json
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -71,7 +72,24 @@ def _read_shapefile_zip(input_zip: Path) -> GeoDataFrame:
             f"geometry source not found at {input_zip} "
             f"(did you run `pipeline fetch`?)"
         )
-    return gpd.read_file(f"zip://{input_zip}")
+    inner_shp: str = _find_inner_shapefile(input_zip)
+    return gpd.read_file(f"/vsizip/{input_zip}/{inner_shp}")
+
+
+def _find_inner_shapefile(input_zip: Path) -> str:
+    """Return the path of the single .shp entry inside the zip."""
+    with zipfile.ZipFile(input_zip) as archive:
+        shp_names: list[str] = [
+            name for name in archive.namelist() if name.lower().endswith(".shp")
+        ]
+    if not shp_names:
+        raise GeometryNormalizeError(f"no .shp found inside {input_zip}")
+    if len(shp_names) > 1:
+        raise GeometryNormalizeError(
+            f"expected exactly one .shp inside {input_zip}, found {len(shp_names)}: "
+            f"{', '.join(sorted(shp_names))}"
+        )
+    return shp_names[0]
 
 
 def _verify_crs(gdf: GeoDataFrame, source_crs: str, input_zip: Path) -> None:
