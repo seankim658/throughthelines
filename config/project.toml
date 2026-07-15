@@ -38,8 +38,9 @@ manifest_file = "{derived_dir}/manifest.json"
 [scope]
 congress_start = 107
 congress_end = 120
-planned = ["PA", "TX"]
+planned = ["PA", "CA", "UT", "MO", "MD"]
 
 [scope.chambers]
 NC = ["congressional"]
 VA = ["congressional"]
+TX = ["congressional"]
