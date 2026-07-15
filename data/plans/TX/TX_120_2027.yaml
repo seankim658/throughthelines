@@ -1,0 +1,11 @@
+# Hand-authored: the 2025 mid-decade map (PlanC2333, HB 4, 89th Leg. 2nd C.S.).
+# Not in the Lewis archive, so scaffold does not generate it. Curation-sensitive
+# fields are left to default to "pending" and are filled during Phase B.
+plan_id: TX_120_2027
+state: TX
+chamber: congressional
+congress_start: 120
+congress_end: 120
+source_file: district_geometry/tlc/TX/PlanC2333.geojson
+source_commit: sha256:6797d6e39f76224fa0d9a4f4226e8f1a044fbeaa890d706d366dbdd24a2a2099
+schema_version: 1
