@@ -6,8 +6,6 @@ Most tools show your *current* district. Through the Lines answers the harder qu
 
 **Live:** https://throughthelines.org
 
-> **Status:** v0.6.0, live in production. Current coverage is North Carolina, across the 107th–120th Congresses (2001–2027). The pipeline and schema are built to extend further. Pennsylvania, Texas, and Virginia are planned next.
-
 ## How it works
 
 Each address is resolved entirely client side, there is no backend and no data collection of any kind. The Census Geocoder converts addresses into a 2020 Census block, and a prebuilt lookup table maps that block to its district under every Congress in scope. Districts are matched against each decade's own Census block geometry (2000 blocks for the 107th–112th, 2010 for the 113th–117th, 2020 for the 118th–120th) so there's no time-warping of modern boundaries onto past maps. Addresses are never sent anywhere but the [U.S. Census Geocoder](https://geocoding.geo.census.gov/geocoder/).
