@@ -28,6 +28,8 @@ Setup for a local checkout is in the [README](https://github.com/seankim658/thro
 
 From a checkout, `uv run pipeline plan-index` rebuilds the plan index and, in doing so, validates every plan file.
 
+For code changes, run `bash scripts/check.sh` from the repository root. It runs the same checks as CI.
+
 ## Conventions
 
 Project-wide conventions such as date semantics, how to record split court votes, source precedence, and the YAML comment style live in the [Curation guide](https://throughthelines.org/docs/curation#recording-conventions) and [Data model & schema](https://throughthelines.org/docs/data-model) docs.

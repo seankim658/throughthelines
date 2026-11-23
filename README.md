@@ -27,6 +27,7 @@ through-the-lines/
 ├── pipeline/          # Python build pipeline (uv)
 ├── config/            # project + source configuration (TOML)
 ├── data/plans/NC/     # hand-curated plan-metadata YAMLs  ← the dataset
+├── scripts/check.sh   # every lint, type and test check
 ├── deploy.sh          # one-shot redeploy
 └── .github/workflows/ # CI
 ```
@@ -91,14 +92,13 @@ R2_BUCKET=ttl-artifacts
 
 `./deploy.sh` (runnable from anywhere in the tree) chains the redeploy loop, it rebuilds the manifest with the current git SHA, publishes to R2, builds the frontend, and deploys to Cloudflare Pages. It does **not** run the heavy data build (it assumes the artifacts under `data/derived/` are already built). It requires `apps/web/.env.production` (the prod `PUBLIC_ARTIFACTS_*` values), an authenticated `wrangler`, and R2 credentials.
 
+## Checks
+
+`bash scripts/check.sh` runs every check on both halves and prints one line per step. It covers ruff, mypy, deptry and pytest for the pipeline (the tests also validate every plan YAML), and prettier, eslint and svelte-check for the frontend. `--packages pipeline` or `--packages web` narrows a run while you iterate. See `--help` for details.
+
 ## CI
 
-GitHub Actions runs on every push to `main` and every pull request: 
-
-- Python type-checking (`mypy`) and plan-YAML validation 
-- Frontend type-checking (`svelte-check`) and linting. 
-
-It does not run the data build.
+GitHub Actions runs `scripts/check.sh` on every push to `main` and every pull request. It does not run the data build.
 
 ## License
 

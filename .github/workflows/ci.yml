@@ -13,12 +13,9 @@ permissions:
   contents: read
 
 jobs:
-  pipeline:
-    name: Pipeline, type-check + tests + plan validation
+  check:
+    name: Full check (scripts/check.sh)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: pipeline
     steps:
       - uses: actions/checkout@v4
 
@@ -26,33 +23,6 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Type-check (mypy + pydantic plugin)
-        run: uv run mypy src tests
-
-      - name: Test
-        run: uv run pytest
-
-      - name: Validate plan YAMLs
-        run: uv run pipeline plan-index
-
-  web:
-    name: Web · svelte-check + lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/web
-    # $env/static/public is resolved at check/build time; without these the
-    # gitignored .env is absent in CI and `svelte-kit sync` fails. Dev defaults
-    # are fine here, nothing in CI fetches real artifacts.
-    env:
-      PUBLIC_ARTIFACTS_BASE: /derived
-      PUBLIC_ARTIFACTS_LAYOUT: flat
-    steps:
-      - uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -66,11 +36,5 @@ jobs:
           cache: pnpm
           cache-dependency-path: apps/web/pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check (svelte-check)
-        run: pnpm check
-
-      - name: Lint (prettier + eslint)
-        run: pnpm lint
+      - name: Run every check
+        run: bash scripts/check.sh
