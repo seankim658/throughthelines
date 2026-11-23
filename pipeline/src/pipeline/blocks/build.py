@@ -54,6 +54,14 @@ _PRE_BEF_VINTAGE: BlockVintage = "v2000"
 # First Congress for which a Census BEF is expected
 _FIRST_BEF_CONGRESS: int = 113
 
+# The last Congress elected under each census cycle's maps. A cycle's first
+# election is two years after its census, so the 2010 cycle runs from the 113th
+# (2012) to the 117th (2020).
+_LAST_CONGRESS_BY_VINTAGE: dict[BlockVintage, int] = {
+    "v2010": 117,
+    "v2020": 122,
+}
+
 # --- Errors ---
 
 
@@ -244,7 +252,7 @@ def _resolve_congress_sources(
     """
     sources: dict[int, BlockAssignmentSource] = {}
     needed_vintages: set[BlockVintage] = set()
-    polygon_fallback_congresses: list[int] = []
+    polygon_fallback_congresses: dict[BlockVintage, list[int]] = {}
     carried_congresses: list[tuple[int, int]] = []
     state_fips: str = STATE_INFO[state].fips
 
@@ -278,26 +286,31 @@ def _resolve_congress_sources(
             sources[congress] = _make_polygon_source(
                 plan=plan,
                 congress=congress,
+                vintage=_PRE_BEF_VINTAGE,
                 raw_dir=project_paths.raw_dir,
                 geometry_source=geometry_source,
                 lewis_landing_url=lewis_landing_url,
             )
             needed_vintages.add(_PRE_BEF_VINTAGE)
-            polygon_fallback_congresses.append(congress)
+            polygon_fallback_congresses.setdefault(_PRE_BEF_VINTAGE, []).append(
+                congress
+            )
             continue
 
         # Step 3: BEF-era polygon fallback under --spatial-join-fallback
         if spatial_join_fallback:
+            vintage: BlockVintage = _census_vintage_for_congress(congress)
             try:
                 sources[congress] = _make_polygon_source(
                     plan=plan,
                     congress=congress,
+                    vintage=vintage,
                     raw_dir=project_paths.raw_dir,
                     geometry_source=geometry_source,
                     lewis_landing_url=lewis_landing_url,
                 )
-                needed_vintages.add(_PRE_BEF_VINTAGE)
-                polygon_fallback_congresses.append(congress)
+                needed_vintages.add(vintage)
+                polygon_fallback_congresses.setdefault(vintage, []).append(congress)
                 continue
             except BlocksBuildError:
                 if allow_missing:
@@ -318,11 +331,11 @@ def _resolve_congress_sources(
         )
 
     resolution_warnings: list[str] = []
-    if polygon_fallback_congresses:
+    for vintage_key in sorted(polygon_fallback_congresses):
         resolution_warnings.append(
             f"Polygon-fallback vintage: Congresses "
-            f"{sorted(polygon_fallback_congresses)} sourced via "
-            f"PolygonJoinSource declared block_vintage={_PRE_BEF_VINTAGE}."
+            f"{sorted(polygon_fallback_congresses[vintage_key])} sourced via "
+            f"PolygonJoinSource declared block_vintage={vintage_key}."
         )
     if carried_congresses:
         pairs: str = ", ".join(
@@ -393,9 +406,22 @@ def _make_delimited_source(
         ) from e
 
 
+def _census_vintage_for_congress(congress: int) -> BlockVintage:
+    """Return the block vintage of the census cycle a BEF-era Congress falls in."""
+    for vintage, last_congress in sorted(_LAST_CONGRESS_BY_VINTAGE.items()):
+        if congress <= last_congress:
+            return vintage
+    raise BlocksBuildError(
+        f"Congress {congress} falls after the last census cycle with block "
+        f"geometry (the {max(_LAST_CONGRESS_BY_VINTAGE.values())}th Congress), "
+        f"so it cannot fall back to a polygon join"
+    )
+
+
 def _make_polygon_source(
     plan: Plan,
     congress: int,
+    vintage: BlockVintage,
     raw_dir: Path,
     geometry_source: GeometrySource | None,
     lewis_landing_url: str,
@@ -412,7 +438,7 @@ def _make_polygon_source(
         return PolygonJoinSource(
             geojson_path=geojson_path,
             source_file=plan.source_file,
-            _block_vintage=_PRE_BEF_VINTAGE,
+            _block_vintage=vintage,
             provider=provider,
             upstream_landing_url=landing_url,
         )
@@ -727,23 +753,24 @@ def _serialize_congresses(build_plan: _BuildPlan) -> list[dict[str, Any]]:
 def _load_assignments(
     build_plan: _BuildPlan, geometry: BlockGeometry
 ) -> dict[int, dict[str, int]]:
-    """Load block-to-district assignemnts for every Congress in scope.
+    """Load block-to-district assignments for every Congress in scope.
 
-    Polygon-join results are cached by geojson_path so a multi-Congress
-    Lewis plan is spatial-joined exactly once and reused across every
-    Congress it covers.
+    Polygon-join results are cached by plan file and block vintage, so a
+    multi-Congress plan is joined once per decade it spans and reused across
+    the Congresses in that decade.
     """
     assignments: dict[int, dict[str, int]] = {}
-    polygon_cache: dict[Path, dict[str, int]] = {}
+    polygon_cache: dict[tuple[Path, BlockVintage], dict[str, int]] = {}
 
     for congress, source in build_plan.sources.items():
         if isinstance(source, PolygonJoinSource):
-            cached: dict[str, int] | None = polygon_cache.get(source.geojson_path)
+            cache_key = (source.geojson_path, source.block_vintage)
+            cached: dict[str, int] | None = polygon_cache.get(cache_key)
             if cached is not None:
                 assignments[congress] = cached
                 continue
             result: dict[str, int] = source.load(geometry)
-            polygon_cache[source.geojson_path] = result
+            polygon_cache[cache_key] = result
             assignments[congress] = result
         else:
             assignments[congress] = source.load(geometry)

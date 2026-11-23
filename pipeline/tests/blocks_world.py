@@ -72,6 +72,8 @@ class BlockWorld:
     plans: list[Plan]
     assignments: list[BlockAssignmentEntry] = field(default_factory=list)
     carries: list[BlockAssignmentCarry] = field(default_factory=list)
+    congress_start: int = CONGRESS_START
+    congress_end: int = CONGRESS_END
 
     @property
     def output_path(self) -> Path:
@@ -85,8 +87,8 @@ class BlockWorld:
             state="NC",
             chamber="congressional",
             scope=ScopeSettings(
-                congress_start=CONGRESS_START,
-                congress_end=CONGRESS_END,
+                congress_start=self.congress_start,
+                congress_end=self.congress_end,
                 chambers={"NC": ["congressional"]},
                 planned=[],
             ),
@@ -111,6 +113,15 @@ class BlockWorld:
         history_index: int = output["blocks"][block_geoid("v2020", index)]
         history: list[int | None] = output["histories"][history_index]
         return history
+
+    def add_plan(self, plan_id: str, start: int, end: int | None) -> Plan:
+        """Write polygons for a new plan over [start, end] and return it.
+
+        The polygons use the same split as the default plan.
+        """
+        source_file: str = f"district_geometry/lewis/NC/{plan_id}.geojson"
+        _write_plan_polygons(self.paths.raw_dir / source_file)
+        return _plan(plan_id, start, end, source_file)
 
     def write_bef(
         self,
@@ -247,7 +258,7 @@ def _write_plan_polygons(path: Path) -> None:
     frame.to_file(path, driver="GeoJSON")
 
 
-def _plan(plan_id: str, start: int, end: int, source_file: str) -> Plan:
+def _plan(plan_id: str, start: int, end: int | None, source_file: str) -> Plan:
     return Plan.model_validate(
         {
             "plan_id": plan_id,

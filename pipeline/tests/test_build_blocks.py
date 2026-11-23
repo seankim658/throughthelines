@@ -192,6 +192,78 @@ def test_missing_tabblock_zip_raises(world: BlockWorld) -> None:
         world.build()
 
 
+def test_spatial_join_fallback_uses_the_congress_own_decade(
+    world: BlockWorld,
+) -> None:
+    world.plans = [world.plans[0], world.add_plan("NC_113_2013", 113, 115)]
+    world.assignments = [a for a in world.assignments if a.congress != 113]
+    world.carries = [c for c in world.carries if c.congress != 114]
+
+    world.build(spatial_join_fallback=True)
+    sources: dict[int, dict[str, Any]] = _sources_by_congress(world)
+
+    assert sources[113]["type"] == "polygon_join"
+    assert sources[113]["block_vintage"] == "v2010"
+    assert sources[114]["block_vintage"] == "v2010"
+    assert [world.history_of(i)[1] for i in range(BLOCK_COUNT)] == list(POLYGON_SPLIT)
+
+
+def test_spatial_join_fallback_in_the_2020_cycle_uses_2020_blocks(
+    world: BlockWorld,
+) -> None:
+    world.congress_start = 118
+    world.congress_end = 118
+    world.plans = [world.add_plan("NC_118_2023", 118, 118)]
+    world.assignments = []
+    world.carries = []
+
+    world.build(spatial_join_fallback=True)
+
+    assert _sources_by_congress(world)[118]["block_vintage"] == "v2020"
+    assert [world.history_of(i)[0] for i in range(BLOCK_COUNT)] == list(POLYGON_SPLIT)
+
+
+def test_spatial_join_fallback_past_2020_cycle_raises(world: BlockWorld) -> None:
+    world.congress_start = 123
+    world.congress_end = 123
+    world.plans = [world.add_plan("NC_123_2033", 123, 123)]
+    world.assignments = []
+    world.carries = []
+
+    with pytest.raises(BlocksBuildError, match="Congress 123"):
+        world.build(spatial_join_fallback=True)
+
+
+def test_plan_spanning_two_decades_joins_each_decade_separately(
+    world: BlockWorld,
+) -> None:
+    # One plan covers the 112th (2000 blocks) and the 113th (2010 blocks).
+    spanning: Plan = world.add_plan("NC_112_2011", 112, 113)
+    world.plans = [spanning, world.add_plan("NC_114_2015", 114, 115)]
+    world.assignments = [a for a in world.assignments if a.congress != 113]
+    world.carries = [c for c in world.carries if c.congress != 114]
+
+    world.build(spatial_join_fallback=True)
+
+    for index in range(BLOCK_COUNT):
+        assert world.history_of(index)[:2] == [POLYGON_SPLIT[index]] * 2
+
+
+def test_polygon_fallback_warning_names_each_vintage(world: BlockWorld) -> None:
+    world.plans = [world.plans[0], world.add_plan("NC_113_2013", 113, 115)]
+    world.assignments = [a for a in world.assignments if a.congress != 113]
+    world.carries = [c for c in world.carries if c.congress != 114]
+
+    result = world.build(spatial_join_fallback=True)
+    fallback: list[str] = [w for w in result.warnings if "Polygon-fallback" in w]
+
+    assert len(fallback) == 2
+    assert "[112]" in fallback[0]
+    assert "block_vintage=v2000" in fallback[0]
+    assert "[113, 114]" in fallback[1]
+    assert "block_vintage=v2010" in fallback[1]
+
+
 def _single_plan(world: BlockWorld, start: int, end: int | None) -> Plan:
     """Return a plan over [start, end] that reuses the first plan's polygons."""
     return world.plans[0].model_copy(
