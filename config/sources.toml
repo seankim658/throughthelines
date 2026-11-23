@@ -35,6 +35,17 @@ files = [
   "GeoJson/North Carolina_119_to_119.geojson",
 ]
 
+[lewis.states.PA]
+files = [
+  "GeoJson/Pennsylvania_103_to_107.geojson",
+  "GeoJson/Pennsylvania_108_to_108.geojson",
+  "GeoJson/Pennsylvania_109_to_112.geojson",
+  "GeoJson/Pennsylvania_113_to_114.geojson",
+  "GeoJson/Pennsylvania_115_to_115.geojson",
+  "GeoJson/Pennsylvania_116_to_117.geojson",
+  "GeoJson/Pennsylvania_118_to_119.geojson",
+]
+
 [lewis.states.TX]
 files = [
   "GeoJson/Texas_107_to_107.geojson",
