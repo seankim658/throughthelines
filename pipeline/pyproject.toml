@@ -27,7 +27,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "mypy>=2.1.0",
-    "pytest>=8.4.0",
+    "pytest>=9.0.0",
     "ruff>=0.17.0",
     "types-boto3[s3]>=1.43.34",
     "types-geopandas>=1.1.3.20260408",
@@ -50,6 +50,8 @@ select = [
 # pytest reports through assert.
 "tests/**" = ["S101"]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers"
+addopts = ["--strict-markers", "--strict-config", "-ra"]
+xfail_strict = true
+filterwarnings = ["error"]
