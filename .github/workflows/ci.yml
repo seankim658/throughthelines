@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   pipeline:
-    name: Pipeline, type-check + plan validation
+    name: Pipeline, type-check + tests + plan validation
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,7 +31,10 @@ jobs:
         run: uv sync
 
       - name: Type-check (mypy + pydantic plugin)
-        run: uv run mypy src
+        run: uv run mypy src tests
+
+      - name: Test
+        run: uv run pytest
 
       - name: Validate plan YAMLs
         run: uv run pipeline plan-index
