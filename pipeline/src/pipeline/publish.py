@@ -12,7 +12,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3 import S3Client
+    from types_boto3_s3 import S3Client
 
 
 _MANIFEST_KEY: str = "manifest.json"
@@ -141,7 +141,13 @@ def _load_manifest(manifest_file: Path) -> dict[str, Any]:
             f"manifest not found at {manifest_file} (run `pipeline manifest` first)"
         )
     with manifest_file.open("rb") as f:
-        return json.load(f)
+        manifest: Any = json.load(f)
+    if not isinstance(manifest, dict):
+        raise PublishError(
+            f"manifest at {manifest_file} must be a JSON object; "
+            f"got {type(manifest).__name__}"
+        )
+    return manifest
 
 
 # --- S3 client + transfers ---

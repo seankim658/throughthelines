@@ -6,7 +6,7 @@ from typing import Any
 
 def _key_check(
     obj: dict[str, Any], name: str, missing_message: str, error_cls: type[Exception]
-):
+) -> None:
     if name not in obj:
         raise error_cls(missing_message)
 

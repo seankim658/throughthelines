@@ -11,7 +11,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import TypedDict
 
 from pipeline.config import ScopeSettings
 from pipeline.core import SupportedStateCode, write_json_atomic
@@ -163,7 +163,7 @@ def _parse_row(
     state_abbrev: str = (raw.get("state_abbrev") or "").strip()
     if state_abbrev not in scope.chambers:
         return None
-    state: SupportedStateCode = cast(SupportedStateCode, state_abbrev)
+    state: SupportedStateCode = state_abbrev
 
     chamber_raw: str = (raw.get("chamber") or "").strip()
     if chamber_raw != "House":

@@ -4,7 +4,6 @@ import argparse
 import sys
 from collections.abc import Collection
 from pathlib import Path
-from typing import cast
 
 from pipeline.config import FetchConfig, ProjectConfig, ScopeSettings, load_fetch_config
 from pipeline.core import SUPPORTED_STATES, SupportedStateCode
@@ -31,7 +30,7 @@ def validate_state(value: str) -> SupportedStateCode:
         raise argparse.ArgumentTypeError(
             f"unsupported state {value!r}; supported: {list(SUPPORTED_STATES)}"
         )
-    return cast(SupportedStateCode, value)
+    return value
 
 
 def dedupe_states(states: list[SupportedStateCode]) -> list[SupportedStateCode]:

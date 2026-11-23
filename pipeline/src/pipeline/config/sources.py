@@ -294,7 +294,7 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
                 f"unknown state {state_raw!r} in [[{section_label}]] in {path} "
                 f"(expected one of: {supported_list})"
             )
-        state: SupportedStateCode = cast(SupportedStateCode, state_raw)
+        state: SupportedStateCode = state_raw
 
         congress: int = require_int(
             entry_raw, "congress", section_label, path, FetchConfigError
@@ -428,9 +428,7 @@ def _load_block_assignment_identity(
             f"unknown state {state_raw!r} in [[{section_label}]] in {path} "
             f"(expected '*' or one of: {supported_list})"
         )
-    state: SupportedStateCode | Literal["*"] = cast(
-        "SupportedStateCode | Literal['*']", state_raw
-    )
+    state: SupportedStateCode | Literal["*"] = state_raw
 
     congress = require_int(entry_raw, "congress", section_label, path, FetchConfigError)
 
@@ -485,7 +483,7 @@ def _load_block_assignment_file(
         provider=provider,
         state=state,
         congress=congress,
-        vintage=cast(BlockVintage, vintage_raw),
+        vintage=vintage_raw,
         url=url,
         landing_url=landing_url,
         inner_filename=inner_filename,
@@ -590,7 +588,7 @@ def _load_census_tabblock_templates(
                 f"census.tabblock.{vintage_key}.url_template missing required "
                 f"{{fips}} placeholder in {path}"
             )
-        templates[cast(BlockVintage, vintage_key)] = template
+        templates[vintage_key] = template
 
     if not templates:
         raise FetchConfigError(
