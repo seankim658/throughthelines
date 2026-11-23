@@ -1,16 +1,17 @@
 """Loader for config/request.toml."""
 
 from __future__ import annotations
+
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from pipeline.config._common import (
-    require_section,
-    require_int,
     require_float,
+    require_int,
     require_int_list,
+    require_section,
     require_supported_schema_version,
 )
 

@@ -6,27 +6,11 @@ district-history array (one slot per Congress in scope).
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import (
-    BlockAssignmentEntry,
-    BlockAssignmentCarry,
-    BlockVintage,
-    CensusSource,
-    GeometrySource,
-    NATIONAL_SCOPE,
-    ProjectPaths,
-    ScopeSettings,
-)
-from pipeline.core import (
-    STATE_INFO,
-    SupportedChamberType,
-    SupportedStateCode,
-    write_json_atomic,
-)
-from pipeline.plans import Plan
 from pipeline.blocks.readers import (
     TABBLOCK_COLUMNS,
     Centroid,
@@ -44,6 +28,23 @@ from pipeline.blocks.spatial_joins import (
     CrossDecadeResult,
     cross_decade_join,
 )
+from pipeline.config import (
+    NATIONAL_SCOPE,
+    BlockAssignmentCarry,
+    BlockAssignmentEntry,
+    BlockVintage,
+    CensusSource,
+    GeometrySource,
+    ProjectPaths,
+    ScopeSettings,
+)
+from pipeline.core import (
+    STATE_INFO,
+    SupportedChamberType,
+    SupportedStateCode,
+    write_json_atomic,
+)
+from pipeline.plans import Plan
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 
@@ -132,11 +133,12 @@ def _validate_inputs(
     Checks:
         1. Required tabblock zip exists on disk for every BlockVintage referenced
            by the sourcing matrix.
-        2. The in-scope plan set covers [congress_start, congress_end] with with
+        2. The in-scope plan set covers [congress_start, congress_end] with
            no duplicates.
-        3. Every Congress in scope resolves to a source: a `[[block_assignment]]` entry (state-specific
-           or national, with its zip on disk), the pre-BEF polygon fallback, the `--spatial-join-fallback`
-           opt-in, or an unsourced placeholder under `--allow-missing`.
+        3. Every Congress in scope resolves to a source: a `[[block_assignment]]`
+           entry (state-specific or national, with its zip on disk), the pre-BEF
+           polygon fallback, the `--spatial-join-fallback` opt-in, or an
+           unsourced placeholder under `--allow-missing`.
 
     """
     state_info = STATE_INFO[state]

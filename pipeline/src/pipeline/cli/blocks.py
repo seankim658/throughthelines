@@ -1,9 +1,10 @@
 from __future__ import annotations
+
 import argparse
 import sys
 
-from pipeline.cli._common import CliError, load_in_scope_plans, load_sources_and_states
 from pipeline.blocks import BlocksBuildError, BlocksBuildResult, build_blocks
+from pipeline.cli._common import CliError, load_in_scope_plans, load_sources_and_states
 from pipeline.config import ProjectConfig
 from pipeline.core import SupportedStateCode
 

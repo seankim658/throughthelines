@@ -11,17 +11,18 @@ missing artifact aborts the build rather than producing downstream 404s.
 """
 
 from __future__ import annotations
-from importlib.metadata import version as _pkg_version
+
 import hashlib
 import json
 import os
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import ProjectConfig, FetchConfig
+from pipeline.config import FetchConfig, ProjectConfig
 from pipeline.core import (
     STATE_INFO,
     SupportedChamberType,
@@ -159,8 +160,9 @@ def _resolve_git_sha(warnings: list[str]) -> str | None:
         return env_sha.strip()
 
     try:
+        # git is looked up on PATH, like every other build tool.
         result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
+            ["git", "rev-parse", "HEAD"],  # noqa: S607
             capture_output=True,
             text=True,
             check=True,
@@ -201,12 +203,7 @@ def _compute_url_prefix(git_sha: str | None) -> str | None:
 
 def _now_utc_iso8601() -> str:
     """Build identity timestamp in `YYYY-MM-DDTHH:MM:SSZ` form."""
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 # --- Artifact Assembly ---

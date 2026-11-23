@@ -11,11 +11,12 @@ time.
 """
 
 from __future__ import annotations
+
 import json
 import shutil
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pipeline.core import replace_atomic
@@ -105,7 +106,8 @@ def build_basemap(
         f"--maxzoom={max_zoom}",
     ]
 
-    completed: subprocess.CompletedProcess[str] = subprocess.run(
+    # The arguments are a fixed command line built from config, never shell input.
+    completed: subprocess.CompletedProcess[str] = subprocess.run(  # noqa: S603
         args, capture_output=True, text=True, check=False
     )
 
@@ -166,9 +168,7 @@ def _is_cached(
         return False
     if stamp.output_filename != output_path.name:
         return False
-    if output_path.stat().st_size != stamp.output_size_bytes:
-        return False
-    return True
+    return output_path.stat().st_size == stamp.output_size_bytes
 
 
 def _load_stamp(stamp_path: Path) -> _StampData:
@@ -216,7 +216,7 @@ def _write_stamp(
             "filename": output_filename,
             "size_bytes": output_size_bytes,
         },
-        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "created_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     tmp_path: Path = stamp_path.with_name(stamp_path.name + ".partial")
     with tmp_path.open("w") as f:

@@ -89,8 +89,9 @@ def _check_successor_predecessor_symmetry(
 
         if successor.predecessor != plan.plan_id:
             errors.append(
-                f"asymmetric relation: {plan.plan_id}.superseded_by = {successor_id!r}, "
-                f"but {successor_id}.predecessor = {successor.predecessor!r}"
+                f"asymmetric relation: {plan.plan_id}.superseded_by = "
+                f"{successor_id!r}, but {successor_id}.predecessor = "
+                f"{successor.predecessor!r}"
             )
 
 

@@ -10,13 +10,14 @@ Covers any block-to-district mapping published as a CSV/TSV inside a zip:
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
-from pipeline.config import BlockVintage
 from pipeline.blocks.readers import load_delimited_assignment
 from pipeline.blocks.sources.base import BlockAssignmentSource, BlockGeometry
 from pipeline.blocks.sources.provenance import DelimitedAssignmentProvenance
+from pipeline.config import BlockVintage
 
 
 @dataclass(frozen=True)

@@ -19,17 +19,18 @@ downstream artifacts:
 """
 
 from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from shapely.geometry import mapping, shape, Polygon, MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon, mapping, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import polylabel, unary_union
 
-from pipeline.plans.models import Plan
 from pipeline.core import SupportedStateCode, write_json_atomic
+from pipeline.plans.models import Plan
 
 # --- Errors ---
 

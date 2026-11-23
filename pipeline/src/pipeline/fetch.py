@@ -12,19 +12,20 @@ The fetch is split into two scopes:
 """
 
 from __future__ import annotations
+
 import hashlib
 import random
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
 
-from pipeline.config import FetchConfig, RequestSettings, ProjectPaths
+from pipeline.config import FetchConfig, ProjectPaths, RequestSettings
 from pipeline.core.state_codes import SupportedStateCode
 
 DEFAULT_USER_AGENT: str = "through-the-lines-pipeline/0.1"
@@ -217,6 +218,9 @@ def _http_get_with_retry(
     user_agent: str,
     extra_headers: dict[str, str] | None = None,
 ) -> tuple[bytes | None, dict[str, str]]:
+    if not source_url.startswith("https://"):
+        raise FetchError(f"source URLs must use https; got {source_url!r}")
+
     last_exception: Exception | None = None
     backoff_seconds: float = settings.initial_backoff_seconds
     retryable_codes: frozenset[int] = frozenset(settings.retryable_http_codes)
@@ -227,8 +231,11 @@ def _http_get_with_retry(
 
     for attempt in range(1, settings.max_retry_attempts + 1):
         try:
-            request = urllib.request.Request(source_url, headers=request_headers)
-            with urllib.request.urlopen(
+            # The https check above rules out file: and custom schemes.
+            request = urllib.request.Request(  # noqa: S310
+                source_url, headers=request_headers
+            )
+            with urllib.request.urlopen(  # noqa: S310
                 request, timeout=settings.request_timeout_seconds
             ) as response:
                 body: bytes = response.read()
@@ -252,15 +259,16 @@ def _http_get_with_retry(
             raise FetchError(f"failed to download {source_url}: {exc}") from exc
 
         if attempt < settings.max_retry_attempts:
-            sleep_for: float = backoff_seconds + random.uniform(
+            # Retry jitter needs no cryptographic randomness.
+            sleep_for: float = backoff_seconds + random.uniform(  # noqa: S311
                 0, settings.jitter_seconds
             )
             time.sleep(sleep_for)
             backoff_seconds *= settings.backoff_multiplier
 
     raise FetchError(
-        f"failed to download {source_url} after {settings.max_retry_attempts} attempts: "
-        f"{last_exception}"
+        f"failed to download {source_url} after "
+        f"{settings.max_retry_attempts} attempts: {last_exception}"
     ) from last_exception
 
 
@@ -346,7 +354,7 @@ def _write_manifest(
 ) -> Path:
     state_path.parent.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, Any] = {
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": datetime.now(UTC).isoformat(),
         "lewis_commit_sha": sources.lewis.commit_sha,
         "files": [
             {

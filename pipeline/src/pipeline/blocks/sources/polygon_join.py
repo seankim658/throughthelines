@@ -7,14 +7,15 @@ than as a pre-computed block assignment file.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
-from pipeline.config import BlockVintage
 from pipeline.blocks.readers import load_plan_polygons
-from pipeline.blocks.spatial_joins import plan_polygon_join
 from pipeline.blocks.sources.base import BlockAssignmentSource, BlockGeometry
 from pipeline.blocks.sources.provenance import PolygonJoinProvenance
+from pipeline.blocks.spatial_joins import plan_polygon_join
+from pipeline.config import BlockVintage
 
 
 @dataclass(frozen=True)

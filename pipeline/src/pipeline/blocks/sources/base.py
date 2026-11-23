@@ -1,7 +1,8 @@
 """Block-assignemnt source contract.
 
-A BlockAssignmentSource maps Census blocks to districts for one plan, keyed in one decade's block
-geometry. The builder owns cross-decade linkage and the {congress -> source} mapping.
+A BlockAssignmentSource maps Census blocks to districts for one plan, keyed in one
+decade's block geometry. The builder owns cross-decade linkage and the
+{congress -> source} mapping.
 
 Concrete sources live in sibling modules:
     - delimited.py:     CSV/TSV block-assignment files
@@ -23,15 +24,17 @@ To add a new source type:
 
 Design rules:
 
-    - A source knows its upstream format and its block vintage. It does not know its plan_id
-    of which Congress it serves, that's the responsibility of the builder. This keeps sources
-    reusable across Congresses if a single upstream covers a multi-Congress plan.
-    - `load()` is the only point where any I/O happens. Constructors should validate things such
-    as the file existing, the required config is present, etc.
+    - A source knows its upstream format and its block vintage. It does not know
+    its plan_id or which Congress it serves, that's the responsibility of the
+    builder. This keeps sources reusable across Congresses if a single upstream
+    covers a multi-Congress plan.
+    - `load()` is the only point where any I/O happens. Constructors should
+    validate things such as the file existing, the required config is present, etc.
     - The `provenance()` shape is part of the frontend contract
 """
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 

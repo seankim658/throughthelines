@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from datetime import date
-from typing import Annotated, Any, Literal, ClassVar
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     BaseModel,
@@ -229,14 +229,15 @@ class Plan(BaseModel):
         """Ensures plan_id follows the STATE_CONGRESS_YEAR pattern."""
         if not re.match(PLAN_ID_PATTERN, value):
             raise ValueError(
-                f"plan_id must match pattern STATE_CONGRESS_YEAR (e.g., NC_118_2023); got {value!r}"
+                "plan_id must match pattern STATE_CONGRESS_YEAR "
+                f"(e.g., NC_118_2023); got {value!r}"
             )
         return value
 
     @field_validator("predecessor", "superseded_by")
     @classmethod
     def _plan_reference_is_well_formed(cls, value: str | None) -> str | None:
-        """A plan reference must be None, the sentinel 'pending', or a well-formed plan_id matching PLAN_ID_PATTERN."""
+        """Require a plan reference to be None, 'pending', or a well-formed plan_id."""
         if value is None or value == PENDING:
             return value
         if not re.match(PLAN_ID_PATTERN, value):
@@ -251,7 +252,8 @@ class Plan(BaseModel):
         """Ensure congress_end is not before congress_start."""
         if self.congress_end is not None and self.congress_end < self.congress_start:
             raise ValueError(
-                f"congress_end({self.congress_end}) must be >= congress_start ({self.congress_start})"
+                f"congress_end ({self.congress_end}) must be >= "
+                f"congress_start ({self.congress_start})"
             )
         return self
 
@@ -267,7 +269,8 @@ class Plan(BaseModel):
         state_from_id, congress_from_id, _ = parts
         if state_from_id != self.state:
             raise ValueError(
-                f"plan_id state prefix ({state_from_id}) does not match state field ({self.state})"
+                f"plan_id state prefix ({state_from_id}) does not match "
+                f"state field ({self.state})"
             )
         if not congress_from_id.isdigit():
             raise ValueError(
@@ -275,7 +278,8 @@ class Plan(BaseModel):
             )
         if int(congress_from_id) != self.congress_start:
             raise ValueError(
-                f"plan_id congress ({congress_from_id}) does not match congress_start ({self.congress_start})"
+                f"plan_id congress ({congress_from_id}) does not match "
+                f"congress_start ({self.congress_start})"
             )
         return self
 
@@ -295,9 +299,7 @@ class Plan(BaseModel):
 
     @model_validator(mode="after")
     def _inline_citations_resolve(self) -> Plan:
-        """Every [CODE] in a prose field must be well-formed and match a source_code defined
-        on this plan's references.
-        """
+        """Require every [CODE] in a prose field to match a source_code on this plan."""
         defined: set[str] = set(
             _collect_source_codes(self.court_citations, self.sources)
         )

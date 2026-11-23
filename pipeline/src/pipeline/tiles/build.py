@@ -9,12 +9,13 @@ External dependency: `tippecanoe` must be on $PATH at build time.
 """
 
 from __future__ import annotations
+
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from pipeline.core import SupportedStateCode, SupportedChamberType, replace_atomic
+from pipeline.core import SupportedChamberType, SupportedStateCode, replace_atomic
 
 # Name of the binary to shell out to
 _TIPPECANOE_BIN: str = "tippecanoe"
@@ -86,7 +87,8 @@ def build_tiles(
     for layer_name, path in layer_inputs.items():
         args.extend(["-L", f"{layer_name}:{path}"])
 
-    completed: subprocess.CompletedProcess[str] = subprocess.run(
+    # The arguments are a fixed command line built from config, never shell input.
+    completed: subprocess.CompletedProcess[str] = subprocess.run(  # noqa: S603
         args, capture_output=True, text=True, check=False
     )
 

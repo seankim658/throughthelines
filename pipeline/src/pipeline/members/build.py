@@ -7,6 +7,7 @@ strings, and writes a nested JSON lookup in the format:
 """
 
 from __future__ import annotations
+
 import csv
 from dataclasses import dataclass
 from pathlib import Path

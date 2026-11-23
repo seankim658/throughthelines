@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import shutil
 import sys
 from argparse import Namespace
 
-from pipeline.cli._common import format_bytes, CliError, load_sources
 from pipeline.basemap import BasemapBuildError, BasemapBuildResult, build_basemap
+from pipeline.cli._common import CliError, format_bytes, load_sources
 from pipeline.config import ProjectConfig
 
 
@@ -25,7 +26,7 @@ def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
 
     cfg = sources.protomaps_basemap
 
-    print(f"[basemap]")
+    print("[basemap]")
     print(f"\tbuild_url : {cfg.build_url}")
     print(f"\tbbox      : {cfg.bbox}")
     print(f"\tmaxzoom   : {cfg.max_zoom}")

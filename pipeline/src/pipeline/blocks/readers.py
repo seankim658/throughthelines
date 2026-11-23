@@ -1,9 +1,11 @@
 """File I/O for the block-lookup pipeline."""
 
 from __future__ import annotations
+
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, NamedTuple, Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 if TYPE_CHECKING:
     from geopandas import GeoDataFrame
@@ -51,7 +53,7 @@ def _centroids_from_columns(
 ) -> dict[str, Centroid]:
     """Build a {geoid: Centroid} dict from three parallel column iterables."""
     centroids: dict[str, Centroid] = {}
-    for geoid_raw, lon_raw, lat_raw in zip(geoids, lons, lats):
+    for geoid_raw, lon_raw, lat_raw in zip(geoids, lons, lats, strict=True):
         geoid: str = str(geoid_raw)
         if state_fips is not None and not geoid.startswith(state_fips):
             continue
@@ -176,46 +178,45 @@ def load_delimited_assignment(
     district_column_upper: str = district_column.strip().upper()
     assignments: dict[str, int] = {}
 
-    with zipfile.ZipFile(zip_path, "r") as zf:
-        with zf.open(inner_filename) as raw:
-            reader = csv.reader(
-                (line.decode("utf-8-sig") for line in raw), delimiter=delimiter
+    with zipfile.ZipFile(zip_path, "r") as zf, zf.open(inner_filename) as raw:
+        reader = csv.reader(
+            (line.decode("utf-8-sig") for line in raw), delimiter=delimiter
+        )
+        header: list[str] = next(reader)
+
+        geoid_idx: int | None = None
+        district_idx: int | None = None
+        for i, col in enumerate(header):
+            col_stripped: str = col.strip().upper()
+            if col_stripped in geoid_aliases:
+                geoid_idx = i
+            elif col_stripped == district_column_upper:
+                district_idx = i
+
+        if geoid_idx is None:
+            raise BlocksReadError(
+                f"could not identify block-GEOID column "
+                f"(expected one of {sorted(geoid_aliases)}) in "
+                f"{inner_filename} within {zip_path}; "
+                f"header: {header}"
             )
-            header: list[str] = next(reader)
+        if district_idx is None:
+            raise BlocksReadError(
+                f"could not find district column {district_column!r} in "
+                f"{inner_filename} within {zip_path}; "
+                f"header: {header}"
+            )
 
-            geoid_idx: int | None = None
-            district_idx: int | None = None
-            for i, col in enumerate(header):
-                col_stripped: str = col.strip().upper()
-                if col_stripped in geoid_aliases:
-                    geoid_idx = i
-                elif col_stripped == district_column_upper:
-                    district_idx = i
-
-            if geoid_idx is None:
-                raise BlocksReadError(
-                    f"could not identify block-GEOID column "
-                    f"(expected one of {sorted(geoid_aliases)}) in "
-                    f"{inner_filename} within {zip_path}; "
-                    f"header: {header}"
-                )
-            if district_idx is None:
-                raise BlocksReadError(
-                    f"could not find district column {district_column!r} in "
-                    f"{inner_filename} within {zip_path}; "
-                    f"header: {header}"
-                )
-
-            for row in reader:
-                if len(row) <= max(geoid_idx, district_idx):
-                    continue
-                geoid: str = row[geoid_idx].strip()
-                if not geoid.startswith(state_fips):
-                    continue
-                district_raw: str = row[district_idx].strip()
-                try:
-                    assignments[geoid] = int(district_raw)
-                except ValueError:
-                    continue
+        for row in reader:
+            if len(row) <= max(geoid_idx, district_idx):
+                continue
+            geoid: str = row[geoid_idx].strip()
+            if not geoid.startswith(state_fips):
+                continue
+            district_raw: str = row[district_idx].strip()
+            try:
+                assignments[geoid] = int(district_raw)
+            except ValueError:
+                continue
 
     return assignments

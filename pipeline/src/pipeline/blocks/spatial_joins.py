@@ -1,6 +1,7 @@
 """Spatial join primitives for the block-lookup pipeline."""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, NamedTuple
 
 from pipeline.blocks.readers import Centroid
@@ -56,7 +57,11 @@ def cross_decade_join(
     has_match = joined["index_right"].notna()
     matched = joined[has_match]
     linkage: dict[str, str] = dict(
-        zip(matched["source_geoid"].astype(str), matched[target_geoid_col].astype(str))
+        zip(
+            matched["source_geoid"].astype(str),
+            matched[target_geoid_col].astype(str),
+            strict=True,
+        )
     )
     unmatched: list[str] = joined[~has_match]["source_geoid"].tolist()
 
@@ -68,7 +73,7 @@ def cross_decade_join(
 def plan_polygon_join(
     centroids: dict[str, Centroid], plan_polygons: gpd.GeoDataFrame, district_col: str
 ) -> dict[str, int]:
-    """Spatial-join block centroids against plan polygons to assign each block a district."""
+    """Assign each block a district by joining its centroid to plan polygons."""
     import geopandas as gpd
     from shapely import Point
 
@@ -88,7 +93,11 @@ def plan_polygon_join(
     matched = joined[has_match]
 
     assignments: dict[str, int] = dict(
-        zip(matched["block_geoid"].astype(str), matched[district_col].astype(int))
+        zip(
+            matched["block_geoid"].astype(str),
+            matched[district_col].astype(int),
+            strict=True,
+        )
     )
 
     return assignments

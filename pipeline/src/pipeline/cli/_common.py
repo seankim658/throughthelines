@@ -1,11 +1,13 @@
 from __future__ import annotations
-import sys
-import argparse
-from pathlib import Path
-from typing import Collection, cast
 
-from pipeline.core import SupportedStateCode, SUPPORTED_STATES
+import argparse
+import sys
+from collections.abc import Collection
+from pathlib import Path
+from typing import cast
+
 from pipeline.config import FetchConfig, ProjectConfig, ScopeSettings, load_fetch_config
+from pipeline.core import SUPPORTED_STATES, SupportedStateCode
 from pipeline.plans import (
     Plan,
     PlanLoadError,

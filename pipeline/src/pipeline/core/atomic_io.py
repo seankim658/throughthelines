@@ -1,6 +1,6 @@
 from __future__ import annotations
+
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,7 @@ def replace_atomic(tmp_path: Path, dest_path: Path) -> None:
     """
     try:
         dest_path.parent.mkdir(parents=True, exist_ok=True)
-        os.replace(tmp_path, dest_path)
+        tmp_path.replace(dest_path)
     except OSError:
         if tmp_path.exists():
             tmp_path.unlink(missing_ok=True)
@@ -29,7 +29,7 @@ def write_text_atomic(dest_path: Path, content: str, encoding: str = "utf-8") ->
     tmp_path: Path = _tmp_path_for(dest_path)
     try:
         tmp_path.write_text(content, encoding=encoding)
-        os.replace(tmp_path, dest_path)
+        tmp_path.replace(dest_path)
     except OSError:
         if tmp_path.exists():
             tmp_path.unlink(missing_ok=True)

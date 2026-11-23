@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
 
 from pipeline.cli._common import validate_state
-from pipeline.config import load_project_config, ProjectConfigError
+from pipeline.config import ProjectConfigError, load_project_config
 from pipeline.core import RepoRootNotFoundError, find_repo_root
 
 
@@ -94,17 +95,17 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Build pipeline",
         epilog=(
             "Recommended run order:\n"
-            "  1. fetch                 Download upstream sources (except the basemap)\n"
-            "  2. scaffold-plans        Generate placeholder plan-metadata YAMLs\n"
-            "  3. normalize-geometry    Normalize non-Lewis shapefiles into GeoJSON\n"
-            "  3. stitch                Stitch plan metadata onto district polygons\n"
-            "  4. members               Slice Voteview into per-state members.json\n"
-            "  5. blocks                Build per-state block-lookup JSON\n"
-            "  6. tiles                 Build PMTiles archives via tippecanoe\n"
-            "  7. basemap               Extract CONUS basemap via pmtiles CLI\n"
-            "  8. plan-index            Build plan_index.json for the frontend\n"
-            "  9. manifest              Build manifest.json (run last)\n"
-            " 10. publish               Upload artifacts to R2 (deploy; needs R2_* env)\n"
+            "  1. fetch               Download upstream sources (except the basemap)\n"
+            "  2. scaffold-plans      Generate placeholder plan-metadata YAMLs\n"
+            "  3. normalize-geometry  Normalize non-Lewis shapefiles into GeoJSON\n"
+            "  4. stitch              Stitch plan metadata onto district polygons\n"
+            "  5. members             Slice Voteview into per-state members.json\n"
+            "  6. blocks              Build per-state block-lookup JSON\n"
+            "  7. tiles               Build PMTiles archives via tippecanoe\n"
+            "  8. basemap             Extract CONUS basemap via pmtiles CLI\n"
+            "  9. plan-index          Build plan_index.json for the frontend\n"
+            " 10. manifest            Build manifest.json (run last)\n"
+            " 11. publish             Upload artifacts to R2 (deploy; needs R2_* env)\n"
             "\n"
             "Steps 5-9 are independent and can run in any order after step 4.\n"
             "Step 11 (publish) requires a built manifest and R2 credentials."

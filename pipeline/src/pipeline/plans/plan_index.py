@@ -7,16 +7,17 @@ data export, and metadata-completeness indicators.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import ScopeSettings, GeometrySource
+from pipeline.config import GeometrySource, ScopeSettings
 from pipeline.core import SupportedStateCode, write_json_atomic
-from pipeline.plans.models import Plan
 from pipeline.plans.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
-from pipeline.plans.validators import PlanSetValidationError
+from pipeline.plans.models import Plan
 from pipeline.plans.scope import plan_in_scope
+from pipeline.plans.validators import PlanSetValidationError
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import pytest
+from conftest import PlanRecordFactory
 from pydantic import ValidationError
 
 from pipeline.plans import PENDING, Plan
-
-from conftest import PlanRecordFactory
 
 AAR_SOURCE: dict[str, str] = {
     "url": "https://redistricting.lls.edu/state/north-carolina/",

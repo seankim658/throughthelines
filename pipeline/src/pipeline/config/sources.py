@@ -1,13 +1,13 @@
 """Loader for config/sources.toml."""
 
 from __future__ import annotations
+
 import tomllib
 import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast, get_args
 
-from pipeline.core import SUPPORTED_STATES, SupportedStateCode, STATE_INFO
 from pipeline.config._common import (
     require_int,
     require_section,
@@ -15,13 +15,15 @@ from pipeline.config._common import (
     require_string_list,
     require_supported_schema_version,
 )
+from pipeline.core import STATE_INFO, SUPPORTED_STATES, SupportedStateCode
 
 SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
 
 # Decade-vintage labels for Census tabulation block geometry
-# v2000 → 2000-Census blocks (used for 107th–112th Congress spatial joins)
-# v2010 → 2010-Census blocks (used for 113th–117th BEFs)
-# v2020 → 2020-Census blocks (used for 118th–119th BEFs; runtime pivot)
+# v2000 is the 2000-Census blocks, used for pre-BEF spatial joins
+# v2010 is the 2010-Census blocks, used for 2010-cycle assignment files
+# v2020 is the 2020-Census blocks, used for 2020-cycle assignment files and as
+# the runtime pivot
 BlockVintage = Literal["v2000", "v2010", "v2020"]
 SUPPORTED_VINTAGES: tuple[BlockVintage, ...] = get_args(BlockVintage)
 
@@ -539,7 +541,10 @@ def _load_block_assignment_carry(
 def _validate_carry_targets(
     files: list[BlockAssignmentEntry], carries: list[BlockAssignmentCarry], path: Path
 ) -> None:
-    """Every carry must point at a real (non-carry) entry in the same scope (and no chains)."""
+    """Require every carry to point at a real entry in its own scope.
+
+    A carry can never point at another carry, so carries never chain.
+    """
     real_by_key: dict[tuple[str, int], BlockAssignmentEntry] = {
         (entry.state, entry.congress): entry for entry in files
     }

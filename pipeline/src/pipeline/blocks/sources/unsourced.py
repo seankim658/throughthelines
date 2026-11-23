@@ -1,11 +1,12 @@
 """Explicit-hole block-assignment source."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from pipeline.config import BlockVintage
 from pipeline.blocks.sources.base import BlockAssignmentSource, BlockGeometry
 from pipeline.blocks.sources.provenance import UnsourcedProvenance
+from pipeline.config import BlockVintage
 
 
 @dataclass(frozen=True)

@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 import sys
 
 from pipeline.cli._common import (
     CliError,
     load_sources,
-    print_warnings,
     print_warning_count,
+    print_warnings,
 )
 from pipeline.config import ProjectConfig
 from pipeline.manifest import ManifestBuildError, ManifestBuildResult, build_manifest

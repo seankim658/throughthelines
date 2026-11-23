@@ -5,6 +5,7 @@ authority and produces the GeoJSON for the stitch step to consume.
 """
 
 from __future__ import annotations
+
 import json
 import zipfile
 from dataclasses import dataclass
@@ -55,7 +56,7 @@ def normalize_geometry(
 
     return GeometryNormalizeResult(
         output_path=output_path,
-        feature_count=int(len(normalized)),
+        feature_count=len(normalized),
         distrct_count=int(normalized[_DISTRICT_PROPERTY].nunique()),
     )
 

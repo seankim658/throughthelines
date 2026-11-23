@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import sys
 
-from pipeline.cli._common import print_warnings, print_warning_count
+from pipeline.cli._common import print_warning_count, print_warnings
 from pipeline.config import ProjectConfig, load_fetch_config, load_request_config
 from pipeline.core import SUPPORTED_STATES
 from pipeline.fetch import FetchError, FetchResult, fetch_national, fetch_state

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from conftest import PlanRecordFactory
 
 from pipeline.plans import (
     Plan,
@@ -10,8 +11,6 @@ from pipeline.plans import (
     load_plans_dir,
     validate_plan_set,
 )
-
-from conftest import PlanRecordFactory
 
 
 def _plan_2013(plan_record: PlanRecordFactory, **overrides: object) -> Plan:
