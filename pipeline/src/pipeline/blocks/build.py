@@ -65,7 +65,6 @@ class BlocksBuildError(Exception):
 
 @dataclass(frozen=True)
 class _BuildPlan:
-
     state: SupportedStateCode
     scope: ScopeSettings
     state_fips: str
@@ -104,7 +103,6 @@ class _ResolvedAssignment:
 
 @dataclass(frozen=True)
 class BlocksBuildResult:
-
     state: SupportedStateCode
     output_path: Path
     blocks_count: int

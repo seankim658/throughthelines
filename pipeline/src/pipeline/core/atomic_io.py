@@ -35,6 +35,7 @@ def write_text_atomic(dest_path: Path, content: str, encoding: str = "utf-8") ->
             tmp_path.unlink(missing_ok=True)
         raise
 
+
 # NOTE : might need to stream later if file size becomes an issue
 def write_json_atomic(dest_path: Path, payload: Any) -> None:
     content: str = json.dumps(payload, separators=(",", ":"))

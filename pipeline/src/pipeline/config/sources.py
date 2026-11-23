@@ -51,7 +51,6 @@ class FetchConfigError(ValueError):
 
 @dataclass(frozen=True)
 class LewisSource:
-
     repo: str
     commit_sha: str
     landing_url: str
@@ -61,14 +60,12 @@ class LewisSource:
     def raw_url(self, file_path: str) -> str:
         encoded: str = urllib.parse.quote(file_path)
         return (
-            f"https://raw.githubusercontent.com/{self.repo}/"
-            f"{self.commit_sha}/{encoded}"
+            f"https://raw.githubusercontent.com/{self.repo}/{self.commit_sha}/{encoded}"
         )
 
 
 @dataclass(frozen=True)
 class GeometrySource:
-
     provider: str
     state: SupportedStateCode
     congress: int
@@ -82,14 +79,12 @@ class GeometrySource:
 
 @dataclass(frozen=True)
 class VoteviewSource:
-
     url: str
     landing_url: str
 
 
 @dataclass(frozen=True)
 class BlockAssignmentEntry:
-
     provider: str
     state: SupportedStateCode | Literal["*"]
     congress: int
@@ -119,7 +114,6 @@ class BlockAssignmentCarry:
 
 @dataclass(frozen=True)
 class CensusSource:
-
     tabblock_templates: dict[BlockVintage, str]
 
     def tabblock_url(self, vintage: BlockVintage, state: SupportedStateCode) -> str:
@@ -130,7 +124,6 @@ class CensusSource:
 
 @dataclass(frozen=True)
 class ProtomapsBasemapSource:
-
     build_url: str
     landing_url: str
     max_zoom: int
@@ -139,7 +132,6 @@ class ProtomapsBasemapSource:
 
 @dataclass(frozen=True)
 class FetchConfig:
-
     schema_version: int
     lewis: LewisSource
     geometry_sources: list[GeometrySource]

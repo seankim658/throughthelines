@@ -27,7 +27,6 @@ class ScaffoldGeneratorError(Exception):
 
 @dataclass(frozen=True)
 class ScaffoldResult:
-
     status: ScaffoldStatus
     plan_id: str | None
     source_path: Path
@@ -49,8 +48,7 @@ def scaffold_all(
 ) -> list[ScaffoldResult]:
     if not lewis_dir.is_dir():
         raise FileNotFoundError(
-            f"Lewis directory not found: {lewis_dir} "
-            f"(did you run `pipeline fetch`?)"
+            f"Lewis directory not found: {lewis_dir} (did you run `pipeline fetch`?)"
         )
 
     lewis_files: list[Path] = sorted(lewis_dir.glob("*.geojson"))

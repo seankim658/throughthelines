@@ -33,7 +33,6 @@ class PublishError(Exception):
 
 
 class R2Settings(BaseSettings):
-
     model_config = SettingsConfigDict(
         env_prefix="R2_", env_file=_ENV_FILE, extra="ignore"
     )

@@ -35,7 +35,6 @@ class ProjectConfigError(ValueError):
 
 @dataclass(frozen=True)
 class ProjectSettings:
-
     name: str
     domain: str
     tagline: str
@@ -44,7 +43,6 @@ class ProjectSettings:
 
 @dataclass(frozen=True)
 class ScopeSettings:
-
     congress_start: int
     congress_end: int
     chambers: dict[SupportedStateCode, list[SupportedChamberType]]
@@ -53,7 +51,6 @@ class ScopeSettings:
 
 @dataclass(frozen=True)
 class ProjectPaths:
-
     config_dir: Path
     request_filename: str
     sources_filename: str
@@ -78,7 +75,6 @@ class ProjectPaths:
 
 @dataclass(frozen=True)
 class ProjectConfig:
-
     schema_version: int
     project_settings: ProjectSettings
     project_paths: ProjectPaths
@@ -136,8 +132,7 @@ def _resolve_paths(
     if pending:
         unresolved = ", ".join(sorted(pending))
         raise ProjectConfigError(
-            f"unresolved or cyclic path reference(s) in [paths] in "
-            f"{path}: {unresolved}"
+            f"unresolved or cyclic path reference(s) in [paths] in {path}: {unresolved}"
         )
 
     del resolved["repo_root"]
@@ -231,8 +226,7 @@ def _load_scope_section(raw: dict[str, Any], path: Path) -> ScopeSettings:
         )
     if not (103 <= congress_end <= 130):
         raise ProjectConfigError(
-            f"scope.congress_end ({congress_end}) must be between 103 "
-            f"and 130 in {path}"
+            f"scope.congress_end ({congress_end}) must be between 103 and 130 in {path}"
         )
 
     chambers: dict[SupportedStateCode, list[SupportedChamberType]] = (
@@ -271,7 +265,7 @@ def _load_scope_chambers(
             )
         if not isinstance(chamber_list, list) or not chamber_list:
             raise ProjectConfigError(
-                f"[scope.chambers.{state_code}] must be a non-empty list in " f"{path}"
+                f"[scope.chambers.{state_code}] must be a non-empty list in {path}"
             )
         validated: list[SupportedChamberType] = []
         for chamber in chamber_list:

@@ -43,7 +43,6 @@ class _StatePlansResult:
 
 @dataclass(frozen=True)
 class PlanIndexBuildResult:
-
     output_path: Path
     states_count: int
     plans_count: int

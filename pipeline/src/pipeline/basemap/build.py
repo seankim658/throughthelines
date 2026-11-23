@@ -37,7 +37,6 @@ class BasemapBuildError(Exception):
 
 @dataclass(frozen=True)
 class BasemapBuildResult:
-
     output_path: Path
     file_size_bytes: int
     cached: bool
@@ -45,7 +44,6 @@ class BasemapBuildResult:
 
 @dataclass(frozen=True)
 class _StampData:
-
     schema_version: int
     build_url: str
     bbox: tuple[float, float, float, float]

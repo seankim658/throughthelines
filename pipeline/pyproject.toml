@@ -29,10 +29,15 @@ dev = [
     "boto3-stubs[s3]>=1.43.34",
     "mypy>=2.1.0",
     "pytest>=8.4.0",
+    "ruff>=0.17.0",
     "types-boto3>=1.43.34",
     "types-geopandas>=1.1.3.20260408",
     "types-pyyaml>=6.0.12.20260408",
 ]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

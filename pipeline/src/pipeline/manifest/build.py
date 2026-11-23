@@ -57,7 +57,6 @@ class ManifestBuildError(Exception):
 
 @dataclass(frozen=True)
 class ManifestBuildResult:
-
     output_path: Path
     version: str
     git_sha: str | None

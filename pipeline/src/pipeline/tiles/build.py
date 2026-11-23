@@ -31,7 +31,6 @@ class TilesBuildError(Exception):
 
 @dataclass(frozen=True)
 class TilesBuildResult:
-
     state: SupportedStateCode
     output_path: Path
     file_size_bytes: int

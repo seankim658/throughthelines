@@ -212,7 +212,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "manifest",
         help=(
-            "Build manifest.json, the frontend discovery document. " "Must be run last."
+            "Build manifest.json, the frontend discovery document. Must be run last."
         ),
     )
 

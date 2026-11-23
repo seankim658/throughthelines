@@ -44,7 +44,6 @@ class FetchError(Exception):
 
 @dataclass(frozen=True)
 class FetchedFile:
-
     source_url: str
     local_path: Path
     sha256: str
@@ -56,7 +55,6 @@ class FetchedFile:
 
 @dataclass(frozen=True)
 class FetchResult:
-
     files: list[FetchedFile]
     state_path: Path
     state: SupportedStateCode | None  # None means national scope

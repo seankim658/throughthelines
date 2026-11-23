@@ -21,7 +21,6 @@ YAML_EXTENSIONS: frozenset[str] = frozenset({".yaml", ".yml"})
 
 
 class PlanLoadError(Exception):
-
     def __init__(self, path: Path, message: str) -> None:
         self.path: Path = path
         self.message: str = message
@@ -29,7 +28,6 @@ class PlanLoadError(Exception):
 
 
 class PlanSetLoadError(Exception):
-
     def __init__(self, failures: list[LoadFailure]) -> None:
         self.failures: list[LoadFailure] = failures
         summary: str = "\n".join(
@@ -40,7 +38,6 @@ class PlanSetLoadError(Exception):
 
 @dataclass(frozen=True)
 class LoadFailure:
-
     path: Path
     message: str
 

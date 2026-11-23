@@ -32,7 +32,6 @@ class GeometryNormalizeError(Exception):
 
 @dataclass(frozen=True)
 class GeometryNormalizeResult:
-
     output_path: Path
     feature_count: int
     distrct_count: int
@@ -69,8 +68,7 @@ def _read_shapefile_zip(input_zip: Path) -> GeoDataFrame:
 
     if not input_zip.exists():
         raise GeometryNormalizeError(
-            f"geometry source not found at {input_zip} "
-            f"(did you run `pipeline fetch`?)"
+            f"geometry source not found at {input_zip} (did you run `pipeline fetch`?)"
         )
     inner_shp: str = _find_inner_shapefile(input_zip)
     return gpd.read_file(f"/vsizip/{input_zip}/{inner_shp}")

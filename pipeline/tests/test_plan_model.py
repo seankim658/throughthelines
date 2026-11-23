@@ -67,13 +67,17 @@ def test_open_ended_plan_is_accepted(plan_record: PlanRecordFactory) -> None:
 def test_plan_reference_accepts_null_pending_or_plan_id(
     plan_record: PlanRecordFactory,
 ) -> None:
-    plan = Plan.model_validate(plan_record(predecessor=None, superseded_by="NC_115_2017"))
+    plan = Plan.model_validate(
+        plan_record(predecessor=None, superseded_by="NC_115_2017")
+    )
 
     assert plan.predecessor is None
     assert plan.superseded_by == "NC_115_2017"
 
 
-def test_plan_reference_rejects_unknown_sentinel(plan_record: PlanRecordFactory) -> None:
+def test_plan_reference_rejects_unknown_sentinel(
+    plan_record: PlanRecordFactory,
+) -> None:
     with pytest.raises(ValidationError, match="plan reference"):
         Plan.model_validate(plan_record(predecessor="unknown"))
 

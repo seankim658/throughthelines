@@ -28,7 +28,6 @@ class RequestConfigError(ValueError):
 
 @dataclass(frozen=True)
 class RequestSettings:
-
     max_retry_attempts: int
     initial_backoff_seconds: float
     backoff_multiplier: float
@@ -39,7 +38,6 @@ class RequestSettings:
 
 @dataclass(frozen=True)
 class RequestConfig:
-
     schema_version: int
     request_settings: RequestSettings
 

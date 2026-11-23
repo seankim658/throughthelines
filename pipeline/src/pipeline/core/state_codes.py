@@ -32,7 +32,6 @@ class BBox:
 
 @dataclass(frozen=True)
 class StateInfo:
-
     code: SupportedStateCode
     fips: str  # 2-digit Census FIPS
     name_upper: str  # TIGER URL slug

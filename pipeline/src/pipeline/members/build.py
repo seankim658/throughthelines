@@ -70,7 +70,6 @@ class MembersBuildError(Exception):
 
 @dataclass(frozen=True)
 class _SliceRow:
-
     state: SupportedStateCode
     congress: int
     district: int
@@ -88,7 +87,6 @@ class _SliceRow:
 
 @dataclass(frozen=True)
 class MembersBuildResult:
-
     output_path: Path
     rows_read: int
     rows_in_scope: int
@@ -232,8 +230,7 @@ def _parse_int(raw: dict[str, str], column: str, row_idx: int) -> int:
         as_float: float = float(value)
     except ValueError as e:
         raise MembersBuildError(
-            f"row {row_idx}: malformed {column!r} value {value!r} "
-            f"(expected integer)"
+            f"row {row_idx}: malformed {column!r} value {value!r} (expected integer)"
         ) from e
     as_int: int = int(as_float)
     if as_int != as_float:

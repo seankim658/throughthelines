@@ -43,7 +43,6 @@ class StitchError(Exception):
 
 @dataclass(frozen=True)
 class StitchResult:
-
     state: SupportedStateCode
     polygons_path: Path
     labels_path: Path
@@ -201,6 +200,5 @@ def _largest_polygon(geom: BaseGeometry) -> Polygon:
     if isinstance(geom, MultiPolygon):
         return max(geom.geoms, key=lambda p: p.area)
     raise StitchError(
-        f"expected Polygon or MultiPolygon for label anchor, "
-        f"got {type(geom).__name__}"
+        f"expected Polygon or MultiPolygon for label anchor, got {type(geom).__name__}"
     )

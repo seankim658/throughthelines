@@ -46,8 +46,7 @@ def run_basemap(project_config: ProjectConfig, args: Namespace) -> int:
 
     status: str = "cached" if result.cached else "extracted"
     print(
-        f"\t→ {result.output_path} "
-        f"({format_bytes(result.file_size_bytes)}, {status})"
+        f"\t→ {result.output_path} ({format_bytes(result.file_size_bytes)}, {status})"
     )
 
     return 0
