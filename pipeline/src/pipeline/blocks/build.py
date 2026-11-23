@@ -576,7 +576,7 @@ def build_blocks(
         needs_2000_linkage=needs_2000_linkage,
     )
     geometry: BlockGeometry = _build_block_geometry(linkage)
-    assignments: dict[int, dict[str, int]] = _load_assignments(build_plan, geometry)
+    assignments, polygon_warnings = _load_assignments(build_plan, geometry)
 
     histories_by_block: dict[str, list[int | None]] = _build_block_histories(
         build_plan=build_plan, linkage=linkage, assignments=assignments
@@ -611,6 +611,7 @@ def build_blocks(
         unsourced_congresses=unsourced_congresses,
         warnings=(
             linkage.warnings
+            + polygon_warnings
             + build_plan.resolution_warnings
             + [_summarize_linkage(linkage)]
         ),
@@ -752,30 +753,58 @@ def _serialize_congresses(build_plan: _BuildPlan) -> list[dict[str, Any]]:
 
 def _load_assignments(
     build_plan: _BuildPlan, geometry: BlockGeometry
-) -> dict[int, dict[str, int]]:
+) -> tuple[dict[int, dict[str, int]], list[str]]:
     """Load block-to-district assignments for every Congress in scope.
 
     Polygon-join results are cached by plan file and block vintage, so a
     multi-Congress plan is joined once per decade it spans and reused across
-    the Congresses in that decade.
+    the Congresses in that decade. Also return a warning for each join that
+    left blocks outside every district polygon.
     """
     assignments: dict[int, dict[str, int]] = {}
-    polygon_cache: dict[tuple[Path, BlockVintage], dict[str, int]] = {}
+    polygon_cache: dict[tuple[str, BlockVintage], dict[str, int]] = {}
+    polygon_congresses: dict[tuple[str, BlockVintage], list[int]] = {}
 
     for congress, source in build_plan.sources.items():
-        if isinstance(source, PolygonJoinSource):
-            cache_key = (source.geojson_path, source.block_vintage)
-            cached: dict[str, int] | None = polygon_cache.get(cache_key)
-            if cached is not None:
-                assignments[congress] = cached
-                continue
-            result: dict[str, int] = source.load(geometry)
-            polygon_cache[cache_key] = result
-            assignments[congress] = result
-        else:
+        if not isinstance(source, PolygonJoinSource):
             assignments[congress] = source.load(geometry)
+            continue
+        cache_key = (source.source_file, source.block_vintage)
+        if cache_key not in polygon_cache:
+            polygon_cache[cache_key] = source.load(geometry)
+        assignments[congress] = polygon_cache[cache_key]
+        polygon_congresses.setdefault(cache_key, []).append(congress)
 
-    return assignments
+    warnings: list[str] = _unmatched_polygon_warnings(
+        polygon_cache, polygon_congresses, geometry
+    )
+    return assignments, warnings
+
+
+def _unmatched_polygon_warnings(
+    polygon_cache: dict[tuple[str, BlockVintage], dict[str, int]],
+    polygon_congresses: dict[tuple[str, BlockVintage], list[int]],
+    geometry: BlockGeometry,
+) -> list[str]:
+    """Report blocks whose centroid fell in no district polygon.
+
+    Those blocks have a null district for the Congresses the plan serves.
+    Coastal blocks are the usual case, since plan polygons are often clipped
+    to the shoreline while blocks include water.
+    """
+    warnings: list[str] = []
+    for (source_file, vintage), matched in polygon_cache.items():
+        total: int = len(geometry.centroids(vintage))
+        unmatched: int = total - len(matched)
+        if unmatched == 0:
+            continue
+        congresses: list[int] = sorted(polygon_congresses[(source_file, vintage)])
+        warnings.append(
+            f"{unmatched} of {total} {vintage} block(s) fell outside every "
+            f"district polygon in {source_file}; their district is null for "
+            f"Congresses {congresses}"
+        )
+    return warnings
 
 
 def _build_block_histories(

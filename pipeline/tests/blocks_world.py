@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import geopandas as gpd
-from shapely.geometry import box
+from shapely.geometry import Polygon, box
 
 from pipeline.blocks import BlocksBuildResult, build_blocks
 from pipeline.config import (
@@ -249,9 +249,14 @@ def _write_zipped_shapefile(frame: gpd.GeoDataFrame, zip_path: Path) -> None:
 
 def _write_plan_polygons(path: Path) -> None:
     # District 1 covers blocks 0 and 1, district 2 covers blocks 2 and 3.
+    write_district_polygons(path, {1: box(0, 0, 2, 1), 2: box(2, 0, 4, 1)})
+
+
+def write_district_polygons(path: Path, districts: dict[int, Polygon]) -> None:
+    """Write a plan GeoJSON with one polygon per district number."""
     frame = gpd.GeoDataFrame(
-        {"district": [1, 2]},
-        geometry=[box(0, 0, 2, 1), box(2, 0, 4, 1)],
+        {"district": list(districts)},
+        geometry=list(districts.values()),
         crs="EPSG:4269",
     )
     path.parent.mkdir(parents=True, exist_ok=True)

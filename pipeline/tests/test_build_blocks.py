@@ -14,7 +14,9 @@ from blocks_world import (
     BlockWorld,
     block_geoid,
     make_block_world,
+    write_district_polygons,
 )
+from shapely.geometry import box
 
 from pipeline.blocks import BlocksBuildError
 from pipeline.plans import Plan
@@ -262,6 +264,32 @@ def test_polygon_fallback_warning_names_each_vintage(world: BlockWorld) -> None:
     assert "block_vintage=v2000" in fallback[0]
     assert "[113, 114]" in fallback[1]
     assert "block_vintage=v2010" in fallback[1]
+
+
+def test_block_outside_every_district_is_null_and_reported(
+    world: BlockWorld,
+) -> None:
+    plan_112: Plan = world.plans[0]
+    # District 2 stops short of block 3, so block 3 lies in no district.
+    write_district_polygons(
+        world.paths.raw_dir / plan_112.source_file,
+        {1: box(0, 0, 2, 1), 2: box(2, 0, 3, 1)},
+    )
+
+    result = world.build()
+    unmatched: list[str] = [w for w in result.warnings if "outside every" in w]
+
+    assert world.history_of(3)[0] is None
+    assert len(unmatched) == 1
+    assert "1 of 4 v2000 block(s)" in unmatched[0]
+    assert plan_112.source_file in unmatched[0]
+    assert "[112]" in unmatched[0]
+
+
+def test_no_unmatched_warning_when_every_block_lands(world: BlockWorld) -> None:
+    result = world.build()
+
+    assert not [w for w in result.warnings if "outside every" in w]
 
 
 def _single_plan(world: BlockWorld, start: int, end: int | None) -> Plan:
