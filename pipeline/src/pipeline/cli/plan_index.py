@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+import argparse
 import sys
 
 from pipeline.cli._common import (
     CliError,
     load_sources,
+    print_unpublished,
     print_warning_count,
     print_warnings,
+    release_config,
 )
 from pipeline.config import ProjectConfig
 from pipeline.plans import PlanIndexBuildError, PlanIndexBuildResult, build_plan_index
 
 
-def run_plan_index(project_config: ProjectConfig) -> int:
+def run_plan_index(project_config: ProjectConfig, args: argparse.Namespace) -> int:
     paths = project_config.project_paths
+    release: ProjectConfig = release_config(project_config, args)
 
     try:
         sources = load_sources(project_config)
@@ -23,7 +27,7 @@ def run_plan_index(project_config: ProjectConfig) -> int:
 
     try:
         result: PlanIndexBuildResult = build_plan_index(
-            scope=project_config.scope,
+            scope=release.scope,
             plans_dir=paths.plans_dir,
             output_path=paths.plan_index_file,
             geometry_sources=sources.geometry_sources,
@@ -44,6 +48,7 @@ def run_plan_index(project_config: ProjectConfig) -> int:
         f"→ {result.output_path}"
     )
 
+    print_unpublished(project_config, args)
     print_warning_count(len(result.warnings))
 
     return 0

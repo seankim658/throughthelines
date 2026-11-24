@@ -79,6 +79,8 @@ uv run pipeline plan-index          # build plan_index.json
 uv run pipeline manifest            # build manifest.json (run last)
 ```
 
+Every state in `[scope.chambers]` in `config/project.toml` is built, but only the states listed in `[scope] publish` go live. `plan-index`, `members` and `manifest` leave the other states out by default. To preview an unpublished state locally, run those three with `--include-unpublished`. `publish` refuses artifacts built that way.
+
 `uv run pipeline publish` uploads the built artifacts to R2 and requires credentials in `pipeline/.env`:
 
 ```

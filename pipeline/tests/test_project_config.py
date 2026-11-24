@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pipeline.config import ProjectConfigError, load_project_config
+from pipeline.config import ProjectConfigError, load_project_config, published_scope
 
 
 def _write_project(tmp_path: Path, repo_root: Path, publish_line: str) -> Path:
@@ -64,3 +64,30 @@ def test_publish_must_be_a_list(tmp_path: Path, repo_root: Path) -> None:
 
     with pytest.raises(ProjectConfigError, match=r"scope\.publish must be a list"):
         load_project_config(path, repo_root=str(repo_root))
+
+
+def test_published_scope_keeps_only_published_states(repo_root: Path) -> None:
+    scope = load_project_config(
+        repo_root / "config" / "project.toml", repo_root=str(repo_root)
+    ).scope
+
+    narrowed = published_scope(scope)
+
+    assert sorted(narrowed.chambers) == sorted(scope.publish)
+    assert narrowed.publish == scope.publish
+    assert narrowed.congress_start == scope.congress_start
+    assert narrowed.congress_end == scope.congress_end
+
+
+def test_published_scope_lists_unpublished_built_states_as_planned(
+    repo_root: Path,
+) -> None:
+    scope = load_project_config(
+        repo_root / "config" / "project.toml", repo_root=str(repo_root)
+    ).scope
+    unpublished: list[str] = sorted(set(scope.chambers) - set(scope.publish))
+
+    narrowed = published_scope(scope)
+
+    assert unpublished
+    assert narrowed.planned == [*scope.planned, *unpublished]

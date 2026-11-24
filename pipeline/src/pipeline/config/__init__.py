@@ -7,6 +7,7 @@ from pipeline.config.project import (
     ProjectSettings,
     ScopeSettings,
     load_project_config,
+    published_scope,
 )
 from pipeline.config.request import (
     RequestConfig,
@@ -50,4 +51,5 @@ __all__ = [
     "load_fetch_config",
     "load_project_config",
     "load_request_config",
+    "published_scope",
 ]

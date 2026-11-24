@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from pipeline.cli._common import validate_state
+from pipeline.cli._common import add_include_unpublished_argument, validate_state
 from pipeline.config import ProjectConfigError, load_project_config
 from pipeline.core import RepoRootNotFoundError, find_repo_root
 
@@ -53,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "members":
         from pipeline.cli.members import run_members
 
-        return run_members(project_config)
+        return run_members(project_config, args)
 
     if args.command == "blocks":
         from pipeline.cli.blocks import run_blocks
@@ -73,12 +73,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "plan-index":
         from pipeline.cli.plan_index import run_plan_index
 
-        return run_plan_index(project_config)
+        return run_plan_index(project_config, args)
 
     if args.command == "manifest":
         from pipeline.cli.manifest import run_manifest
 
-        return run_manifest(project_config)
+        return run_manifest(project_config, args)
 
     if args.command == "publish":
         from pipeline.cli.publish import run_publish
@@ -157,7 +157,10 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_state_argument(stitch_parser, "stitch")
 
     # Members
-    subparsers.add_parser("members", help="Slice Voteview CSV into members.json.")
+    members_parser = subparsers.add_parser(
+        "members", help="Slice Voteview CSV into members.json."
+    )
+    add_include_unpublished_argument(members_parser)
 
     # Blocks
     blocks_parser = subparsers.add_parser(
@@ -205,17 +208,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     # Plan index
-    subparsers.add_parser(
+    plan_index_parser = subparsers.add_parser(
         "plan-index", help="Build plan_index.json metadata index for the frontend."
     )
+    add_include_unpublished_argument(plan_index_parser)
 
     # Manifest
-    subparsers.add_parser(
+    manifest_parser = subparsers.add_parser(
         "manifest",
         help=(
             "Build manifest.json, the frontend discovery document. Must be run last."
         ),
     )
+    add_include_unpublished_argument(manifest_parser)
 
     # Publish
     subparsers.add_parser(

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
@@ -143,6 +143,20 @@ def _resolve_paths(
 
 
 # --- Loader ---
+
+
+def published_scope(scope: ScopeSettings) -> ScopeSettings:
+    """Narrow a scope to the states that may go live.
+
+    Built states left out of scope.publish move to planned, so the site lists
+    them as coming rather than as not covered.
+    """
+    unpublished: list[str] = sorted(set(scope.chambers) - set(scope.publish))
+    return replace(
+        scope,
+        chambers={state: scope.chambers[state] for state in scope.publish},
+        planned=[*scope.planned, *unpublished],
+    )
 
 
 def load_project_config(path: Path, repo_root: str) -> ProjectConfig:

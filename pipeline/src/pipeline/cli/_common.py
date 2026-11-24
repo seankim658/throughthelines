@@ -3,9 +3,16 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Collection
+from dataclasses import replace
 from pathlib import Path
 
-from pipeline.config import FetchConfig, ProjectConfig, ScopeSettings, load_fetch_config
+from pipeline.config import (
+    FetchConfig,
+    ProjectConfig,
+    ScopeSettings,
+    load_fetch_config,
+    published_scope,
+)
 from pipeline.core import SUPPORTED_STATES, SupportedStateCode
 from pipeline.plans import (
     Plan,
@@ -125,3 +132,38 @@ def load_in_scope_plans(
     ) as e:
         raise CliError(f"\terror loading plans: {e}") from e
     return [p for p in plans if plan_in_scope(p, scope)]
+
+
+def add_include_unpublished_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--include-unpublished",
+        action="store_true",
+        help=(
+            "Keep built states missing from scope.publish, for a local preview. "
+            "publish refuses artifacts built this way."
+        ),
+    )
+
+
+def release_config(
+    project_config: ProjectConfig, args: argparse.Namespace
+) -> ProjectConfig:
+    """Return the config narrowed to published states, unless asked to keep all."""
+    if args.include_unpublished:
+        return project_config
+    return replace(project_config, scope=published_scope(project_config.scope))
+
+
+def print_unpublished(project_config: ProjectConfig, args: argparse.Namespace) -> None:
+    """Name the built states this run left out, so a missing state is no surprise."""
+    scope: ScopeSettings = project_config.scope
+    left_out: list[str] = sorted(set(scope.chambers) - set(scope.publish))
+    if args.include_unpublished:
+        if left_out:
+            print(f"\nIncluded unpublished: {', '.join(left_out)} (preview only)")
+        return
+    if left_out:
+        print(
+            f"\nLeft out (not in scope.publish): {', '.join(left_out)}. "
+            "Pass --include-unpublished for a local preview."
+        )
