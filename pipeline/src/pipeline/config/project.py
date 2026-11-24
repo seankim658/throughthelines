@@ -49,6 +49,7 @@ class ScopeSettings:
     congress_end: int
     chambers: dict[SupportedStateCode, list[SupportedChamberType]]
     planned: list[str]
+    publish: list[SupportedStateCode]
 
 
 @dataclass(frozen=True)
@@ -235,12 +236,14 @@ def _load_scope_section(raw: dict[str, Any], path: Path) -> ScopeSettings:
         _load_scope_chambers(scope_raw, path)
     )
     planned: list[str] = _load_scope_planned(scope_raw, chambers, path)
+    publish: list[SupportedStateCode] = _load_scope_publish(scope_raw, chambers, path)
 
     return ScopeSettings(
         congress_start=congress_start,
         congress_end=congress_end,
         chambers=chambers,
         planned=planned,
+        publish=publish,
     )
 
 
@@ -282,6 +285,39 @@ def _load_scope_chambers(
         chambers[cast(SupportedStateCode, state_code)] = validated
 
     return chambers
+
+
+def _load_scope_publish(
+    scope_raw: dict[str, Any],
+    chambers: dict[SupportedStateCode, list[SupportedChamberType]],
+    path: Path,
+) -> list[SupportedStateCode]:
+    """Read the opt-in list of built states whose artifacts may go live.
+
+    The key is required, so leaving it out never publishes every built state.
+    """
+    if "publish" not in scope_raw:
+        raise ProjectConfigError(
+            f"scope.publish is required in {path}; list the states in "
+            f"scope.chambers that may go live, or [] for none"
+        )
+    publish_raw: Any = scope_raw["publish"]
+    if not isinstance(publish_raw, list):
+        raise ProjectConfigError(f"scope.publish must be a list in {path}")
+
+    publish: list[SupportedStateCode] = []
+    for entry in publish_raw:
+        if entry not in chambers:
+            raise ProjectConfigError(
+                f"state {entry!r} in scope.publish is not in scope.chambers in "
+                f"{path}; only a built state can go live"
+            )
+        if entry in publish:
+            raise ProjectConfigError(
+                f"scope.publish lists {entry!r} more than once in {path}"
+            )
+        publish.append(entry)
+    return publish
 
 
 def _load_scope_planned(

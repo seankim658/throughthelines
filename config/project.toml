@@ -39,6 +39,10 @@ manifest_file = "{derived_dir}/manifest.json"
 congress_start = 107
 congress_end = 120
 planned = ["CA", "UT", "MO", "MD"]
+# States whose artifacts may go live. Every state in [scope.chambers] is built
+# and validated, but only these reach the manifest and R2. A newly activated
+# state stays off the site until it is added here.
+publish = ["NC", "VA"]
 
 [scope.chambers]
 NC = ["congressional"]

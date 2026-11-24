@@ -91,6 +91,7 @@ class BlockWorld:
                 congress_end=self.congress_end,
                 chambers={"NC": ["congressional"]},
                 planned=[],
+                publish=["NC"],
             ),
             project_paths=self.paths,
             census_source=self.census,
