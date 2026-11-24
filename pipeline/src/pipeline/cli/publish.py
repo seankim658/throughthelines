@@ -28,6 +28,7 @@ def run_publish(project_config: ProjectConfig) -> int:
             derived_dir=paths.derived_dir,
             basemap_file=paths.basemap_file,
             settings=settings,
+            publish_states=project_config.scope.publish,
         )
     except PublishError as e:
         print(f"publish failed: {e}", file=sys.stderr)

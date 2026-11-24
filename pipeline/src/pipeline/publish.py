@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Collection
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -140,14 +141,59 @@ def _load_manifest(manifest_file: Path) -> dict[str, Any]:
         raise PublishError(
             f"manifest not found at {manifest_file} (run `pipeline manifest` first)"
         )
-    with manifest_file.open("rb") as f:
-        manifest: Any = json.load(f)
-    if not isinstance(manifest, dict):
+    return _load_json_object(manifest_file, "manifest")
+
+
+def _load_json_object(path: Path, label: str) -> dict[str, Any]:
+    if not path.exists():
+        raise PublishError(f"{label} not found at {path}")
+    with path.open("rb") as f:
+        loaded: Any = json.load(f)
+    if not isinstance(loaded, dict):
         raise PublishError(
-            f"manifest at {manifest_file} must be a JSON object; "
-            f"got {type(manifest).__name__}"
+            f"{label} at {path} must be a JSON object; got {type(loaded).__name__}"
         )
-    return manifest
+    return loaded
+
+
+# --- Release gate ---
+
+
+def check_release_states(
+    manifest: dict[str, Any], derived_dir: Path, publish_states: Collection[str]
+) -> None:
+    """Refuse a release whose artifacts hold a state missing from scope.publish.
+
+    Checks the manifest's states and the states inside the plan index and
+    members file it names, since those two files cover every state at once.
+    """
+    problems: list[str] = []
+    for label, states in _release_states(manifest, derived_dir):
+        unpublished: list[str] = sorted(set(states) - set(publish_states))
+        if unpublished:
+            problems.append(f"{label} holds {', '.join(unpublished)}")
+    if problems:
+        raise PublishError(
+            "refusing to publish states missing from scope.publish: "
+            f"{'; '.join(problems)}. Rebuild plan-index, members and manifest "
+            "without --include-unpublished, or add the state to scope.publish."
+        )
+
+
+def _release_states(
+    manifest: dict[str, Any], derived_dir: Path
+) -> list[tuple[str, list[str]]]:
+    """Return each released artifact's name with the states it holds."""
+    artifacts: dict[str, Any] = manifest["artifacts"]
+    plan_index_path: str = artifacts["plan_index"]["path"]
+    members_path: str = artifacts["members"]["path"]
+    plan_index = _load_json_object(derived_dir / plan_index_path, "plan index")
+    members = _load_json_object(derived_dir / members_path, "members file")
+    return [
+        ("manifest.json", list(manifest.get("states", {}))),
+        (plan_index_path, list(plan_index.get("plans", {}))),
+        (members_path, list(members)),
+    ]
 
 
 # --- S3 client + transfers ---
@@ -197,9 +243,20 @@ def _upload(client: S3Client, bucket: str, source: Path, key: str) -> None:
 
 
 def publish_artifacts(
-    manifest_file: Path, derived_dir: Path, basemap_file: Path, settings: R2Settings
+    manifest_file: Path,
+    derived_dir: Path,
+    basemap_file: Path,
+    settings: R2Settings,
+    *,
+    publish_states: Collection[str],
 ) -> PublishResult:
+    """Upload the manifest's artifacts to R2, then the manifest itself.
+
+    Nothing uploads when any released artifact holds a state missing from
+    publish_states.
+    """
     manifest: dict[str, Any] = _load_manifest(manifest_file)
+    check_release_states(manifest, derived_dir, publish_states)
     url_prefix: str | None = manifest.get("build", {}).get("url_prefix")
 
     plans: list[_PlannedUpload] = _plan_global_uploads(
