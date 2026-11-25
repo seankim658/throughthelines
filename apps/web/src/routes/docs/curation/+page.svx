@@ -181,4 +181,4 @@ If you cannot run it locally, the same checks will run in continuous integration
 
 ## Submitting
 
-Open a pull request containing only your YAML change. If you have a correction but cannot open a pull request, open an issue giving the plan, the field, the correct value, and your source, and a maintainer can make the edit.
+Open a pull request containing only your YAML change. If you have a correction but cannot open a pull request, open an issue with the [plan metadata correction](https://github.com/seankim658/throughthelines/issues/new?template=plan-metadata-correction.yml) form, giving the plan, the field, the correct value, and your source, and a maintainer can make the edit.

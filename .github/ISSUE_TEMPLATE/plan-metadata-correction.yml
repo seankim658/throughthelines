@@ -1,0 +1,53 @@
+name: Plan metadata correction
+description: Report a wrong or missing value in a plan record, with a source.
+title: "Correction: <plan ID> <field>"
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Use this form if you can't open a pull request. A maintainer checks
+        the source and makes the edit. Plan records live in `data/plans/`,
+        and the [curation guide](https://throughthelines.org/docs/curation)
+        explains each field.
+  - type: input
+    id: plan
+    attributes:
+      label: Plan
+      description: The plan ID, such as NC_113_2013, or the state and years it governed.
+    validations:
+      required: true
+  - type: input
+    id: field
+    attributes:
+      label: Field
+      description: The field that is wrong or missing, such as enacted_date or court_citations.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current value
+      description: What the record says now. Leave this empty if the value is missing.
+  - type: textarea
+    id: correct
+    attributes:
+      label: Correct value
+      description: What the record should say.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source
+      description: >-
+        A link to the source that supports the correction. Prefer the most
+        primary source, such as the bill page, the session law or the court
+        opinion.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything else a maintainer should know.

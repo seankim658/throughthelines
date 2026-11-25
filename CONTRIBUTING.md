@@ -18,7 +18,7 @@ Curation is editing one YAML file under `data/plans/<STATE>/`. The full process,
 
 You don't need to run anything locally, the CI validates every plan file on each pull request. To check it yourself first, see [Validating locally](#validating-locally).
 
-If you have a correction but can't open a pull request, open an issue using the **plan metadata correction** template with the plan, the field, the correct value, and your source.
+If you have a correction but can't open a pull request, open an issue using the **[plan metadata correction](https://github.com/seankim658/throughthelines/issues/new?template=plan-metadata-correction.yml)** template with the plan, the field, the correct value, and your source.
 
 ## Contributing code
 
