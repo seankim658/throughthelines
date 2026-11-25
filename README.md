@@ -104,7 +104,9 @@ GitHub Actions runs `scripts/check.sh` on every push to `main` and every pull re
 
 ## License
 
-Code is MIT (`LICENSE`). The plan-metadata dataset under `data/plans/` is CC-BY-SA 4.0 (`LICENSE-DATA`).
+Code is MIT (`LICENSE`). The plan-metadata dataset under `data/plans/`, and the plan index built from it, is CC BY-SA 4.0 (`LICENSE-DATA`). The license covers the records' own text, selection and arrangement, not the facts they report.
+
+Published files that combine the dataset with upstream data keep the upstream terms too. These include district geometry from the Lewis archive (MIT) and the Census Bureau (public domain), and the OpenStreetMap basemap (ODbL). The site's [Data](https://throughthelines.org/data) page lists every source and how to cite it.
 
 ## Acknowledgments
 
