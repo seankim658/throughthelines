@@ -63,7 +63,7 @@ def build_basemap(
     basemap_file: Path,
     force: bool = False,
 ) -> BasemapBuildResult:
-    """Extract a bbox subset of a Promotomaps daily basemap build."""
+    """Extract a bbox subset of a Protomaps daily basemap build."""
     if shutil.which(_PMTILES_BIN) is None:
         raise BasemapBuildError(
             f"`{_PMTILES_BIN}` not found on $PATH; install go-pmtiles "

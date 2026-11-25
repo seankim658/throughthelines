@@ -281,5 +281,6 @@ geoid_column = "SCTBKEY"
 build_url = "https://build.protomaps.com/20260518.pmtiles" # Don't visit this directly
 landing_url = "https://maps.protomaps.com/builds"
 max_zoom = 12
-# Buffer applied around each state's bounding box.
+# Area cut from the planet build, as [west, south, east, north] in degrees.
+# One box covers the contiguous United States for every state in scope.
 bbox = [-125.0, 24.3, -66.9, 49.4]

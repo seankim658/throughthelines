@@ -11,11 +11,10 @@ properties. Emit one FeatureCollection per output tile-layer per state:
 The per-layer split lets the tiles step feed tippecanoe via the `-L name:file`
 multi-layer syntax.
 
-The stitched GeoJSON is an internal build artifact. It feeds two
-downstream artifacts:
-
-    - tippecanoe -> {STATE}.pmtiles  (map tiles)
-    - spatial join with Census 2020 BEF -> block_lookup.json (address lookup)
+The stitched GeoJSON is an internal build artifact that only the tiles
+step reads, feeding tippecanoe to build {STATE}.pmtiles. Block lookup does
+not read it. Where a Congress needs a polygon join, block lookup reads the
+plan's source GeoJSON directly.
 """
 
 from __future__ import annotations
