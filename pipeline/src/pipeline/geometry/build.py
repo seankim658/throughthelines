@@ -35,7 +35,7 @@ class GeometryNormalizeError(Exception):
 class GeometryNormalizeResult:
     output_path: Path
     feature_count: int
-    distrct_count: int
+    district_count: int
 
 
 # --- API ---
@@ -57,7 +57,7 @@ def normalize_geometry(
     return GeometryNormalizeResult(
         output_path=output_path,
         feature_count=len(normalized),
-        distrct_count=int(normalized[_DISTRICT_PROPERTY].nunique()),
+        district_count=int(normalized[_DISTRICT_PROPERTY].nunique()),
     )
 
 

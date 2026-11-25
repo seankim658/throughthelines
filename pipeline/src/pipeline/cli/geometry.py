@@ -113,7 +113,7 @@ def _normalize_one(
 
     print(
         f"\t[{plan.plan_id}] {result.feature_count} features, "
-        f"{result.distrct_count} distrcts → {result.output_path}"
+        f"{result.district_count} districts → {result.output_path}"
     )
     return True
 

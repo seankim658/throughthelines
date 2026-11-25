@@ -733,7 +733,7 @@ def _serialize_congresses(build_plan: _BuildPlan) -> list[dict[str, Any]]:
 
     Each entry records the plan_id governing that Congress and the discriminated
     `block_source` payload from the source's provenance() method. The same payload
-    if propagated up into the manifest file, so any change here is a frontent contract
+    is propagated up into the manifest file, so any change here is a frontend contract
     change.
     """
     entries: list[dict[str, Any]] = []

@@ -22,7 +22,7 @@ from pipeline.config import BlockVintage
 
 @dataclass(frozen=True)
 class DelimitedAssignmentSource(BlockAssignmentSource):
-    """A block-to-distrct assignment loaded from a delimited file in a zip."""
+    """A block-to-district assignment loaded from a delimited file in a zip."""
 
     # --- Config ---
     zip_path: Path
