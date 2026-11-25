@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import GeometrySource, ScopeSettings
+from pipeline.config import LEWIS_PROVIDER, GeometrySource, ScopeSettings
 from pipeline.core import SupportedStateCode, write_json_atomic
 from pipeline.plans.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
 from pipeline.plans.models import Plan
@@ -78,7 +78,7 @@ def _boundary_source_for_plan(
                 "provider": geometry_source.provider,
                 "landing_url": geometry_source.landing_url,
             }
-    return {"provider": "lewis", "landing_url": lewis_homepage_url}
+    return {"provider": LEWIS_PROVIDER, "landing_url": lewis_homepage_url}
 
 
 def _load_state_plans(

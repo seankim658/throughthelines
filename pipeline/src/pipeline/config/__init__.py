@@ -16,6 +16,7 @@ from pipeline.config.request import (
     load_request_config,
 )
 from pipeline.config.sources import (
+    LEWIS_PROVIDER,
     NATIONAL_SCOPE,
     BlockAssignmentCarry,
     BlockAssignmentEntry,
@@ -30,6 +31,7 @@ from pipeline.config.sources import (
 )
 
 __all__ = [
+    "LEWIS_PROVIDER",
     "NATIONAL_SCOPE",
     "BlockAssignmentCarry",
     "BlockAssignmentEntry",

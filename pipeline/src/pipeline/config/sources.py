@@ -28,6 +28,9 @@ SUPPORTED_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
 BlockVintage = Literal["v2000", "v2010", "v2020"]
 SUPPORTED_VINTAGES: tuple[BlockVintage, ...] = get_args(BlockVintage)
 
+# Provider of the Lewis archive polygons, which no source entry names
+LEWIS_PROVIDER: str = "lewis"
+
 # Wildcard for a block-assignment entry that applies to all states
 NATIONAL_SCOPE: Literal["*"] = "*"
 
@@ -145,6 +148,7 @@ class FetchConfig:
     block_assignments: list[BlockAssignmentEntry]
     block_carries: list[BlockAssignmentCarry]
     protomaps_basemap: ProtomapsBasemapSource
+    provider_names: dict[str, str]
 
 
 # --- Loader ---
@@ -218,6 +222,11 @@ def load_fetch_config(path: Path) -> FetchConfig:
         bbox=_load_basemap_bbox(protomaps_basemap_raw, path),
     )
 
+    provider_names: dict[str, str] = _load_provider_names(raw, path)
+    _require_registered_providers(
+        provider_names, [*geometry_sources, *block_assignments, *block_carries], path
+    )
+
     return FetchConfig(
         schema_version=schema_version,
         lewis=lewis,
@@ -227,6 +236,7 @@ def load_fetch_config(path: Path) -> FetchConfig:
         block_assignments=block_assignments,
         block_carries=block_carries,
         protomaps_basemap=protomaps_basemap,
+        provider_names=provider_names,
     )
 
 
@@ -351,6 +361,43 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
 
     entries.sort(key=lambda e: (e.congress, e.state, e.provider))
     return entries
+
+
+def _load_provider_names(raw: dict[str, Any], path: Path) -> dict[str, str]:
+    """Map each provider code to the name the site shows for it."""
+    providers_raw: dict[str, Any] = require_section(
+        raw, "providers", path, FetchConfigError
+    )
+    names: dict[str, str] = {}
+    for code, provider_raw in providers_raw.items():
+        label: str = f"providers.{code}"
+        if not isinstance(provider_raw, dict):
+            raise FetchConfigError(f"[{label}] must be a table in {path}")
+        name: str = require_string(provider_raw, "name", label, path, FetchConfigError)
+        if not name.strip():
+            raise FetchConfigError(f"{label}.name must be a non-empty string in {path}")
+        names[code] = name
+    return names
+
+
+def _require_registered_providers(
+    provider_names: dict[str, str],
+    entries: list[GeometrySource | BlockAssignmentEntry | BlockAssignmentCarry],
+    path: Path,
+) -> None:
+    """Require a display name for every provider a source entry names."""
+    if LEWIS_PROVIDER not in provider_names:
+        raise FetchConfigError(
+            f"provider {LEWIS_PROVIDER!r} for the Lewis archive is not in "
+            f"[providers] in {path}; add a [providers.{LEWIS_PROVIDER}] table"
+        )
+    for entry in entries:
+        if entry.provider not in provider_names:
+            raise FetchConfigError(
+                f"provider {entry.provider!r} (state {entry.state}, congress "
+                f"{entry.congress}) is not in [providers] in {path}; add a "
+                f"[providers.{entry.provider}] table with its display name"
+            )
 
 
 def _parse_sha256_pin(pin: str, section_label: str, path: Path) -> str:

@@ -16,7 +16,7 @@ from pipeline.fetch import FetchError, HttpResponse, fetch_state
 
 NCGA_URL: str = "https://example.org/ncga/plan.zip"
 NCGA_BODY: bytes = b"ncga plan shapefile"
-OTHER_URL: str = "https://example.org/other/plan.zip"
+OTHER_URL: str = "https://example.org/tlc/plan.zip"
 OTHER_BODY: bytes = b"other plan shapefile"
 
 
@@ -92,7 +92,7 @@ def test_every_mismatch_is_reported_in_one_error(tmp_path: Path) -> None:
     sources = _load_sources(
         tmp_path,
         geometry_entry(_pin(b"curated ncga"), provider="ncga", url=NCGA_URL),
-        geometry_entry(_pin(b"curated other"), provider="other", url=OTHER_URL),
+        geometry_entry(_pin(b"curated tlc"), provider="tlc", url=OTHER_URL),
     )
     paths = project_paths(tmp_path)
     downloader = FakeDownloader({NCGA_URL: NCGA_BODY, OTHER_URL: OTHER_BODY})

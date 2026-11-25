@@ -35,38 +35,22 @@
 	function formatVintage(vintage: 'v2000' | 'v2010' | 'v2020'): string {
 		return vintage.slice(1);
 	}
-	// TODO : Probably extract the next three functions to the pipeline eventually
+	function providerName(provider: string): string | undefined {
+		return sources.providers[provider]?.name;
+	}
+
 	function formatDelimitedProvider(provider: string): string {
-		switch (provider) {
-			case 'census':
-				return 'Census Block Equivalency File';
-			case 'ncga':
-				return 'NC General Assembly block assignment file';
-			default:
-				return 'block assignment file';
-		}
+		const name = providerName(provider);
+		return name === undefined ? 'block assignment file' : `${name} block assignment file`;
 	}
 
 	function formatBoundaryProvider(provider: string): string {
-		switch (provider) {
-			case 'lewis':
-				return 'Jeffrey B. Lewis';
-			case 'ncga':
-				return 'NC General Assembly';
-			default:
-				return 'district boundary source';
-		}
+		return providerName(provider) ?? 'district boundary source';
 	}
 
 	function formatPolygonProvider(provider: string): string {
-		switch (provider) {
-			case 'lewis':
-				return 'Lewis plan polygons';
-			case 'ncga':
-				return 'NC General Assembly plan polygons';
-			default:
-				return 'plan polygons';
-		}
+		const name = providerName(provider);
+		return name === undefined ? 'plan polygons' : `${name} plan polygons`;
 	}
 
 	function congressTimingNote(congress: number): string | null {

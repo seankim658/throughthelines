@@ -66,6 +66,25 @@ files = [
   "GeoJson/Virginia_118_to_119.geojson",
 ]
 
+# --- Providers ---
+#
+# The name the site shows for each provider code. Every provider that a
+# [[geometry_source]] or [[block_assignment]] entry names needs one, and so
+# does "lewis", the Lewis archive. The site builds its source labels from the
+# name, such as "<name> plan polygons", so write it to read well there.
+
+[providers.lewis]
+name = "Jeffrey B. Lewis"
+
+[providers.census]
+name = "Census Bureau"
+
+[providers.ncga]
+name = "NC General Assembly"
+
+[providers.tlc]
+name = "Texas Legislative Council"
+
 # --- District geometry sources ---
 #
 # Congressional district boundaries published as polygons (shapefile/GeoJSON) by a non-Lewis 

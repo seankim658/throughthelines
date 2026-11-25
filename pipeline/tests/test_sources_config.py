@@ -10,7 +10,12 @@ from config_fixtures import (
     write_sources,
 )
 
-from pipeline.config import FetchConfigError, load_fetch_config, load_project_config
+from pipeline.config import (
+    LEWIS_PROVIDER,
+    FetchConfigError,
+    load_fetch_config,
+    load_project_config,
+)
 
 
 def test_shipped_configs_load(repo_root: Path) -> None:
@@ -113,3 +118,56 @@ def test_checksum_pin_hex_is_case_insensitive(tmp_path: Path) -> None:
     config = load_fetch_config(path)
 
     assert config.geometry_sources[0].sha256 == digest.lower()
+
+
+def test_provider_names_load(tmp_path: Path) -> None:
+    path: Path = write_sources(tmp_path, block_assignment_entry("*", 116))
+
+    config = load_fetch_config(path)
+
+    assert config.provider_names["census"] == "Census Bureau"
+    assert config.provider_names[LEWIS_PROVIDER] == "Jeffrey B. Lewis"
+
+
+@pytest.mark.parametrize(
+    "entry",
+    [
+        geometry_entry(f"sha256:{'0' * 64}", provider="nyc"),
+        block_assignment_entry("NC", 117, provider="nyc"),
+        carry_entry("NC", 117, 116, provider="nyc"),
+    ],
+    ids=["geometry_source", "block_assignment_file", "block_assignment_carry"],
+)
+def test_entry_naming_an_unregistered_provider_is_rejected(
+    tmp_path: Path, entry: str
+) -> None:
+    path: Path = write_sources(
+        tmp_path, block_assignment_entry("NC", 116, provider="nyc"), entry
+    )
+
+    with pytest.raises(FetchConfigError, match=r"provider 'nyc' .* \[providers\]"):
+        load_fetch_config(path)
+
+
+def test_lewis_provider_must_be_registered(tmp_path: Path) -> None:
+    path: Path = write_sources(tmp_path, block_assignment_entry("*", 116))
+    path.write_text(
+        path.read_text("utf-8").replace(
+            '[providers.lewis]\nname = "Jeffrey B. Lewis"\n', ""
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FetchConfigError, match=r"provider 'lewis' .* \[providers\]"):
+        load_fetch_config(path)
+
+
+def test_blank_provider_name_is_rejected(tmp_path: Path) -> None:
+    path: Path = write_sources(tmp_path, block_assignment_entry("*", 116))
+    path.write_text(
+        path.read_text("utf-8").replace('name = "Census Bureau"', 'name = "  "'),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FetchConfigError, match=r"providers\.census\.name"):
+        load_fetch_config(path)

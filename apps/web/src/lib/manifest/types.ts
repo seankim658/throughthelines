@@ -85,9 +85,16 @@ export interface VoteviewSource {
 	landing_url: string;
 }
 
+/** How the site names one data provider. */
+export interface ProviderInfo {
+	name: string;
+}
+
 export interface SourcesSection {
 	lewis: LewisSource;
 	voteview: VoteviewSource;
+	// Keyed by the provider code that boundary and block sources carry
+	providers: Partial<Record<string, ProviderInfo>>;
 }
 
 /** Top-level manifest. */

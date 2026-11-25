@@ -34,13 +34,25 @@ build_url = "https://build.protomaps.com/20260518.pmtiles"
 landing_url = "https://maps.protomaps.com/builds"
 max_zoom = 12
 bbox = [-125.0, 24.3, -66.9, 49.4]
+
+[providers.lewis]
+name = "Jeffrey B. Lewis"
+
+[providers.census]
+name = "Census Bureau"
+
+[providers.ncga]
+name = "NC General Assembly"
+
+[providers.tlc]
+name = "Texas Legislative Council"
 """
 
 
-def block_assignment_entry(state: str, congress: int) -> str:
+def block_assignment_entry(state: str, congress: int, provider: str = "census") -> str:
     return f"""
 [[block_assignment]]
-provider = "census"
+provider = "{provider}"
 state = "{state}"
 congress = {congress}
 vintage = "v2010"
@@ -51,10 +63,12 @@ district_column = "CD{congress}"
 """
 
 
-def carry_entry(state: str, congress: int, same_as: int, extra: str = "") -> str:
+def carry_entry(
+    state: str, congress: int, same_as: int, extra: str = "", provider: str = "census"
+) -> str:
     return f"""
 [[block_assignment]]
-provider = "census"
+provider = "{provider}"
 state = "{state}"
 congress = {congress}
 same_as_congress = {same_as}
@@ -66,11 +80,12 @@ def geometry_entry(
     checksum: str,
     provider: str = "ncga",
     url: str = "https://example.org/ncga/plan.zip",
+    state: str = "NC",
 ) -> str:
     return f"""
 [[geometry_source]]
 provider = "{provider}"
-state = "NC"
+state = "{state}"
 congress = 120
 url = "{url}"
 landing_url = "https://example.org/landing"

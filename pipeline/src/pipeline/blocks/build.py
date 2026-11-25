@@ -29,6 +29,7 @@ from pipeline.blocks.spatial_joins import (
     cross_decade_join,
 )
 from pipeline.config import (
+    LEWIS_PROVIDER,
     NATIONAL_SCOPE,
     BlockAssignmentCarry,
     BlockAssignmentEntry,
@@ -432,7 +433,7 @@ def _make_polygon_source(
         provider: str = geometry_source.provider
         landing_url: str = geometry_source.landing_url
     else:
-        provider = "lewis"
+        provider = LEWIS_PROVIDER
         landing_url = lewis_landing_url
     try:
         return PolygonJoinSource(

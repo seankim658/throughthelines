@@ -22,7 +22,15 @@ from importlib.metadata import version as _pkg_version
 from pathlib import Path
 from typing import Any
 
-from pipeline.config import FetchConfig, ProjectConfig
+from pipeline.config import (
+    LEWIS_PROVIDER,
+    NATIONAL_SCOPE,
+    BlockAssignmentCarry,
+    BlockAssignmentEntry,
+    FetchConfig,
+    GeometrySource,
+    ProjectConfig,
+)
 from pipeline.core import (
     STATE_INFO,
     SupportedChamberType,
@@ -125,7 +133,7 @@ def build_manifest(
             "planned": list(scope.planned),
         },
         "artifacts": global_artifacts,
-        "sources": _build_sources_section(sources),
+        "sources": _build_sources_section(sources, set(scope.chambers)),
         "states": states_section,
     }
 
@@ -372,7 +380,9 @@ def _load_block_lookup_congresses(
 # --- Source Provenance ---
 
 
-def _build_sources_section(sources: FetchConfig) -> dict[str, Any]:
+def _build_sources_section(
+    sources: FetchConfig, states: set[SupportedStateCode]
+) -> dict[str, Any]:
     lewis = sources.lewis
     commit_url: str = f"{lewis.landing_url.rstrip('/')}/tree/{lewis.commit_sha}"
     return {
@@ -382,4 +392,29 @@ def _build_sources_section(sources: FetchConfig) -> dict[str, Any]:
             "homepage_url": lewis.homepage,
         },
         "voteview": {"landing_url": sources.voteview.landing_url},
+        "providers": _build_providers_section(sources, states),
+    }
+
+
+def _build_providers_section(
+    sources: FetchConfig, states: set[SupportedStateCode]
+) -> dict[str, dict[str, str]]:
+    """Name each provider whose data these states use.
+
+    Providers that only unbuilt or unpublished states use are left out, so
+    the manifest reveals nothing about them.
+    """
+    entries: list[GeometrySource | BlockAssignmentEntry | BlockAssignmentCarry] = [
+        *sources.geometry_sources,
+        *sources.block_assignments,
+        *sources.block_carries,
+    ]
+    used: set[str] = {LEWIS_PROVIDER}
+    for entry in entries:
+        if entry.state == NATIONAL_SCOPE or entry.state in states:
+            used.add(entry.provider)
+    return {
+        code: {"name": name}
+        for code, name in sources.provider_names.items()
+        if code in used
     }
