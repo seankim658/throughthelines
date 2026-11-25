@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import tomllib
 import urllib.parse
 from dataclasses import dataclass
@@ -29,6 +30,8 @@ SUPPORTED_VINTAGES: tuple[BlockVintage, ...] = get_args(BlockVintage)
 
 # Wildcard for a block-assignment entry that applies to all states
 NATIONAL_SCOPE: Literal["*"] = "*"
+
+_SHA256_HEX: re.Pattern[str] = re.compile(r"[0-9a-fA-F]{64}")
 
 _CARRY_FORBIDDEN_KEYS: tuple[str, ...] = (
     "vintage",
@@ -74,7 +77,7 @@ class GeometrySource:
     url: str
     landing_url: str
     local_filename: str
-    checksum: str
+    sha256: str
     source_crs: str
     district_field: str
 
@@ -318,8 +321,12 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
         local_filename: str = require_string(
             entry_raw, "local_filename", section_label, path, FetchConfigError
         )
-        checksum: str = require_string(
-            entry_raw, "checksum", section_label, path, FetchConfigError
+        sha256: str = _parse_sha256_pin(
+            require_string(
+                entry_raw, "checksum", section_label, path, FetchConfigError
+            ),
+            section_label,
+            path,
         )
         source_crs: str = require_string(
             entry_raw, "source_crs", section_label, path, FetchConfigError
@@ -336,7 +343,7 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
                 url=url,
                 landing_url=landing_url,
                 local_filename=local_filename,
-                checksum=checksum,
+                sha256=sha256,
                 source_crs=source_crs,
                 district_field=district_field,
             )
@@ -344,6 +351,17 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
 
     entries.sort(key=lambda e: (e.congress, e.state, e.provider))
     return entries
+
+
+def _parse_sha256_pin(pin: str, section_label: str, path: Path) -> str:
+    """Return the lowercase hex digest from a "sha256:<hex>" checksum pin."""
+    algorithm, _, digest = pin.partition(":")
+    if algorithm != "sha256" or not _SHA256_HEX.fullmatch(digest):
+        raise FetchConfigError(
+            f"checksum {pin!r} in [[{section_label}]] in {path} must be "
+            f"sha256:<64 hex digits>"
+        )
+    return digest.lower()
 
 
 def _load_census(census_raw: dict[str, Any], path: Path) -> CensusSource:

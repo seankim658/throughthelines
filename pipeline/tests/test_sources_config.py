@@ -132,3 +132,48 @@ def test_duplicate_entry_is_rejected(tmp_path: Path) -> None:
 
     with pytest.raises(FetchConfigError, match="duplicate"):
         load_fetch_config(path)
+
+
+def _geometry_entry(checksum: str) -> str:
+    return f"""
+[[geometry_source]]
+provider = "ncga"
+state = "NC"
+congress = 120
+url = "https://example.org/ncga/plan.zip"
+landing_url = "https://example.org/landing"
+local_filename = "plan.zip"
+checksum = "{checksum}"
+source_crs = "EPSG:32119"
+district_field = "DISTRICT"
+"""
+
+
+@pytest.mark.parametrize(
+    "checksum",
+    [
+        "c21e18d29a0f6dd52636c866ca3b05295a0757c6d6d98ee42ffa0b2eee795897",
+        "md5:9e107d9d372bb6826bd81d3542a419d6",
+        "sha256:c21e18d29a0f",
+        "sha256:" + "g" * 64,
+        "sha256:",
+    ],
+)
+def test_malformed_checksum_pin_is_rejected(tmp_path: Path, checksum: str) -> None:
+    path: Path = _write_sources(
+        tmp_path, _file_entry("*", 116), _geometry_entry(checksum)
+    )
+
+    with pytest.raises(FetchConfigError, match="sha256:<64 hex digits>"):
+        load_fetch_config(path)
+
+
+def test_checksum_pin_hex_is_case_insensitive(tmp_path: Path) -> None:
+    digest: str = "C21E18D29A0F6DD52636C866CA3B05295A0757C6D6D98EE42FFA0B2EEE795897"
+    path: Path = _write_sources(
+        tmp_path, _file_entry("*", 116), _geometry_entry(f"sha256:{digest}")
+    )
+
+    config = load_fetch_config(path)
+
+    assert config.geometry_sources[0].sha256 == digest.lower()

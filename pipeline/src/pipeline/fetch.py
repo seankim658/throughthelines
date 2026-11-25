@@ -9,6 +9,11 @@ The fetch is split into two scopes:
         - Lewis plan polygon GeoJSONs for one state
         - Census tabblock shapefiles (one per vintage, for one state)
         - Block-assignment files with state = <this state>
+        - Geometry-source files for one state
+
+Geometry sources carry a pinned sha256. A file that does not match its pin
+is never saved, and the fetch fails after trying every source, so a plan is
+never built from district lines that changed upstream without review.
 """
 
 from __future__ import annotations
@@ -25,7 +30,7 @@ from typing import Any, Literal, Protocol
 
 import yaml
 
-from pipeline.config import FetchConfig, ProjectPaths, RequestSettings
+from pipeline.config import FetchConfig, GeometrySource, ProjectPaths, RequestSettings
 from pipeline.core.state_codes import SupportedStateCode
 
 DEFAULT_USER_AGENT: str = "through-the-lines-pipeline/0.1"
@@ -38,6 +43,10 @@ FetchStatus = Literal["fetched", "unchanged"]
 
 class FetchError(Exception):
     """Raised when a download fails or produces an unexpected result."""
+
+
+class _ChecksumMismatchError(FetchError):
+    """Raised when a pinned file's bytes do not match its pin."""
 
 
 # --- Models ---
@@ -59,7 +68,6 @@ class FetchResult:
     files: list[FetchedFile]
     state_path: Path
     state: SupportedStateCode | None  # None means national scope
-    warnings: list[str]
 
 
 @dataclass(frozen=True)
@@ -121,7 +129,7 @@ def fetch_national(
         )
 
     written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
-    return FetchResult(files=fetched, state_path=written_path, state=None, warnings=[])
+    return FetchResult(files=fetched, state_path=written_path, state=None)
 
 
 def fetch_state(
@@ -177,31 +185,55 @@ def fetch_state(
             _fetch_one(entry.url, bef_local, downloader, prior.get(entry.url))
         )
 
-    geometry_warnings: list[str] = []
-    for geometry in sources.geometry_sources:
-        if geometry.state != state:
-            continue
-        geometry_local: Path = (
-            project_paths.district_geometry_dir
-            / geometry.provider
-            / state
-            / geometry.local_filename
-        )
-        fetched_file: FetchedFile = _fetch_one(
-            geometry.url,
-            geometry_local,
-            downloader,
-            prior.get(geometry.url),
-        )
-        fetched.append(fetched_file)
-        warning: str | None = _verify_checksum(fetched_file, geometry.checksum)
-        if warning is not None:
-            geometry_warnings.append(warning)
+    geometries: list[GeometrySource] = [
+        geometry for geometry in sources.geometry_sources if geometry.state == state
+    ]
+    fetched.extend(
+        _fetch_geometry_sources(geometries, project_paths, downloader, prior)
+    )
 
     written_path: Path = _write_manifest(sources, fetched, project_paths, state_path)
-    return FetchResult(
-        files=fetched, state_path=written_path, state=state, warnings=geometry_warnings
-    )
+    return FetchResult(files=fetched, state_path=written_path, state=state)
+
+
+def _fetch_geometry_sources(
+    geometries: list[GeometrySource],
+    project_paths: ProjectPaths,
+    downloader: Downloader,
+    prior: dict[str, _PriorRecord],
+) -> list[FetchedFile]:
+    """Fetch every pinned geometry source, then fail on any mismatch.
+
+    Every source is tried before failing, so one run reports every file that
+    changed upstream.
+    """
+    fetched: list[FetchedFile] = []
+    mismatches: list[str] = []
+    for geometry in geometries:
+        local_path: Path = (
+            project_paths.district_geometry_dir
+            / geometry.provider
+            / geometry.state
+            / geometry.local_filename
+        )
+        try:
+            fetched.append(
+                _fetch_one(
+                    geometry.url,
+                    local_path,
+                    downloader,
+                    prior.get(geometry.url),
+                    expected_sha256=geometry.sha256,
+                )
+            )
+        except _ChecksumMismatchError as exc:
+            mismatches.append(str(exc))
+    if mismatches:
+        raise FetchError(
+            f"{len(mismatches)} geometry source(s) do not match their pinned "
+            f"checksum in sources.toml: {'; '.join(mismatches)}"
+        )
+    return fetched
 
 
 # --- Fetch ---
@@ -268,24 +300,40 @@ def _fetch_one(
     local_path: Path,
     downloader: Downloader,
     prior: _PriorRecord | None,
+    *,
+    expected_sha256: str | None = None,
 ) -> FetchedFile:
+    """Download one file, saving it only if it matches any expected digest."""
     extra_headers: dict[str, str] = _build_conditional_headers(local_path, prior)
     response: HttpResponse = downloader.get(source_url, extra_headers)
     if response.body is None:
-        return _record_unchanged(source_url, local_path, response.headers, prior)
+        unchanged: FetchedFile = _record_unchanged(
+            source_url, local_path, response.headers, prior
+        )
+        _verify_sha256(unchanged.source_url, unchanged.sha256, expected_sha256)
+        return unchanged
 
+    sha256: str = hashlib.sha256(response.body).hexdigest()
+    _verify_sha256(source_url, sha256, expected_sha256)
     local_path.parent.mkdir(parents=True, exist_ok=True)
     local_path.write_bytes(response.body)
 
     return FetchedFile(
         source_url=source_url,
         local_path=local_path,
-        sha256=hashlib.sha256(response.body).hexdigest(),
+        sha256=sha256,
         file_bytes=len(response.body),
         etag=response.headers.get("ETag"),
         last_modified=response.headers.get("Last-Modified"),
         status="fetched",
     )
+
+
+def _verify_sha256(source_url: str, actual: str, expected: str | None) -> None:
+    if expected is not None and actual != expected:
+        raise _ChecksumMismatchError(
+            f"checksum mismatch for {source_url}: pinned {expected}, got {actual}"
+        )
 
 
 def _build_conditional_headers(
@@ -402,18 +450,3 @@ def _vintage_to_year(vintage: str) -> str:
     if not vintage.startswith("v"):
         raise ValueError(f"unexpected vintage format: {vintage!r}")
     return vintage[1:]
-
-
-def _verify_checksum(fetched: FetchedFile, expected: str) -> str | None:
-    algorithm, _, expected_hex = expected.partition(":")
-    if algorithm != "sha256" or not expected_hex:
-        return (
-            f"malformed checksum pin {expected!r} for {fetched.source_url} "
-            f"(expected 'sha256:<hex>'); skipping verification"
-        )
-    if fetched.sha256.lower() != expected_hex.lower():
-        return (
-            f"checksum mismatch for {fetched.source_url}: "
-            f"pinned {expected_hex}, got {fetched.sha256}"
-        )
-    return None

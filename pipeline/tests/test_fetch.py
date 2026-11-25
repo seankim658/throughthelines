@@ -3,11 +3,15 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from pipeline.config import FetchConfig, ProjectPaths, load_fetch_config
-from pipeline.fetch import HttpResponse, fetch_state
+from pipeline.fetch import FetchError, HttpResponse, fetch_state
 
 NCGA_URL: str = "https://example.org/ncga/plan.zip"
 NCGA_BODY: bytes = b"ncga plan shapefile"
+OTHER_URL: str = "https://example.org/other/plan.zip"
+OTHER_BODY: bytes = b"other plan shapefile"
 
 SOURCES_TOML: str = """
 schema_version = 1
@@ -127,3 +131,59 @@ def test_matching_checksum_saves_the_geometry_file(tmp_path: Path) -> None:
 
     assert _geometry_path(paths, "ncga").read_bytes() == NCGA_BODY
     assert result.state_path.exists()
+
+
+def test_checksum_mismatch_stops_the_fetch(tmp_path: Path) -> None:
+    sources = _load_sources(
+        tmp_path, _geometry_entry("ncga", NCGA_URL, _pin(b"curated version"))
+    )
+    paths = _project_paths(tmp_path)
+
+    with pytest.raises(FetchError, match="checksum mismatch") as raised:
+        fetch_state("NC", sources, paths, FakeDownloader({NCGA_URL: NCGA_BODY}))
+
+    assert NCGA_URL in str(raised.value)
+    assert hashlib.sha256(NCGA_BODY).hexdigest() in str(raised.value)
+
+
+def test_mismatched_file_is_not_saved(tmp_path: Path) -> None:
+    sources = _load_sources(
+        tmp_path, _geometry_entry("ncga", NCGA_URL, _pin(b"curated version"))
+    )
+    paths = _project_paths(tmp_path)
+
+    with pytest.raises(FetchError):
+        fetch_state("NC", sources, paths, FakeDownloader({NCGA_URL: NCGA_BODY}))
+
+    assert not _geometry_path(paths, "ncga").exists()
+    assert not (paths.fetch_state_dir / "NC.yaml").exists()
+
+
+def test_every_mismatch_is_reported_in_one_error(tmp_path: Path) -> None:
+    sources = _load_sources(
+        tmp_path,
+        _geometry_entry("ncga", NCGA_URL, _pin(b"curated ncga")),
+        _geometry_entry("other", OTHER_URL, _pin(b"curated other")),
+    )
+    paths = _project_paths(tmp_path)
+    downloader = FakeDownloader({NCGA_URL: NCGA_BODY, OTHER_URL: OTHER_BODY})
+
+    with pytest.raises(FetchError) as raised:
+        fetch_state("NC", sources, paths, downloader)
+
+    assert NCGA_URL in str(raised.value)
+    assert OTHER_URL in str(raised.value)
+
+
+def test_unchanged_local_file_is_checked_against_its_pin(tmp_path: Path) -> None:
+    sources = _load_sources(
+        tmp_path, _geometry_entry("ncga", NCGA_URL, _pin(b"curated version"))
+    )
+    paths = _project_paths(tmp_path)
+    local: Path = _geometry_path(paths, "ncga")
+    local.parent.mkdir(parents=True)
+    local.write_bytes(NCGA_BODY)
+    downloader = FakeDownloader({}, not_modified=frozenset({NCGA_URL}))
+
+    with pytest.raises(FetchError, match="checksum mismatch"):
+        fetch_state("NC", sources, paths, downloader)
