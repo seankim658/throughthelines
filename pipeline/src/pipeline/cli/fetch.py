@@ -5,7 +5,13 @@ import sys
 from pipeline.cli._common import print_warning_count, print_warnings
 from pipeline.config import ProjectConfig, load_fetch_config, load_request_config
 from pipeline.core import SUPPORTED_STATES
-from pipeline.fetch import FetchError, FetchResult, fetch_national, fetch_state
+from pipeline.fetch import (
+    FetchError,
+    FetchResult,
+    HttpDownloader,
+    fetch_national,
+    fetch_state,
+)
 
 
 def run_fetch(project_config: ProjectConfig) -> int:
@@ -16,26 +22,13 @@ def run_fetch(project_config: ProjectConfig) -> int:
         print(f"fetch failed: {e}", file=sys.stderr)
         return 2
 
+    downloader = HttpDownloader(request.request_settings, project_config.user_agent)
+    paths = project_config.project_paths
     results: list[FetchResult] = []
     try:
-        results.append(
-            fetch_national(
-                sources=sources,
-                request_settings=request.request_settings,
-                user_agent=project_config.user_agent,
-                project_paths=project_config.project_paths,
-            )
-        )
+        results.append(fetch_national(sources, paths, downloader))
         for state in SUPPORTED_STATES:
-            results.append(
-                fetch_state(
-                    state=state,
-                    sources=sources,
-                    request_settings=request.request_settings,
-                    user_agent=project_config.user_agent,
-                    project_paths=project_config.project_paths,
-                )
-            )
+            results.append(fetch_state(state, sources, paths, downloader))
     except FetchError as e:
         print(f"fetch failed: {e}", file=sys.stderr)
         return 1

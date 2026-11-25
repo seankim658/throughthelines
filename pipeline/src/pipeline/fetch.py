@@ -21,7 +21,7 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 import yaml
 
@@ -63,6 +63,18 @@ class FetchResult:
 
 
 @dataclass(frozen=True)
+class HttpResponse:
+    """A downloaded body, or None when the server reports it unchanged."""
+
+    body: bytes | None
+    headers: dict[str, str]
+
+
+class Downloader(Protocol):
+    def get(self, url: str, headers: dict[str, str]) -> HttpResponse: ...
+
+
+@dataclass(frozen=True)
 class _PriorRecord:
     """Single file entry from a previously-written fetch-state record."""
 
@@ -74,13 +86,9 @@ class _PriorRecord:
 
 
 def fetch_national(
-    sources: FetchConfig,
-    request_settings: RequestSettings,
-    user_agent: str | None,
-    project_paths: ProjectPaths,
+    sources: FetchConfig, project_paths: ProjectPaths, downloader: Downloader
 ) -> FetchResult:
     """Fetch Voteview and all Census BEFs."""
-    user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
     project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
     project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
@@ -96,8 +104,7 @@ def fetch_national(
         _fetch_one(
             sources.voteview.url,
             voteview_local,
-            request_settings,
-            user_agent,
+            downloader,
             prior.get(sources.voteview.url),
         )
     )
@@ -110,9 +117,7 @@ def fetch_national(
             continue
         bef_local: Path = bef_dir / Path(entry.url).name
         fetched.append(
-            _fetch_one(
-                entry.url, bef_local, request_settings, user_agent, prior.get(entry.url)
-            )
+            _fetch_one(entry.url, bef_local, downloader, prior.get(entry.url))
         )
 
     written_path: Path = _write_manifest(sources, fetched, project_paths, manifest_path)
@@ -122,11 +127,9 @@ def fetch_national(
 def fetch_state(
     state: SupportedStateCode,
     sources: FetchConfig,
-    request_settings: RequestSettings,
-    user_agent: str | None,
     project_paths: ProjectPaths,
+    downloader: Downloader,
 ) -> FetchResult:
-    user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
     project_paths.raw_dir.mkdir(parents=True, exist_ok=True)
     project_paths.fetch_state_dir.mkdir(parents=True, exist_ok=True)
 
@@ -148,8 +151,7 @@ def fetch_state(
             _fetch_one(
                 source_url,
                 local_path,
-                request_settings,
-                user_agent,
+                downloader,
                 prior.get(source_url),
             )
         )
@@ -162,11 +164,7 @@ def fetch_state(
         vintage_state_dir.mkdir(parents=True, exist_ok=True)
         tab_url: str = sources.census.tabblock_url(vintage, state)
         tab_local: Path = vintage_state_dir / Path(tab_url).name
-        fetched.append(
-            _fetch_one(
-                tab_url, tab_local, request_settings, user_agent, prior.get(tab_url)
-            )
-        )
+        fetched.append(_fetch_one(tab_url, tab_local, downloader, prior.get(tab_url)))
 
     # State-specific block-assignment files
     bef_dir: Path = project_paths.bef_dir
@@ -176,9 +174,7 @@ def fetch_state(
             continue
         bef_local: Path = bef_dir / Path(entry.url).name
         fetched.append(
-            _fetch_one(
-                entry.url, bef_local, request_settings, user_agent, prior.get(entry.url)
-            )
+            _fetch_one(entry.url, bef_local, downloader, prior.get(entry.url))
         )
 
     geometry_warnings: list[str] = []
@@ -194,8 +190,7 @@ def fetch_state(
         fetched_file: FetchedFile = _fetch_one(
             geometry.url,
             geometry_local,
-            request_settings,
-            user_agent,
+            downloader,
             prior.get(geometry.url),
         )
         fetched.append(fetched_file)
@@ -212,90 +207,83 @@ def fetch_state(
 # --- Fetch ---
 
 
-def _http_get_with_retry(
-    source_url: str,
-    settings: RequestSettings,
-    user_agent: str,
-    extra_headers: dict[str, str] | None = None,
-) -> tuple[bytes | None, dict[str, str]]:
-    if not source_url.startswith("https://"):
-        raise FetchError(f"source URLs must use https; got {source_url!r}")
+class HttpDownloader:
+    """Download over https, retrying transient failures with backoff."""
 
-    last_exception: Exception | None = None
-    backoff_seconds: float = settings.initial_backoff_seconds
-    retryable_codes: frozenset[int] = frozenset(settings.retryable_http_codes)
+    def __init__(self, settings: RequestSettings, user_agent: str | None) -> None:
+        self._settings = settings
+        self._user_agent = DEFAULT_USER_AGENT if user_agent is None else user_agent
 
-    request_headers: dict[str, str] = {"User-Agent": user_agent}
-    if extra_headers:
-        request_headers.update(extra_headers)
+    def get(self, url: str, headers: dict[str, str]) -> HttpResponse:
+        if not url.startswith("https://"):
+            raise FetchError(f"source URLs must use https; got {url!r}")
 
-    for attempt in range(1, settings.max_retry_attempts + 1):
+        request_headers: dict[str, str] = {"User-Agent": self._user_agent, **headers}
+        attempts: int = self._settings.max_retry_attempts
+        backoff_seconds: float = self._settings.initial_backoff_seconds
+        last_exception: urllib.error.URLError | None = None
+        for attempt in range(1, attempts + 1):
+            try:
+                return self._attempt(url, request_headers)
+            except urllib.error.URLError as exc:
+                last_exception = exc
+            if attempt < attempts:
+                # Retry jitter needs no cryptographic randomness.
+                jitter: float = random.uniform(0, self._settings.jitter_seconds)  # noqa: S311
+                time.sleep(backoff_seconds + jitter)
+                backoff_seconds *= self._settings.backoff_multiplier
+
+        raise FetchError(
+            f"failed to download {url} after {attempts} attempts: {last_exception}"
+        ) from last_exception
+
+    def _attempt(self, url: str, request_headers: dict[str, str]) -> HttpResponse:
+        """Make one request, raising URLError only for a retryable failure."""
+        # get() checks for https, which rules out file: and custom schemes.
+        request = urllib.request.Request(url, headers=request_headers)  # noqa: S310
         try:
-            # The https check above rules out file: and custom schemes.
-            request = urllib.request.Request(  # noqa: S310
-                source_url, headers=request_headers
-            )
             with urllib.request.urlopen(  # noqa: S310
-                request, timeout=settings.request_timeout_seconds
+                request, timeout=self._settings.request_timeout_seconds
             ) as response:
-                body: bytes = response.read()
-                headers: dict[str, str] = dict(response.headers.items())
-                return body, headers
+                return HttpResponse(
+                    body=response.read(), headers=dict(response.headers.items())
+                )
         except urllib.error.HTTPError as exc:
             if exc.code == 304:
-                headers_304: dict[str, str] = (
+                not_modified_headers: dict[str, str] = (
                     dict(exc.headers.items()) if exc.headers else {}
                 )
-                return None, headers_304
-
-            last_exception = exc
-            if exc.code not in retryable_codes:
-                raise FetchError(
-                    f"HTTP {exc.code} on {source_url}: {exc.reason}"
-                ) from exc
-        except urllib.error.URLError as exc:
-            last_exception = exc
+                return HttpResponse(body=None, headers=not_modified_headers)
+            if exc.code in self._settings.retryable_http_codes:
+                raise
+            raise FetchError(f"HTTP {exc.code} on {url}: {exc.reason}") from exc
+        except urllib.error.URLError:
+            raise
         except Exception as exc:
-            raise FetchError(f"failed to download {source_url}: {exc}") from exc
-
-        if attempt < settings.max_retry_attempts:
-            # Retry jitter needs no cryptographic randomness.
-            sleep_for: float = backoff_seconds + random.uniform(  # noqa: S311
-                0, settings.jitter_seconds
-            )
-            time.sleep(sleep_for)
-            backoff_seconds *= settings.backoff_multiplier
-
-    raise FetchError(
-        f"failed to download {source_url} after "
-        f"{settings.max_retry_attempts} attempts: {last_exception}"
-    ) from last_exception
+            raise FetchError(f"failed to download {url}: {exc}") from exc
 
 
 def _fetch_one(
     source_url: str,
     local_path: Path,
-    settings: RequestSettings,
-    user_agent: str,
+    downloader: Downloader,
     prior: _PriorRecord | None,
 ) -> FetchedFile:
     extra_headers: dict[str, str] = _build_conditional_headers(local_path, prior)
-    body, headers = _http_get_with_retry(
-        source_url, settings, user_agent, extra_headers
-    )
-    if body is None:
-        return _record_unchanged(source_url, local_path, headers, prior)
+    response: HttpResponse = downloader.get(source_url, extra_headers)
+    if response.body is None:
+        return _record_unchanged(source_url, local_path, response.headers, prior)
 
     local_path.parent.mkdir(parents=True, exist_ok=True)
-    local_path.write_bytes(body)
+    local_path.write_bytes(response.body)
 
     return FetchedFile(
         source_url=source_url,
         local_path=local_path,
-        sha256=hashlib.sha256(body).hexdigest(),
-        file_bytes=len(body),
-        etag=headers.get("ETag"),
-        last_modified=headers.get("Last-Modified"),
+        sha256=hashlib.sha256(response.body).hexdigest(),
+        file_bytes=len(response.body),
+        etag=response.headers.get("ETag"),
+        last_modified=response.headers.get("Last-Modified"),
         status="fetched",
     )
 
