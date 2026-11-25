@@ -67,9 +67,9 @@ export const DATA_SOURCES: readonly DataSource[] = [
 	{
 		name: 'All About Redistricting',
 		description:
-			'The narrative reference behind our plan-origin curation. Most of the curation metadata is summarized from here.',
+			'The narrative reference curators use to find and corroborate the primary sources behind each plan record, such as bills, session laws and court opinions.',
 		link: { kind: 'static', url: 'https://redistricting.lls.edu/' },
-		license: '© Justin Levitt (copyrighted reference, summarized with attribution)',
+		license: '© Justin Levitt (cited as a reference)',
 		citation: [
 			{ type: 'text', value: 'Justin Levitt. ' },
 			{

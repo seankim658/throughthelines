@@ -44,7 +44,7 @@ The terms used across these docs, grouped by topic.
 
 For more information on the project's data sources see the [Data](/data) page.
 
-**All About Redistricting** ([link](https://redistricting.lls.edu/)) — Justin Levitt's narrative reference on each state's redistricting plans and the litigation around them. It is the prose source the plan metadata is curated from.
+**All About Redistricting** ([link](https://redistricting.lls.edu/)) — Justin Levitt's narrative reference on each state's redistricting plans and the litigation around them. Curators use it to find and corroborate the primary sources the plan metadata cites.
 
 **Block Equivalency File (BEF)** — A Census file mapping each block to its district for a given Congress. Published from the 113th Congress onward; earlier Congresses are sourced differently. See [Methodology](/docs/methodology).
 

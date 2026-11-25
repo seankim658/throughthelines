@@ -12,11 +12,11 @@ To see an example of a curated plan, see the [NC 113th plan file](https://github
 
 Curation turns prose into structured data. That prose lives in a small number of authoritative places:
 
-- **[All About Redistricting](https://redistricting.lls.edu/)**: The narrative account of each state's plans and the litigation around them. This is the usual starting point.
+- **[All About Redistricting](https://redistricting.lls.edu/)**: The narrative account of each state's plans and the litigation around them. This is the usual starting point for finding the primary sources below.
 - **Primary court opinions**: For any plan that was challenged, the opinion itself is the citable source for what was decided and which districts were affected.
 - **Enacting documents**: The session law or court order that put a plan into effect, where a date or origin needs confirming.
 
-Every value you enter should be traceable to one of these. Curation is not interpretation, it is transcription (with citations).
+Every value you enter should be traceable to one of these. Curation is not interpretation. It records what the sources establish, in your own words, with citations.
 
 ## The workflow
 
@@ -75,6 +75,7 @@ A few specifics keep records consistent across plans and curators:
 - **Dates:** Record `enacted_date` as the date the plan *became law*, for a legislative plan the date it was ratified and chaptered as a session law. For a court or remedial plan the date the order was entered, not the date of a floor vote or the first election it governed. Record `effective_date` as the date it *took legal effect*, the preclearance date for a plan that needed Section 5 preclearance, otherwise the operative date in the enacting instrument. Full definitions are in [Data model & schema](/docs/data-model#dates).
 - **What a court held:** Take it from the opinion itself. When a decision splits by district or by issue, record the split rather than one whole-case vote. For example, one district affirmed unanimously and another by a divided vote, and note any judge or justice who did not participate.
 - **Primary source over summary:** Where a narrative source and a court opinion both touch a legal fact, cite the opinion for what was *decided* (which districts, the constitutional basis, the vote) and the narrative source for context and dates. All About Redistricting, for instance, may say "two districts were struck" without numbering them; the district numbers belong to the opinion.
+- **Your own words:** Write every prose field yourself. Don't copy or closely paraphrase sentences from All About Redistricting or any other secondary source, because their wording is copyrighted even though the facts are not. Short quotes are fine from court opinions and government documents, such as a plan's official name or a holding's key phrase.
 
 ### Recording a strikedown
 
