@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import geopandas as gpd
+from config_fixtures import project_paths
 from shapely.geometry import Polygon, box
 
 from pipeline.blocks import BlocksBuildResult, build_blocks
@@ -162,7 +163,7 @@ def make_block_world(root: Path) -> BlockWorld:
     112 joins polygons (pre-BEF), 113 has a national file, 114 carries 113
     nationally, and 115 has both a national carry and a state file.
     """
-    paths: ProjectPaths = _project_paths(root)
+    paths: ProjectPaths = project_paths(root)
     census: CensusSource = _write_tabblocks(paths)
     _write_plan_polygons(paths.raw_dir / _POLYGON_SOURCE_FILE)
     world = BlockWorld(
@@ -189,33 +190,6 @@ def make_block_world(root: Path) -> BlockWorld:
         ),
     ]
     return world
-
-
-def _project_paths(root: Path) -> ProjectPaths:
-    raw: Path = root / "raw"
-    derived: Path = root / "derived"
-    return ProjectPaths(
-        config_dir=root / "config",
-        request_filename="request.toml",
-        sources_filename="sources.toml",
-        raw_dir=raw,
-        district_geometry_dir=raw / "district_geometry",
-        lewis_dir=raw / "district_geometry" / "lewis",
-        voteview_dir=raw / "voteview",
-        census_dir=raw / "census",
-        tabblock_dir=raw / "census" / "tabblock",
-        bef_dir=raw / "census" / "bef",
-        fetch_state_dir=raw / "fetch_state",
-        plans_dir=root / "plans",
-        derived_dir=derived,
-        stitched_dir=derived / "stitched",
-        members_file=derived / "members.json",
-        block_lookup_dir=derived / "block_lookup",
-        tiles_dir=derived / "tiles",
-        basemap_file=derived / "basemap.pmtiles",
-        plan_index_file=derived / "plan_index.json",
-        manifest_file=derived / "manifest.json",
-    )
 
 
 def _write_tabblocks(paths: ProjectPaths) -> CensusSource:
