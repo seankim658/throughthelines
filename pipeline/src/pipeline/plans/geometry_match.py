@@ -25,7 +25,8 @@ def geometry_source_for_plan(
     """Return the geometry source whose Congress falls in `plan`'s range.
 
     Raise when more than one does, since every match would write the same
-    plan file.
+    plan file. Raise too when the plan's `source_commit` is not the match's
+    checksum pin, since the plan then describes a different file.
     """
     matches: list[GeometrySource] = [
         geometry_source
@@ -39,4 +40,14 @@ def geometry_source_for_plan(
             f"plan {plan.plan_id} matches geometry sources for Congresses "
             f"{congresses}; a plan takes at most one geometry source"
         )
-    return matches[0] if matches else None
+    if not matches:
+        return None
+    match: GeometrySource = matches[0]
+    pin: str = f"sha256:{match.sha256}"
+    if plan.source_commit != pin:
+        raise PlanGeometryError(
+            f"plan {plan.plan_id} has source_commit {plan.source_commit!r}, but "
+            f"its geometry source for Congress {match.congress} is pinned to "
+            f"{pin!r}; they must match"
+        )
+    return match

@@ -6,6 +6,8 @@ from conftest import PlanRecordFactory
 from pipeline.config import GeometrySource, ScopeSettings
 from pipeline.plans import Plan, PlanGeometryError, geometry_source_for_plan
 
+_PIN: str = "a" * 64
+
 _SCOPE = ScopeSettings(
     congress_start=113,
     congress_end=120,
@@ -23,7 +25,7 @@ def _geometry_source(congress: int, provider: str = "ncga") -> GeometrySource:
         url=f"https://example.org/{provider}/{congress}.zip",
         landing_url="https://example.org/landing",
         local_filename=f"{provider}_{congress}.zip",
-        sha256="a" * 64,
+        sha256=_PIN,
         source_crs="EPSG:32119",
         district_field="DISTRICT",
     )
@@ -32,7 +34,7 @@ def _geometry_source(congress: int, provider: str = "ncga") -> GeometrySource:
 def test_plan_matches_the_source_inside_its_range(
     plan_record: PlanRecordFactory,
 ) -> None:
-    plan = Plan.model_validate(plan_record())
+    plan = Plan.model_validate(plan_record(source_commit=f"sha256:{_PIN}"))
     source = _geometry_source(114)
 
     assert geometry_source_for_plan(plan, [_geometry_source(116), source], _SCOPE) is (
@@ -57,3 +59,12 @@ def test_two_sources_for_one_plan_are_rejected(
         geometry_source_for_plan(
             plan, [_geometry_source(113), _geometry_source(114, "census")], _SCOPE
         )
+
+
+def test_plan_whose_source_commit_differs_from_the_pin_is_rejected(
+    plan_record: PlanRecordFactory,
+) -> None:
+    plan = Plan.model_validate(plan_record(source_commit="sha256:" + "b" * 64))
+
+    with pytest.raises(PlanGeometryError, match=r"NC_113_2013.*source_commit"):
+        geometry_source_for_plan(plan, [_geometry_source(114)], _SCOPE)
