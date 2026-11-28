@@ -19,6 +19,7 @@ from blocks_world import (
 from shapely.geometry import box
 
 from pipeline.blocks import BlocksBuildError
+from pipeline.config import BlockAssignmentCarry
 from pipeline.plans import Plan
 
 
@@ -161,6 +162,42 @@ def test_carry_needs_a_target_in_its_own_scope(world: BlockWorld) -> None:
     ]
 
     with pytest.raises(BlocksBuildError, match="same_as_congress=113"):
+        world.build()
+
+
+def test_carry_across_a_redraw_raises(world: BlockWorld) -> None:
+    # The state redrew for 114, so borrowing 113's file would give 114 the
+    # old map.
+    world.plans = [
+        world.plans[0],
+        _single_plan(world, 113, 113),
+        _single_plan(world, 114, 115),
+    ]
+
+    with pytest.raises(
+        BlocksBuildError,
+        match=r"Congress 114 .*Congress 113.*NC.*NC_114_2015.*NC_113_2013",
+    ):
+        world.build()
+
+    assert not world.output_path.exists()
+
+
+def test_carry_from_outside_scope_raises(world: BlockWorld) -> None:
+    world.congress_start = 113
+    world.plans = world.plans[1:]
+    world.assignments = [
+        world.write_bef(state="*", congress=112, split=NATIONAL_113_SPLIT),
+        *[a for a in world.assignments if a.congress != 113],
+    ]
+    world.carries = [
+        BlockAssignmentCarry(
+            provider="census", state="*", congress=113, same_as_congress=112
+        ),
+        *world.carries,
+    ]
+
+    with pytest.raises(BlocksBuildError, match=r"no in-scope plan .*Congress 112"):
         world.build()
 
 

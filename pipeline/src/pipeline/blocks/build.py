@@ -279,6 +279,12 @@ def _resolve_congress_sources(
             )
             needed_vintages.add(resolved.entry.vintage)
             if resolved.derived_from is not None:
+                _check_carry_keeps_plan(
+                    state=state,
+                    congress=congress,
+                    source_congress=resolved.derived_from,
+                    plan_by_congress=plan_by_congress,
+                )
                 carried_congresses.append((congress, resolved.derived_from))
             continue
 
@@ -348,6 +354,31 @@ def _resolve_congress_sources(
         )
 
     return sources, needed_vintages, resolution_warnings
+
+
+def _check_carry_keeps_plan(
+    state: SupportedStateCode,
+    congress: int,
+    source_congress: int,
+    plan_by_congress: dict[int, Plan],
+) -> None:
+    """Refuse a carry across a redraw, where the borrowed file holds the old map."""
+    plan: Plan = plan_by_congress[congress]
+    source_plan: Plan | None = plan_by_congress.get(source_congress)
+    if source_plan is None:
+        raise BlocksBuildError(
+            f"carry for Congress {congress} borrows Congress {source_congress}'s "
+            f"file, but no in-scope plan for state {state} covers Congress "
+            f"{source_congress}, so the carry can't be checked"
+        )
+    if source_plan.plan_id != plan.plan_id:
+        raise BlocksBuildError(
+            f"carry for Congress {congress} borrows Congress {source_congress}'s "
+            f"file, but state {state} changed plans between them "
+            f"({plan.plan_id} governs {congress}, {source_plan.plan_id} governs "
+            f"{source_congress}). Add a block-assignment entry for Congress "
+            f"{congress}."
+        )
 
 
 def _resolve_assignment(
