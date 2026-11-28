@@ -78,7 +78,7 @@ def resolve_target_states(
     states_arg: list[SupportedStateCode] | None,
     configured_states: Collection[SupportedStateCode],
 ) -> list[SupportedStateCode]:
-    """Resolve the `--state` CLI argument against the configured state set."""
+    """Resolve the `--state` CLI argument against the built states."""
     configured: list[SupportedStateCode] = sorted(configured_states)
     if states_arg is None:
         return configured
@@ -88,8 +88,8 @@ def resolve_target_states(
     ]
     if missing:
         raise CliArgError(
-            f"state(s) {missing} not configured in sources.toml; "
-            f"available: {configured}"
+            f"state(s) {missing} are not built states in [scope.chambers]; "
+            f"built: {configured}"
         )
 
     return dedupe_states(states_arg)
@@ -107,14 +107,25 @@ def load_sources_and_states(
     project_config: ProjectConfig,
     states_arg: list[SupportedStateCode] | None,
 ) -> tuple[FetchConfig, list[SupportedStateCode]]:
-    """Load sources.toml and resolve the --state argument against it."""
+    """Load sources.toml and resolve the --state argument against the built states.
+
+    Every target state needs Lewis files, so one without them stops the step.
+    """
     sources = load_sources(project_config)
     try:
         target_states: list[SupportedStateCode] = resolve_target_states(
-            states_arg, sources.lewis.states
+            states_arg, project_config.scope.chambers.keys()
         )
     except CliArgError as e:
         raise CliError(f"error: {e}") from e
+    without_lewis: list[SupportedStateCode] = [
+        state for state in target_states if state not in sources.lewis.states
+    ]
+    if without_lewis:
+        raise CliError(
+            f"error: built state(s) {without_lewis} have no [lewis.states] "
+            f"entry in {project_config.sources_config_path}"
+        )
     return sources, target_states
 
 

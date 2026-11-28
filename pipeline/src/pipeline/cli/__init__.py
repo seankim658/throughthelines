@@ -115,7 +115,10 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
     # Fetch
-    subparsers.add_parser("fetch", help="Download upstream sources to data/raw/.")
+    subparsers.add_parser(
+        "fetch",
+        help="Download upstream sources for the built states to data/raw/.",
+    )
 
     # Scaffold
     scaffold_parser = subparsers.add_parser(
@@ -242,7 +245,7 @@ def _add_state_argument(parser: argparse.ArgumentParser, verb: str) -> None:
         metavar="STATE",
         help=(
             f"Two-letter state code to {verb} (repeatable, e.g. "
-            "--state NC --state PA). If omitted, applies to every state "
-            "configured in sources.toml."
+            "--state NC --state PA). If omitted, applies to every built state "
+            "in [scope.chambers]."
         ),
     )

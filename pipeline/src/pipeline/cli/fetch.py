@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 from pipeline.config import ProjectConfig, load_fetch_config, load_request_config
-from pipeline.core import SUPPORTED_STATES
 from pipeline.fetch import (
     FetchError,
     FetchResult,
@@ -26,7 +25,7 @@ def run_fetch(project_config: ProjectConfig) -> int:
     results: list[FetchResult] = []
     try:
         results.append(fetch_national(sources, paths, downloader))
-        for state in SUPPORTED_STATES:
+        for state in sorted(project_config.scope.chambers):
             results.append(fetch_state(state, sources, paths, downloader))
     except FetchError as e:
         print(f"fetch failed: {e}", file=sys.stderr)
