@@ -4,6 +4,10 @@ This subpackage defines the Pydantic models, cross-reference
 validators, YAML loading from disk, scaffolding  for the plan-metadata YAML files.
 """
 
+from pipeline.plans.geometry_match import (
+    geometry_source_for_plan,
+    plan_covers_congress,
+)
 from pipeline.plans.loader import (
     LoadFailure,
     PlanLoadError,
@@ -48,8 +52,10 @@ __all__ = [
     "StitchError",
     "StitchResult",
     "build_plan_index",
+    "geometry_source_for_plan",
     "load_plan",
     "load_plans_dir",
+    "plan_covers_congress",
     "plan_in_scope",
     "scaffold_all",
     "scaffold_one",

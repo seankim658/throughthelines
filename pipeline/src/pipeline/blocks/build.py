@@ -45,7 +45,7 @@ from pipeline.core import (
     SupportedStateCode,
     write_json_atomic,
 )
-from pipeline.plans import Plan
+from pipeline.plans import Plan, geometry_source_for_plan
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 
@@ -259,7 +259,7 @@ def _resolve_congress_sources(
 
     for congress in range(scope.congress_start, scope.congress_end + 1):
         plan: Plan = plan_by_congress[congress]
-        geometry_source: GeometrySource | None = _match_geometry_source(
+        geometry_source: GeometrySource | None = geometry_source_for_plan(
             plan, state_geometry_sources, scope
         )
 
@@ -480,18 +480,6 @@ def _make_polygon_source(
             f"not found at {geojson_path} "
             f"(did you run `pipeline fetch`?)"
         ) from e
-
-
-def _match_geometry_source(
-    plan: Plan, state_geometry_sources: list[GeometrySource], scope: ScopeSettings
-) -> GeometrySource | None:
-    effective_end: int = (
-        plan.congress_end if plan.congress_end is not None else scope.congress_end
-    )
-    for geometry_source in state_geometry_sources:
-        if plan.congress_start <= geometry_source.congress <= effective_end:
-            return geometry_source
-    return None
 
 
 def _resolve_tabblock_paths(

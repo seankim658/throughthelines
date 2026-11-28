@@ -12,7 +12,7 @@ from pipeline.config import (
 )
 from pipeline.core import SupportedStateCode
 from pipeline.geometry import GeometryNormalizeError, normalize_geometry
-from pipeline.plans import Plan
+from pipeline.plans import Plan, plan_covers_congress
 
 # NOTE : should this be hardcoded here
 _GEOMETRY_PATH_PREFIX: str = "district_geometry/"
@@ -122,9 +122,6 @@ def _match_plan(
     geometry: GeometrySource, in_scope_plans: list[Plan], scope: ScopeSettings
 ) -> Plan | None:
     for plan in in_scope_plans:
-        effective_end: int = (
-            plan.congress_end if plan.congress_end is not None else scope.congress_end
-        )
-        if plan.congress_start <= geometry.congress <= effective_end:
+        if plan_covers_congress(plan, geometry.congress, scope):
             return plan
     return None
