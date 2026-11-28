@@ -103,3 +103,30 @@ def test_publish_refuses_before_contacting_r2(tmp_path: Path) -> None:
             settings=settings,
             publish_states=PUBLISHED,
         )
+
+
+def test_publish_refuses_a_manifest_without_a_url_prefix(tmp_path: Path) -> None:
+    manifest = _write_release(
+        tmp_path,
+        manifest_states=PUBLISHED,
+        plan_states=PUBLISHED,
+        member_states=PUBLISHED,
+    )
+    manifest["build"]["url_prefix"] = None
+    manifest_file: Path = tmp_path / "manifest.json"
+    manifest_file.write_text(json.dumps(manifest), "utf-8")
+    settings = R2Settings(
+        access_key_id="unused",
+        secret_access_key="unused",  # noqa: S106
+        account_id="unused",
+        bucket="unused",
+    )
+
+    with pytest.raises(PublishError, match="url_prefix"):
+        publish_artifacts(
+            manifest_file=manifest_file,
+            derived_dir=tmp_path,
+            basemap_file=tmp_path / "basemap.pmtiles",
+            settings=settings,
+            publish_states=PUBLISHED,
+        )

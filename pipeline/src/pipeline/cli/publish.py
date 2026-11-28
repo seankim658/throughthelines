@@ -34,14 +34,6 @@ def run_publish(project_config: ProjectConfig) -> int:
         print(f"publish failed: {e}", file=sys.stderr)
         return 1
 
-    if result.url_prefix is None:
-        print(
-            "\twarn: manifest has a null url_prefix; versioned artifacts were "
-            "uploaded without a v/<sha> prefix. Set THROUGH_THE_LINES_GIT_SHA "
-            "and rebuild the manifest for a versioned deploy.",
-            file=sys.stderr,
-        )
-
     for action, key in result.outcomes:
         print(f"\t{action:8} {key}")
 

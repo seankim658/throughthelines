@@ -60,7 +60,7 @@ class _PlannedUpload:
 @dataclass(frozen=True)
 class PublishResult:
     bucket: str
-    url_prefix: str | None
+    url_prefix: str
     uploaded: int
     skipped: int
     total_bytes: int
@@ -72,8 +72,8 @@ class PublishResult:
 # --- Key / content-type helpers ---
 
 
-def _resolve_key(path: str, unversioned: bool, url_prefix: str | None) -> str:
-    if unversioned or url_prefix is None:
+def _resolve_key(path: str, unversioned: bool, url_prefix: str) -> str:
+    if unversioned:
         return path
     return f"{url_prefix}/{path}"
 
@@ -91,7 +91,7 @@ def _plan_global_uploads(
     artifacts: dict[str, Any],
     derived_dir: Path,
     basemap_file: Path,
-    url_prefix: str | None,
+    url_prefix: str,
 ) -> list[_PlannedUpload]:
     plans: list[_PlannedUpload] = []
 
@@ -117,7 +117,7 @@ def _plan_global_uploads(
 
 
 def _plan_state_uploads(
-    states: dict[str, Any], derived_dir: Path, url_prefix: str | None
+    states: dict[str, Any], derived_dir: Path, url_prefix: str
 ) -> list[_PlannedUpload]:
     plans: list[_PlannedUpload] = []
     for state in states.values():
@@ -199,6 +199,21 @@ def _release_states(
 # --- S3 client + transfers ---
 
 
+def _require_url_prefix(manifest: dict[str, Any], manifest_file: Path) -> str:
+    """Return the manifest's url_prefix, refusing a release without one.
+
+    Unprefixed keys are cached as immutable for a year, so a later unprefixed
+    upload could be served stale.
+    """
+    url_prefix: object = manifest.get("build", {}).get("url_prefix")
+    if not isinstance(url_prefix, str) or not url_prefix:
+        raise PublishError(
+            f"refusing to publish {manifest_file}: build.url_prefix is "
+            f"{url_prefix!r}; rebuild the manifest with a git SHA, as deploy.sh does"
+        )
+    return url_prefix
+
+
 def _make_client(settings: R2Settings) -> S3Client:
     return boto3.client(
         "s3",
@@ -253,11 +268,11 @@ def publish_artifacts(
     """Upload the manifest's artifacts to R2, then the manifest itself.
 
     Nothing uploads when any released artifact holds a state missing from
-    publish_states.
+    publish_states, or when the manifest has no url_prefix.
     """
     manifest: dict[str, Any] = _load_manifest(manifest_file)
     check_release_states(manifest, derived_dir, publish_states)
-    url_prefix: str | None = manifest.get("build", {}).get("url_prefix")
+    url_prefix: str = _require_url_prefix(manifest, manifest_file)
 
     plans: list[_PlannedUpload] = _plan_global_uploads(
         manifest["artifacts"], derived_dir, basemap_file, url_prefix
