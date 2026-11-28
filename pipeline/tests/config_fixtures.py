@@ -81,12 +81,13 @@ def geometry_entry(
     provider: str = "ncga",
     url: str = "https://example.org/ncga/plan.zip",
     state: str = "NC",
+    congress: int = 120,
 ) -> str:
     return f"""
 [[geometry_source]]
 provider = "{provider}"
 state = "{state}"
-congress = 120
+congress = {congress}
 url = "{url}"
 landing_url = "https://example.org/landing"
 local_filename = "plan.zip"

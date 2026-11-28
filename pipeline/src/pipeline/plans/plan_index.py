@@ -14,7 +14,10 @@ from typing import Any
 
 from pipeline.config import LEWIS_PROVIDER, GeometrySource, ScopeSettings
 from pipeline.core import SupportedStateCode, write_json_atomic
-from pipeline.plans.geometry_match import geometry_source_for_plan
+from pipeline.plans.geometry_match import (
+    PlanGeometryError,
+    geometry_source_for_plan,
+)
 from pipeline.plans.loader import PlanLoadError, PlanSetLoadError, load_plans_dir
 from pipeline.plans.models import Plan
 from pipeline.plans.scope import plan_in_scope
@@ -70,9 +73,12 @@ def _boundary_source_for_plan(
     lewis_homepage_url: str,
 ) -> dict[str, str]:
     """Resolve who published this plan's district boundaries."""
-    geometry_source: GeometrySource | None = geometry_source_for_plan(
-        plan, state_geometry_sources, scope
-    )
+    try:
+        geometry_source: GeometrySource | None = geometry_source_for_plan(
+            plan, state_geometry_sources, scope
+        )
+    except PlanGeometryError as e:
+        raise PlanIndexBuildError(str(e)) from e
     if geometry_source is None:
         return {"provider": LEWIS_PROVIDER, "landing_url": lewis_homepage_url}
     return {

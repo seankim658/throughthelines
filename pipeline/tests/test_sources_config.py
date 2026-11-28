@@ -90,6 +90,48 @@ def test_duplicate_entry_is_rejected(tmp_path: Path) -> None:
         load_fetch_config(path)
 
 
+def test_two_providers_for_one_state_and_congress_are_rejected(
+    tmp_path: Path,
+) -> None:
+    path: Path = write_sources(
+        tmp_path,
+        block_assignment_entry("NC", 117, provider="ncga"),
+        block_assignment_entry("NC", 117, provider="census"),
+    )
+
+    with pytest.raises(FetchConfigError, match="state='NC', congress=117"):
+        load_fetch_config(path)
+
+
+def test_carry_and_file_for_one_state_and_congress_are_rejected(
+    tmp_path: Path,
+) -> None:
+    path: Path = write_sources(
+        tmp_path,
+        block_assignment_entry("*", 116),
+        block_assignment_entry("*", 117),
+        carry_entry("*", 117, 116, provider="ncga"),
+    )
+
+    with pytest.raises(FetchConfigError, match="state='\\*', congress=117"):
+        load_fetch_config(path)
+
+
+def test_two_geometry_sources_for_one_state_and_congress_are_rejected(
+    tmp_path: Path,
+) -> None:
+    checksum: str = "sha256:" + "a" * 64
+    path: Path = write_sources(
+        tmp_path,
+        block_assignment_entry("*", 116),
+        geometry_entry(checksum),
+        geometry_entry(checksum, provider="census", url="https://example.org/c.zip"),
+    )
+
+    with pytest.raises(FetchConfigError, match="state='NC', congress=120"):
+        load_fetch_config(path)
+
+
 @pytest.mark.parametrize(
     "checksum",
     [

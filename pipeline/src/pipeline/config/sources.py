@@ -285,7 +285,7 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
             f"[[geometry_source]] in {path} must be an array of tables"
         )
 
-    seen: set[tuple[str, str, int]] = set()
+    seen: set[tuple[str, int]] = set()
     entries: list[GeometrySource] = []
     for idx, entry_raw in enumerate(entries_raw):
         if not isinstance(entry_raw, dict):
@@ -313,12 +313,12 @@ def _load_geometry_sources(raw: dict[str, Any], path: Path) -> list[GeometrySour
             entry_raw, "congress", section_label, path, FetchConfigError
         )
 
-        dedup_key: tuple[str, str, int] = (provider, state_raw, congress)
+        dedup_key: tuple[str, int] = (state_raw, congress)
         if dedup_key in seen:
             raise FetchConfigError(
                 f"duplicate [[geometry_source]] entry for "
-                f"provider={provider!r}, state={state_raw!r}, congress={congress} "
-                f"in {path}"
+                f"state={state_raw!r}, congress={congress} in {path}; "
+                f"each state and Congress takes one geometry source"
             )
         seen.add(dedup_key)
 
@@ -432,7 +432,7 @@ def _load_block_assignments(
             f"[[block_assignment]] in {path} must be a non-empty array of tables"
         )
 
-    seen: set[tuple[str, str, int]] = set()
+    seen: set[tuple[str, int]] = set()
     files: list[BlockAssignmentEntry] = []
     carries: list[BlockAssignmentCarry] = []
 
@@ -447,12 +447,12 @@ def _load_block_assignments(
             entry_raw, section_label, path
         )
 
-        dedup_key: tuple[str, str, int] = (provider, state, congress)
+        dedup_key: tuple[str, int] = (state, congress)
         if dedup_key in seen:
             raise FetchConfigError(
                 f"duplicate [[block_assignment]] entry for "
-                f"provider={provider!r}, state={state!r}, congress={congress} "
-                f"in {path}"
+                f"state={state!r}, congress={congress} in {path}; "
+                f"each state and Congress takes one file or carry"
             )
         seen.add(dedup_key)
 

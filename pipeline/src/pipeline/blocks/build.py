@@ -45,7 +45,7 @@ from pipeline.core import (
     SupportedStateCode,
     write_json_atomic,
 )
-from pipeline.plans import Plan, geometry_source_for_plan
+from pipeline.plans import Plan, PlanGeometryError, geometry_source_for_plan
 
 _OUTPUT_SCHEMA_VERSION: int = 1
 
@@ -259,9 +259,12 @@ def _resolve_congress_sources(
 
     for congress in range(scope.congress_start, scope.congress_end + 1):
         plan: Plan = plan_by_congress[congress]
-        geometry_source: GeometrySource | None = geometry_source_for_plan(
-            plan, state_geometry_sources, scope
-        )
+        try:
+            geometry_source: GeometrySource | None = geometry_source_for_plan(
+                plan, state_geometry_sources, scope
+            )
+        except PlanGeometryError as e:
+            raise BlocksBuildError(str(e)) from e
 
         # Step 1: a real or carried delimited entry (state-specific first)
         resolved: _ResolvedAssignment | None = _resolve_assignment(

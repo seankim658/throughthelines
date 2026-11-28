@@ -5,6 +5,7 @@ validators, YAML loading from disk, scaffolding  for the plan-metadata YAML file
 """
 
 from pipeline.plans.geometry_match import (
+    PlanGeometryError,
     geometry_source_for_plan,
     plan_covers_congress,
 )
@@ -41,6 +42,7 @@ __all__ = [
     "CourtCitation",
     "LoadFailure",
     "Plan",
+    "PlanGeometryError",
     "PlanIndexBuildError",
     "PlanIndexBuildResult",
     "PlanLoadError",

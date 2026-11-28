@@ -12,7 +12,12 @@ from pipeline.config import (
 )
 from pipeline.core import SupportedStateCode
 from pipeline.geometry import GeometryNormalizeError, normalize_geometry
-from pipeline.plans import Plan, plan_covers_congress
+from pipeline.plans import (
+    Plan,
+    PlanGeometryError,
+    geometry_source_for_plan,
+    plan_covers_congress,
+)
 
 # NOTE : should this be hardcoded here
 _GEOMETRY_PATH_PREFIX: str = "district_geometry/"
@@ -47,6 +52,10 @@ def run_normalize_geometry(
             in_scope_plans = load_in_scope_plans(paths.plans_dir, state, scope)
         except CliError as e:
             print(str(e), file=sys.stderr)
+            failed = True
+            continue
+
+        if not _each_plan_has_one_source(in_scope_plans, state_sources, scope):
             failed = True
             continue
 
@@ -116,6 +125,21 @@ def _normalize_one(
         f"{result.district_count} districts → {result.output_path}"
     )
     return True
+
+
+def _each_plan_has_one_source(
+    in_scope_plans: list[Plan],
+    state_sources: list[GeometrySource],
+    scope: ScopeSettings,
+) -> bool:
+    ok: bool = True
+    for plan in in_scope_plans:
+        try:
+            geometry_source_for_plan(plan, state_sources, scope)
+        except PlanGeometryError as e:
+            print(f"\terror: {e}", file=sys.stderr)
+            ok = False
+    return ok
 
 
 def _match_plan(
